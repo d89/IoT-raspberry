@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>IoT</title>
+		<style type="text/css">
+			.chart {
+				width: 100%;
+				height: 300px;
+			}
+
+			#dataarea {
+				display: none;
+			}
+
+			a {
+				color: blue;
+				cursor: pointer;
+			}
+		</style>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.0/socket.io.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/locale/de.js"></script>
+		<script>
+		var backendUrl = 'https://d1303.de:3000';
+		var currentChartData = {};
+		var charts = {};
+		var socket = null;
+
+		function getClients(cb)
+		{
+			$.get("/clients/get", function(clients)
+			{
+				cb(JSON.parse(clients));
+			});
+		}
+		
+		function trimTo(arr, num)
+		{
+			return arr.slice(Math.max(-1 * num, -1 * arr.length));
+		}
+		
+		function generateInitialChartData(labels, data)
+		{
+			return 	{
+				labels: labels,
+				datasets: [
+				{
+					label: "Temperature",
+					fillColor: "rgba(151,187,205,0.2)",
+					strokeColor: "rgba(151,187,205,1)",
+					pointColor: "rgba(151,187,205,1)",
+					pointStrokeColor: "#fff",
+					pointHighlightFill: "#fff",
+					pointHighlightStroke: "rgba(151,187,205,1)",
+					data: data
+				}]
+			};
+		}
+
+		function renderInitialChart(type)
+		{
+			var container = document.getElementById("chart-" + type);
+
+			socket.emit("ui:full", { type: type }, function(dps)
+			{
+				var labels = [];
+				var data = [];
+
+				for (var i = dps.length - 1; i >= 0; i--)
+				{
+					var time = moment(dps[i].created).format('dd, hh:mm:ss');
+					var dp = dps[i].data;
+
+					labels.push(time);
+					data.push(dp);
+				}
+
+				var chartData = generateInitialChartData(labels, data)
+				var ctx = container.getContext("2d");
+				charts[type] = new Chart(ctx).Line(chartData, { animation: true });
+			});
+		}
+
+		function connectToDevice(id)
+		{
+			if (socket)
+			{
+				socket.disconnect();
+			}
+
+			socket = io.connect(backendUrl, { query: "mode=ui&client=" + id });
+
+			socket.on("connect", function()
+			{
+				$("#dataarea").html("").show();
+
+				["temperature", "humidity"].forEach(function(type)
+				{
+					if (type in charts)
+					{
+						charts[type].destroy();
+					}
+
+					charts = {};
+
+					$("#dataarea")[0].innerHTML += "<h2>" + type + "<canvas id='chart-" + type + "' class='chart'></canvas>";
+
+					(function(t)
+					{
+						setTimeout(function()
+						{
+							renderInitialChart(t);
+						}, 200);
+
+					}(type));
+				});
+			});
+
+			socket.on("dataupdate", function(msg)
+			{
+				//console.log("received", msg);
+
+				var type = msg.type;
+				var data = msg.data;
+				var time = moment(msg.created).format('dd, hh:mm:ss');
+
+				if (charts[type])
+				{
+					charts[type].removeData();
+					charts[type].addData([data], time);
+				}
+			});
+		}
+
+		$(document).ready(function()
+		{
+			$("#connectedClients").on("click", "a", function()
+			{
+				var id = $(this).attr("data-id");
+				connectToDevice(id);
+			});
+
+			getClients(function(clients)
+			{
+				$("#connectedClients").append("<h2>Number of connected clients: " + clients.length + "</h2><ul>");
+				
+				for (var i = 0; i < clients.length; i++)
+				{
+					var clientHtml = "<li>" +
+										"<a data-id='" + clients[i].id + "' class='connectedClient'>" +
+											"<b>" + clients[i].client_name + "</b> " +
+										"</a>(" + clients[i].id + " @ " + clients[i].address + ")" +
+									"</li>"
+
+					$("#connectedClients").append(clientHtml);
+				}
+
+				$("#connectedClients").append("</ul>");
+			});
+		});
+		</script>
+	</head>
+	<body>
+		<h1>IoT-Server</h1>
+		<div id="connectedClients"></div>
+		<div id="dataarea"></div>
+	</body>
+</html>

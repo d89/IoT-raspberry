@@ -1,11 +1,8 @@
-var is_live = !(/^win/.test(process.platform));
-is_live = true;
-console.log("IS IN LIVE MODE?", is_live);
-
 //---------------------------------------------------------------------------
 
-var server_url = is_live ? 'https://d1303.de:3000' : 'http://127.0.0.1:3000';
-var socket = require('socket.io-client').connect(server_url);
+const server_url = 'https://d1303.de:3000';
+const client_name = "Davids IoT-Raspberry";
+var socket = require('socket.io-client').connect(server_url, {query: 'mode=client&client_name=' + client_name});
 
 function getRandomInt(min, max) 
 {
@@ -37,8 +34,8 @@ socket.on('connect', function()
 		}
 
 		console.log(`sent to ${server_url}`, payload);
-		socket.emit('data', payload);
-	}, 500);
+		socket.emit('client:data', payload);
+	}, 8500);
 });
 
 socket.on('event', function(data)
