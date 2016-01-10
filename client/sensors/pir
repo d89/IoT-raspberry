@@ -1,0 +1,41 @@
+#!/usr/bin/python
+# Info - This program is for PIR sensor. Contionusly checks for state,
+#        set LED if movement detected and plays wav file on detection.
+
+import RPi.GPIO as GPIO
+import time
+import datetime
+import json
+import sys
+from subprocess import call
+
+PIR = 38
+val = False
+lastState = False
+json_template = { 'state': 0, 'time': str(datetime.datetime.now().time()) }
+
+GPIO.setmode(GPIO.BOARD)	# Change this if using GPIO numbering
+GPIO.setup(PIR, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)	# Set PIR as input
+
+try:
+	while True:
+		val = GPIO.input(PIR)
+
+		if (val == True):
+			json_template['state'] = 1
+
+			#if lastState == False:
+			#    call(["/usr/bin/mpg321", "/home/pi/Music/siren.mp3"])
+
+			lastState = True
+		else:
+			json_template['state'] = 0
+			lastState = False
+
+        	json_template['time'] = str(datetime.datetime.now().time())
+
+		print json.dumps(json_template)
+		sys.stdout.flush()
+		time.sleep(2)
+finally:                   # run on exit
+    GPIO.cleanup()         # clean up

@@ -1,0 +1,49 @@
+#!/usr/bin/python
+import RPi.GPIO as GPIO
+import time
+import json
+import sys
+import datetime
+
+board_pin = 15
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(board_pin, GPIO.IN)
+GPIO.setup(board_pin, GPIO.HIGH)
+
+duration = 0.0005
+json_template = { 'louds': 0, 'silents': 0, 'state': 0, 'time': str(datetime.datetime.now().time()) }
+
+next_permitted_send = time.time()
+send_min_delay = 3
+
+louds = 0
+silents = 0
+
+last_send_louds = 0
+last_send_silents = 0
+
+try:
+	while 1:
+		is_loud = GPIO.input(board_pin) != 1
+
+		if is_loud:
+			louds+=1
+		else:
+			silents+=1
+
+		time.sleep(duration)
+
+		if time.time() >= next_permitted_send:
+			json_template['state'] = louds > last_send_louds
+			json_template['time'] = str(datetime.datetime.now().time())
+			json_template['louds'] = louds
+			json_template['silents'] = silents
+			print json.dumps(json_template)
+			sys.stdout.flush()
+
+			next_permitted_send = time.time() + send_min_delay
+			last_send_louds = louds
+			last_send_silents = silents
+finally:                   # run on exit
+	GPIO.cleanup()         # clean up

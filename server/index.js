@@ -8,6 +8,7 @@ var express = require('express')
 var app = express();
 var http = use_ssl ? require('https') : require('http');
 var sio = require('socket.io');
+var spawn = require('child_process').spawn;
 
 //---------------------------------------------------------------------------
 
@@ -84,7 +85,7 @@ function persistClientData(msg, cb)
 {
 	console.log("got from client", msg);
 	
-	if (!msg.type || !msg.data)
+	if (!("type" in msg) || !("data" in msg))
 	{
 		return cb("malformatted message", msg);
 	}
@@ -95,6 +96,7 @@ function persistClientData(msg, cb)
 	{
 		data = msg.data;
 		//TODO check if saving was successful
+		//TODO store client id aswell
 		dp.persistDataPoint(msg.type, data, function()
 		{
 			//console.log(`persisted ${msg.type}!`)
@@ -107,12 +109,53 @@ function persistClientData(msg, cb)
 	{
 		data = msg.data;
 		//TODO check if saving was successful
+		//TODO store client id aswell
 		dp.persistDataPoint(msg.type, data, function()
 		{
 			//console.log(`persisted ${msg.type}!`)
 		});
 		
 		return cb(null, `extracted humidity ${data}%`);
+	}
+
+    if (msg.type === "cputemp")
+    {
+        data = msg.data;
+        //TODO check if saving was successful
+        //TODO store client id aswell
+        dp.persistDataPoint(msg.type, data, function()
+        {
+            //console.log(`persisted ${msg.type}!`)
+        });
+
+        return cb(null, `extracted cputemp ${data}°C`);
+    }
+
+	if (msg.type === "movement")
+	{
+		data = msg.data === "movement" ? 1 : 0;
+
+		//TODO check if saving was successful
+		//TODO store client id aswell
+		dp.persistDataPoint(msg.type, data, function()
+		{
+			//console.log(`persisted ${msg.type}!`)
+		});
+
+		return cb(null, `extracted movement state ${data}`);
+	}
+
+	if (msg.type === "sound")
+	{
+		data = msg.data === "sound" ? 1 : 0;
+		//TODO check if saving was successful
+		//TODO store client id aswell
+		dp.persistDataPoint(msg.type, data, function()
+		{
+			//console.log(`persisted ${msg.type}!`)
+		});
+
+		return cb(null, `extracted sound state ${data}`);
 	}
 	
 	return cb(`Invalid data type ${msg.type}`);
@@ -197,6 +240,8 @@ io.on('connection', function(socket)
 
 		persistClientData(msg, function(err, resp)
 		{
+            err = !err ? "valid" : err;
+
 			console.log("PERSISTING: ", err, resp);
 
 			respondFromClientToUi(msg, socket, function(err, resp)
@@ -208,7 +253,7 @@ io.on('connection', function(socket)
 
 	socketType === "ui" && socket.on('ui:full', function(msg, resp)
 	{
-		console.log("message from ui: ", msg);
+		console.log("full request from ui: ", msg);
 
 		var type = msg.type;
 		var lastId = msg.lastId;
@@ -230,6 +275,36 @@ io.on('connection', function(socket)
 			resp(datapoints);
 		});
 	});
+
+    socketType === "ui" && socket.on('ui:action', function(msg)
+    {
+        var forClient = getClientId(socket);
+        var foundValidClient = false;
+        console.log(`action message from ui for client ${forClient}`, msg);
+
+        //send to raspberry
+        io.sockets.sockets.forEach(function(s)
+        {
+            if (getSocketType(s) === "client" && forClient === s.id)
+            {
+                console.log(`found listening client socket: ${s.id}!`);
+                foundValidClient = true;
+
+                var request = {
+                    type: msg.type,
+                    data: msg.data
+                };
+
+                msg.created = (new Date).getTime();
+                s.emit("actionrequest", request);
+            }
+        });
+
+        if (!foundValidClient)
+        {
+            console.log(`no waiting raspberry client with id ${forClient} was found`);
+        }
+    });
 
 	socket.on('disconnect', function(msg)
 	{	

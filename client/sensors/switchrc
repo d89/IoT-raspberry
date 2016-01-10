@@ -1,0 +1,23 @@
+#!/usr/bin/python
+import pi_switch
+import sys
+
+#called like this:
+#./rcswitch.py 1 2 0
+#turns off (= 0) the rc plug with number 2 on channel 1
+
+transmission_channel = int(sys.argv[1]) # Address group (1..4)
+device = int(sys.argv[2]) # Channel (1..4)
+to_state = int(sys.argv[3])
+
+print "transmission channel: " + str(transmission_channel)
+print "device: " + str(device)
+print "setting to state: " + str(to_state)
+
+switch = pi_switch.RCSwitchB(transmission_channel, device)
+switch.enableTransmit(0) # use WiringPi pin 0 <=> GPIO17
+
+if to_state == 1:
+    switch.switchOn()
+else:
+    switch.switchOff()

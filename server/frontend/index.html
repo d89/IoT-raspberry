@@ -13,6 +13,16 @@
 				display: none;
 			}
 
+            #actionarea {
+                display: none;
+            }
+
+            .action {
+                border:1px solid #CCC;
+                margin: 10px;
+                padding: 10px;
+            }
+
 			a {
 				color: blue;
 				cursor: pointer;
@@ -48,7 +58,7 @@
 				labels: labels,
 				datasets: [
 				{
-					label: "Temperature",
+					label: "IoT Graph",
 					fillColor: "rgba(151,187,205,0.2)",
 					strokeColor: "rgba(151,187,205,1)",
 					pointColor: "rgba(151,187,205,1)",
@@ -71,7 +81,7 @@
 
 				for (var i = dps.length - 1; i >= 0; i--)
 				{
-					var time = moment(dps[i].created).format('dd, hh:mm:ss');
+					var time = moment(dps[i].created).format('dd, HH:mm:ss');
 					var dp = dps[i].data;
 
 					labels.push(time);
@@ -80,9 +90,21 @@
 
 				var chartData = generateInitialChartData(labels, data)
 				var ctx = container.getContext("2d");
-				charts[type] = new Chart(ctx).Line(chartData, { animation: true });
+				charts[type] = new Chart(ctx).Line(chartData, { animation: false, responsive: true });
 			});
 		}
+
+        function sendAction(type, transferObject)
+        {
+            var action = {
+                type: type,
+                data: transferObject
+            };
+
+            console.log("emitting action to client", action);
+
+            socket.emit("ui:action", action);
+        }
 
 		function connectToDevice(id)
 		{
@@ -95,9 +117,10 @@
 
 			socket.on("connect", function()
 			{
+                $("#actionarea").show();
 				$("#dataarea").html("").show();
 
-				["temperature", "humidity"].forEach(function(type)
+				["temperature", "cputemp", "humidity", "sound", "movement"].forEach(function(type)
 				{
 					if (type in charts)
 					{
@@ -121,11 +144,11 @@
 
 			socket.on("dataupdate", function(msg)
 			{
-				//console.log("received", msg);
+				console.log("received", msg);
 
 				var type = msg.type;
 				var data = msg.data;
-				var time = moment(msg.created).format('dd, hh:mm:ss');
+				var time = moment(msg.created).format('dd, HH:mm:ss');
 
 				if (charts[type])
 				{
@@ -143,6 +166,28 @@
 				connectToDevice(id);
 			});
 
+            $("#actionarea").on("click", "input.send", function()
+            {
+                var type = $(this).parents("div.action").attr("id");
+                var transferObject = {};
+
+                if (type === "led")
+                {
+                    var ledType = $("#led select").val();
+                    transferObject.ledType = ledType;
+                }
+                else if (type === "switchrc")
+                {
+                    var switchNumber = $("#switchrc select").val();
+                    var onoff = $("#switchrc input[name=switchrconoff]:checked").val();
+
+                    transferObject.switchNumber = switchNumber;
+                    transferObject.onoff = onoff;
+                }
+
+                sendAction(type, transferObject);
+            });
+
 			getClients(function(clients)
 			{
 				$("#connectedClients").append("<h2>Number of connected clients: " + clients.length + "</h2><ul>");
@@ -151,7 +196,7 @@
 				{
 					var clientHtml = "<li>" +
 										"<a data-id='" + clients[i].id + "' class='connectedClient'>" +
-											"<b>" + clients[i].client_name + "</b> " +
+										"<b>" + clients[i].client_name + "</b> " +
 										"</a>(" + clients[i].id + " @ " + clients[i].address + ")" +
 									"</li>"
 
@@ -166,6 +211,35 @@
 	<body>
 		<h1>IoT-Server</h1>
 		<div id="connectedClients"></div>
+		<div id="actionarea">
+			<div id="switchrc" class="action">
+                <h4>RC Switch</h4>
+
+                <p>RC Switch Number
+                <select>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                </select></p>
+
+                <p>Turn...
+                    <input type="radio" name="switchrconoff" value="0" />off
+                    <input type="radio" name="switchrconoff" value="1" checked />on
+                </p>
+
+                <p><input type="button" value="send" class="send" /></p>
+			</div>
+			<div id="led" class="action">
+                <h4>Flash LED</h4>
+                <p>color
+                <select>
+                    <option>green</option>
+                    <option>red</option>
+                </select></p>
+
+               <p><input type="button" value="send" class="send" /></p>
+			</div>
+		</div>
 		<div id="dataarea"></div>
 	</body>
 </html>
