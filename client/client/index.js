@@ -1,13 +1,18 @@
 //---------------------------------------------------------------------------
 
+var actionsEnabled = false; //toggle sound actions by clap
+
 const server_url = 'https://d1303.de:3000';
 const client_name = "Davids IoT-Raspberry";
 var socket = require('socket.io-client').connect(server_url, {query: 'mode=client&client_name=' + client_name});
 var spawn = require('child_process').spawn;
 
 var dht11 = require('./sensors/dht11');
-var pir = require('./sensors/pir');
+var pir1 = require('./sensors/pir');
+var pir2 = require('./sensors/pir');
 var lm393 = require('./sensors/lm393');
+var sound = require('./sensors/sound');
+var light = require('./sensors/light');
 var cputemp = require('./sensors/cputemp');
 var ledGreen = require('./sensors/led-green');
 var ledRed = require('./sensors/led-red');
@@ -50,11 +55,11 @@ socket.on('connect', function()
 
     cputemp.watch(function ondata(data)
     {
-        var cputemp = {};
-        cputemp.type = 'cputemp';
-        cputemp.data = data;
-        socket.emit('client:data', cputemp);
-        console.log(`sent to ${server_url}`, cputemp);
+        var cpu = {};
+        cpu.type = 'cputemp';
+        cpu.data = data;
+        socket.emit('client:data', cpu);
+        console.log(`sent to ${server_url}`, cpu);
     },
     function onclose(msg)
     {
@@ -63,19 +68,89 @@ socket.on('connect', function()
 
     //##########################################################################
 
-    pir.watch(function ondata(data)
+    sound.watch(function ondata(data)
+    {
+        var sound = {};
+        sound.type = 'soundvol';
+        sound.data = data.state;
+        socket.emit('client:data', sound);
+        console.log(`sent to ${server_url}`, sound);
+    },
+    function onclose(msg)
+    {
+        console.log(data);
+    });
+
+    //##########################################################################
+
+    pir1.watch(function ondata(data)
     {
         var movement = {
-            type: "movement",
+            type: "movement1",
             data: data.state
         };
 
         //movement detected
-        if (data.state === 1)
+        if (data.state === 1 && actionsEnabled)
+        {
             spawn('/usr/bin/mpg321', ["/home/pi/Music/siren.mp3"]);
+            switchRc.switch(1, 1, 1);
+
+            setTimeout(function()
+            {
+                switchRc.switch(1, 1, 0);
+            }, 5000);
+        }
 
         socket.emit('client:data', movement);
         console.log(`sent to ${server_url}`, movement);
+    },
+    function onclose(msg)
+    {
+        console.log(msg);
+    },
+    {
+        port: 38
+    });
+
+    pir2.watch(function ondata(data)
+    {
+        var movement = {
+            type: "movement2",
+            data: data.state
+        };
+
+        socket.emit('client:data', movement);
+        console.log(`sent to ${server_url}`, movement);
+    },
+    function onclose(msg)
+    {
+        console.log(msg);
+    },
+    {
+        port: 33
+    });
+
+    //##########################################################################
+
+    var lastLightState = false;
+
+    light.watch(function ondata(data)
+    {
+        var light = {
+            type: "light",
+            data: data.state
+        };
+
+        if (actionsEnabled && !lastLightState && data.state)
+        {
+            spawn('/usr/bin/mpg321', ["/home/pi/Music/light.mp3"]);
+        }
+
+        lastLightState = data.state;
+
+        socket.emit('client:data', light);
+        console.log(`sent to ${server_url}`, light);
     },
     function onclose(msg)
     {
@@ -91,9 +166,19 @@ socket.on('connect', function()
             data: data.state === true ? 1 : 0
         };
 
-        //sound detected
-        if (data.state === true)
-            spawn('/usr/bin/mpg321', ["/home/pi/Music/gong.mp3"]);
+        if (data.state)
+        {
+            if (actionsEnabled)
+            {
+                spawn('/usr/bin/mpg321', ["/home/pi/Music/deactivated.mp3"]);
+            }
+            else
+            {
+                spawn('/usr/bin/mpg321', ["/home/pi/Music/activated.mp3"]);
+            }
+
+            actionsEnabled = !actionsEnabled;
+        }
 
         socket.emit('client:data', sound);
         console.log(`sent to ${server_url}`, sound);

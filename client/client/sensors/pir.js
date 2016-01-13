@@ -1,8 +1,8 @@
-exports.watch = function(ondata, onclose)
+exports.watch = function(ondata, onclose, options)
 {
     console.log("watching PIR");
     var spawn = require('child_process').spawn;
-    var prc = spawn('/var/www/IoT-raspberry/sensors/pir',  []);
+    var prc = spawn('/var/www/IoT-raspberry/sensors/pir',  [ options.port ]);
     prc.stdout.setEncoding('utf8');
 
     prc.stderr.on('data', function (data)

@@ -131,9 +131,9 @@ function persistClientData(msg, cb)
         return cb(null, `extracted cputemp ${data}°C`);
     }
 
-	if (msg.type === "movement")
+	if (msg.type === "movement1")
 	{
-		data = msg.data === "movement" ? 1 : 0;
+		data = msg.data;
 
 		//TODO check if saving was successful
 		//TODO store client id aswell
@@ -142,12 +142,40 @@ function persistClientData(msg, cb)
 			//console.log(`persisted ${msg.type}!`)
 		});
 
-		return cb(null, `extracted movement state ${data}`);
+		return cb(null, `extracted movement1 state ${data}`);
+	}
+
+	if (msg.type === "movement2")
+	{
+		data = msg.data;
+
+		//TODO check if saving was successful
+		//TODO store client id aswell
+		dp.persistDataPoint(msg.type, data, function()
+		{
+			//console.log(`persisted ${msg.type}!`)
+		});
+
+		return cb(null, `extracted movement2 state ${data}`);
+	}
+
+	if (msg.type === "light")
+	{
+		data = msg.data;
+
+		//TODO check if saving was successful
+		//TODO store client id aswell
+		dp.persistDataPoint(msg.type, data, function()
+		{
+			//console.log(`persisted ${msg.type}!`)
+		});
+
+		return cb(null, `extracted light state ${data}`);
 	}
 
 	if (msg.type === "sound")
 	{
-		data = msg.data === "sound" ? 1 : 0;
+		data = msg.data;
 		//TODO check if saving was successful
 		//TODO store client id aswell
 		dp.persistDataPoint(msg.type, data, function()
@@ -157,6 +185,19 @@ function persistClientData(msg, cb)
 
 		return cb(null, `extracted sound state ${data}`);
 	}
+
+    if (msg.type === "soundvol")
+    {
+        data = msg.data;
+        //TODO check if saving was successful
+        //TODO store client id aswell
+        dp.persistDataPoint(msg.type, data, function()
+        {
+            //console.log(`persisted ${msg.type}!`)
+        });
+
+        return cb(null, `extracted sound state ${data}`);
+    }
 	
 	return cb(`Invalid data type ${msg.type}`);
 }
