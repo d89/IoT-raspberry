@@ -14,13 +14,18 @@
 			}
 
             #actionarea {
-                display: none;
+                display: flex;
+                visibility: hidden;
             }
 
             .action {
                 border:1px solid #CCC;
                 margin: 10px;
                 padding: 10px;
+            }
+
+            #actionlinks a.active {
+                color: red;
             }
 
 			a {
@@ -35,9 +40,11 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/locale/de.js"></script>
 		<script>
 		var backendUrl = 'https://d1303.de:3000';
+        var types = ["temperature", "cputemp", "humidity", "light", "soundvol", "sound", "movement1", "movement2"];
 		var currentChartData = {};
 		var charts = {};
 		var socket = null;
+        var isLive = true;
 
 		function getClients(cb)
 		{
@@ -70,10 +77,16 @@
 			};
 		}
 
+        function plot(type, labels, data)
+        {
+            var container = document.getElementById("chart-" + type);
+            var chartData = generateInitialChartData(labels, data)
+            var ctx = container.getContext("2d");
+            charts[type] = new Chart(ctx).Line(chartData, { animation: false, responsive: true });
+        }
+
 		function renderInitialChart(type)
 		{
-			var container = document.getElementById("chart-" + type);
-
 			socket.emit("ui:full", { type: type }, function(dps)
 			{
 				var labels = [];
@@ -88,10 +101,63 @@
 					data.push(dp);
 				}
 
-				var chartData = generateInitialChartData(labels, data)
-				var ctx = container.getContext("2d");
-				charts[type] = new Chart(ctx).Line(chartData, { animation: false, responsive: true });
+                plot(type, labels, data);
 			});
+		}
+
+		function renderHistoryAggregation(query)
+		{
+            isLive = false;
+
+			socket.emit(query, { }, function(dps)
+            {
+                resetUi();
+
+                console.log("got it all", dps);
+
+                for (var i = 0; i < types.length; i++)
+                {
+                    var type = types[i];
+
+                    var datapointsForType = dps[type];
+                    var labels = [];
+                    var data = [];
+
+                    for (var k = 0; k < datapointsForType.length; k++)
+                    {
+                        var aggregated = datapointsForType[k];
+
+                        if (aggregated !== null)
+                        {
+                            var time = "no data";
+
+                            switch (query)
+                            {
+                                case "ui:lasthour":
+                                    time = moment(aggregated.from).format('HH:mm:ss') + " - " + moment(aggregated.to).format('HH:mm:ss');
+                                    break;
+                                case "ui:hoursofday":
+                                    time = moment(aggregated.from).format('HH:mm') + " - " + moment(aggregated.to).format('HH:mm');
+                                    break;
+                                case "ui:daysofmonth":
+                                    time = moment(aggregated.from).format('DD.MM.');
+                                    break;
+                            }
+
+                            var dp = aggregated.data;
+                            labels.push(time);
+                            data.push(dp);
+                        }
+                        else
+                        {
+                            labels.push("no data");
+                            data.push(null);
+                        }
+                    }
+
+                    plot(type, labels, data);
+                }
+            });
 		}
 
         function sendAction(type, transferObject)
@@ -106,6 +172,35 @@
             socket.emit("ui:action", action);
         }
 
+        function resetUi()
+        {
+            $("#actionarea").css("visibility", "visible");
+            $("#dataarea").html("").show();
+
+            types.forEach(function(type)
+            {
+                if (type in charts) {
+                    charts[type].destroy();
+                }
+
+                charts = {};
+
+                $("#dataarea")[0].innerHTML += "<h2>" + type + "<canvas id='chart-" + type + "' class='chart'></canvas>";
+            });
+        }
+
+        function startLiveMode()
+        {
+            isLive = true;
+
+            resetUi();
+
+            types.forEach(function(type)
+            {
+                renderInitialChart(type);
+            });
+        }
+
 		function connectToDevice(id)
 		{
 			if (socket)
@@ -117,34 +212,17 @@
 
 			socket.on("connect", function()
 			{
-                $("#actionarea").show();
-				$("#dataarea").html("").show();
-
-				["temperature", "cputemp", "humidity", "light", "soundvol", "sound", "movement1", "movement2"].forEach(function(type)
-				{
-					if (type in charts)
-					{
-						charts[type].destroy();
-					}
-
-					charts = {};
-
-					$("#dataarea")[0].innerHTML += "<h2>" + type + "<canvas id='chart-" + type + "' class='chart'></canvas>";
-
-					(function(t)
-					{
-						setTimeout(function()
-						{
-							renderInitialChart(t);
-						}, 200);
-
-					}(type));
-				});
+                startLiveMode();
 			});
 
 			socket.on("dataupdate", function(msg)
 			{
-				console.log("received", msg);
+                if (!isLive)
+                {
+                    return;
+                }
+
+				//console.log("received", msg);
 
 				var type = msg.type;
 				var data = msg.data;
@@ -186,6 +264,34 @@
                 }
 
                 sendAction(type, transferObject);
+            });
+
+            $("a#actionLive").on("click", function()
+            {
+                $("#actionlinks a").removeClass("active");
+                $(this).addClass("active");
+                startLiveMode();
+            });
+
+            $("a#actionLastHour").on("click", function()
+            {
+                $("#actionlinks a").removeClass("active");
+                $(this).addClass("active");
+                renderHistoryAggregation("ui:lasthour");
+            });
+
+            $("a#actionHoursOfDay").on("click", function()
+            {
+                $("#actionlinks a").removeClass("active");
+                $(this).addClass("active");
+                renderHistoryAggregation("ui:hoursofday");
+            });
+
+            $("a#actionDaysOfMonth").on("click", function()
+            {
+                $("#actionlinks a").removeClass("active");
+                $(this).addClass("active");
+                renderHistoryAggregation("ui:daysofmonth");
             });
 
 			getClients(function(clients)
@@ -239,6 +345,15 @@
 
                <p><input type="button" value="send" class="send" /></p>
 			</div>
+            <div id="actionlinks" class="action">
+                <h4>Toggle Display Mode</h4>
+                <ul>
+                    <li><a id="actionLive" class="active">Live</a></li>
+                    <li><a id="actionLastHour">Last hour</a></li>
+                    <li><a id="actionHoursOfDay">Hours of day</a></li>
+                    <li><a id="actionDaysOfMonth">Days of month</a></li>
+                </ul>
+            </div>
 		</div>
 		<div id="dataarea"></div>
 	</body>

@@ -16,7 +16,6 @@ exports.watch = function(ondata, onclose)
         {
             //console.log("received: ", data);
             data = JSON.parse("" + data);
-
             ondata(data);
         }
         catch (err)

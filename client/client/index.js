@@ -17,6 +17,7 @@ var cputemp = require('./sensors/cputemp');
 var ledGreen = require('./sensors/led-green');
 var ledRed = require('./sensors/led-red');
 var switchRc = require('./sensors/switchrc');
+var display = require('./sensors/display');
 
 socket.on('connect', function()
 {
@@ -73,6 +74,9 @@ socket.on('connect', function()
         var sound = {};
         sound.type = 'soundvol';
         sound.data = data.state;
+
+        display.display("sound volume: " + sound.data);
+
         socket.emit('client:data', sound);
         console.log(`sent to ${server_url}`, sound);
     },
