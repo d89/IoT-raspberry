@@ -1,0 +1,50 @@
+body {
+    padding: 20px;
+}
+
+.chart {
+    width: 100%;
+    height: 300px;
+}
+
+#dataarea {
+    display: none;
+}
+
+#actionarea {
+    display: flex;
+    visibility: hidden;
+}
+
+.action {
+    border: 1px solid #CCC;
+    margin: 10px;
+    padding: 10px;
+    width: 100%;
+}
+
+#actionlinks a.active {
+    color: red;
+}
+
+#streamcontainer {
+    position: relative;
+    display: none;
+}
+
+#stream {
+    width: 640px;
+    height: 480px;
+}
+
+#streamtime {
+    background: yellow;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+a {
+    color: blue;
+    cursor: pointer;
+}
