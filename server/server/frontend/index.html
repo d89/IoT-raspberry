@@ -4,6 +4,10 @@
 		<meta charset="UTF-8" />
 		<title>IoT</title>
 		<style type="text/css">
+            body {
+                padding: 20px;
+            }
+
 			.chart {
 				width: 100%;
 				height: 300px;
@@ -19,13 +23,31 @@
             }
 
             .action {
-                border:1px solid #CCC;
+                border: 1px solid #CCC;
                 margin: 10px;
                 padding: 10px;
+                width: 100%;
             }
 
             #actionlinks a.active {
                 color: red;
+            }
+
+            #streamcontainer {
+                position: relative;
+                display: none;
+            }
+
+            #stream {
+                width: 640px;
+                height: 480px;
+            }
+
+            #streamtime {
+                background: yellow;
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
             }
 
 			a {
@@ -33,11 +55,19 @@
 				cursor: pointer;
 			}
 		</style>
+
+        <link rel="stylesheet" href="https://visitmap.net/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://visitmap.net/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="https://visitmap.net/css/bootstrap-multiselect.css">
+
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.0/socket.io.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/locale/de.js"></script>
+        <script src="https://visitmap.net/js/vendor/bootstrap.min.js"></script>
+        <script src="https://visitmap.net/js/vendor/waitingdialog.js"></script>
+
 		<script>
 		var backendUrl = 'https://d1303.de:3000';
         var types = ["temperature", "cputemp", "humidity", "light", "soundvol", "sound", "movement1", "movement2"];
@@ -58,7 +88,43 @@
 		{
 			return arr.slice(Math.max(-1 * num, -1 * arr.length));
 		}
-		
+
+        function startStream()
+        {
+            $("#startstream").hide();
+            $("#stopstream").show();
+
+            $("#stream").attr("src", "http://www.airport-nuernberg.de/assets/webcam/webcam-big-loading.gif");
+            $("#streamtime").html("Loading ...");
+            $('#streamcontainer').show();
+
+            socket.emit('ui:start-stop-stream', {
+                start: true
+            });
+        }
+
+        function stopStream()
+        {
+            socket.emit('ui:start-stop-stream', {
+                start: false
+            });
+
+            $("#startstream").show();
+            $("#stopstream").hide();
+
+            $('#streamcontainer').hide();
+        }
+
+        function shutdown()
+        {
+            socket.emit("ui:maintenance", { mode: "shutdown" });
+        }
+
+        function restart()
+        {
+            socket.emit("ui:maintenance", { mode: "restart" });
+        }
+
 		function generateInitialChartData(labels, data)
 		{
 			return 	{
@@ -85,7 +151,7 @@
             charts[type] = new Chart(ctx).Line(chartData, { animation: false, responsive: true });
         }
 
-		function renderInitialChart(type)
+		function renderInitialChart(type, cb)
 		{
 			socket.emit("ui:full", { type: type }, function(dps)
 			{
@@ -102,10 +168,12 @@
 				}
 
                 plot(type, labels, data);
+
+                if (cb) cb();
 			});
 		}
 
-		function renderHistoryAggregation(query)
+		function renderHistoryAggregation(query, ondone)
 		{
             isLive = false;
 
@@ -157,6 +225,8 @@
 
                     plot(type, labels, data);
                 }
+
+                return ondone();
             });
 		}
 
@@ -191,13 +261,30 @@
 
         function startLiveMode()
         {
+            waitingDialog.show("Preparing live mode");
+
             isLive = true;
 
             resetUi();
 
+            var loaded = 0;
+
             types.forEach(function(type)
             {
-                renderInitialChart(type);
+                renderInitialChart(type, function()
+                {
+                    ++loaded;
+
+                    waitingDialog.show("Preparing live mode: " + loaded + " ready");
+
+                    if (types.length === loaded)
+                    {
+                        setTimeout(function()
+                        {
+                            waitingDialog.hide();
+                        }, 200);
+                    }
+                });
             });
         }
 
@@ -210,10 +297,36 @@
 
 			socket = io.connect(backendUrl, { query: "mode=ui&client=" + id });
 
-			socket.on("connect", function()
+           	socket.on("connect", function()
 			{
                 startLiveMode();
 			});
+
+            socket.on("client-disconnected", function(data)
+            {
+                alert("client " + data.id + " disconnected!");
+                window.location.reload();
+            });
+
+            socket.on("progress", function(data)
+            {
+                waitingDialog.show("Data aggregation pending: Query " + data.progress, {dialogSize: 'sm' });
+            });
+
+            socket.on("disconnect", function()
+            {
+                alert("server disconnected!");
+                window.location.reload();
+            });
+
+            socket.on("cam-stream", function(msg)
+            {
+                var image = msg.image;
+                var date = msg.date;
+
+                $('#stream').attr('src', 'data:image/jpg;base64,' + image);
+                $('#streamtime').html("Now: " + moment().format("HH:mm:ss") + "<br />" + "Img: " + moment(date).format("HH:mm:ss"));
+            });
 
 			socket.on("dataupdate", function(msg)
 			{
@@ -275,23 +388,35 @@
 
             $("a#actionLastHour").on("click", function()
             {
+                waitingDialog.show("Data aggregation pending");
                 $("#actionlinks a").removeClass("active");
                 $(this).addClass("active");
-                renderHistoryAggregation("ui:lasthour");
+                renderHistoryAggregation("ui:lasthour", function()
+                {
+                    waitingDialog.hide();
+                });
             });
 
             $("a#actionHoursOfDay").on("click", function()
             {
+                waitingDialog.show("Data aggregation pending");
                 $("#actionlinks a").removeClass("active");
                 $(this).addClass("active");
-                renderHistoryAggregation("ui:hoursofday");
+                renderHistoryAggregation("ui:hoursofday", function()
+                {
+                    waitingDialog.hide();
+                });
             });
 
             $("a#actionDaysOfMonth").on("click", function()
             {
+                waitingDialog.show("Data aggregation pending");
                 $("#actionlinks a").removeClass("active");
                 $(this).addClass("active");
-                renderHistoryAggregation("ui:daysofmonth");
+                renderHistoryAggregation("ui:daysofmonth", function()
+                {
+                    waitingDialog.hide();
+                });
             });
 
 			getClients(function(clients)
@@ -303,7 +428,8 @@
 					var clientHtml = "<li>" +
 										"<a data-id='" + clients[i].id + "' class='connectedClient'>" +
 										"<b>" + clients[i].client_name + "</b> " +
-										"</a>(" + clients[i].id + " @ " + clients[i].address + ")" +
+										"</a>(" + clients[i].id + " @ " + clients[i].address +
+                                        " since " + moment(clients[i].connected_at).format("DD.MM. HH:mm:ss") + ")"
 									"</li>"
 
 					$("#connectedClients").append(clientHtml);
@@ -353,6 +479,22 @@
                     <li><a id="actionHoursOfDay">Hours of day</a></li>
                     <li><a id="actionDaysOfMonth">Days of month</a></li>
                 </ul>
+            </div>
+            <div id="maintenance" class="action">
+                <p>
+                    <button type="button" id="shutdown" onclick="shutdown()">Shutdown</button>
+                    <button type="button" id="restart" onclick="restart()">Restart</button>
+                </p>
+            </div>
+            <div id="cam" class="action">
+                <p>
+                    <button type="button" id="startstream" onclick="startStream()">Start Stream</button>
+                    <button type="button" id="stopstream" onclick="stopStream()" style="display:none">Stop Stream</button>
+                </p>
+                <div id="streamcontainer">
+                    <img src="" id="stream" />
+                    <div id="streamtime"></div>
+                </div>
             </div>
 		</div>
 		<div id="dataarea"></div>

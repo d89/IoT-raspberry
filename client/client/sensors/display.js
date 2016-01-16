@@ -1,3 +1,5 @@
+var logger = require('../logger');
+
 exports.display = function(displaycontent)
 {
     //make array
@@ -6,7 +8,7 @@ exports.display = function(displaycontent)
         displaycontent = [displaycontent];
     }
 
-    //console.log("displaying on display", displaycontent);
+    //logger.info("displaying on display", displaycontent);
     var spawn = require('child_process').spawn;
     var prc = spawn('/var/www/IoT-raspberry/sensors/display', displaycontent);
     prc.stdout.setEncoding('utf8');

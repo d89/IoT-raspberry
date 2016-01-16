@@ -1,17 +1,19 @@
+var logger = require('../logger');
+
 exports.blink = function()
 {
-    console.log("blinking LED");
+    logger.info("blinking LED");
     var spawn = require('child_process').spawn;
     var prc = spawn('/var/www/IoT-raspberry/sensors/led-red',  []);
     prc.stdout.setEncoding('utf8');
 
     prc.stderr.on('data', function (data)
     {
-        console.log("received err: ", data);
+        logger.info("received err: ", data);
     });
 
     prc.stdout.on('data', function (data)
     {
-        console.log("received data: ", data);
+        logger.info("received data: ", data);
     });
 };

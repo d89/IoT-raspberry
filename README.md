@@ -123,3 +123,12 @@ http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry
 	for: SainSmart IIC/I2C/TWI Serial 2004 Character 20x4 LCD Display Modul 
 	https://www.auctoritas.ch/bauprojekte/4-ein-sainsmart-lcd-display-am-raspberry-pi-verwenden
 	"i2cdetect 1" instead of "i2cdetect -y 1"
+	
+---
+
+###Camera
+
+* https://www.raspberrypi.org/documentation/usage/camera/raspicam/raspivid.md
+* https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
+* http://jankarres.de/2013/05/raspberry-pi-raspistill-und-raspivid-parameter/
+* http://raspberrypiguide.de/howtos/raspberry-pi-camera-how-to/

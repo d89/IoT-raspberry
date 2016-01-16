@@ -1,6 +1,8 @@
+var logger = require('../logger');
+
 exports.watch = function(ondata, onclose)
 {
-    console.log("watching Light");
+    logger.info("watching Light");
     var spawn = require('child_process').spawn;
     var prc = spawn('/var/www/IoT-raspberry/sensors/light',  []);
 
@@ -8,14 +10,14 @@ exports.watch = function(ondata, onclose)
 
     prc.stderr.on('data', function (data)
     {
-        console.log("received err: ", data);
+        logger.info("received err: ", data);
     });
 
     prc.stdout.on('data', function (data)
     {
         try
         {
-            //console.log("received: ", data);
+            //logger.info("received: ", data);
             data = JSON.parse("" + data);
 
             ondata(data);
@@ -35,6 +37,6 @@ exports.watch = function(ondata, onclose)
 /*
 exports.watch(function(succ, err)
 {
-   console.log(succ, err);
+ logger.info(succ, err);
 });
 */

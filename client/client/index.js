@@ -4,8 +4,12 @@ var actionsEnabled = false; //toggle sound actions by clap
 
 const server_url = 'https://d1303.de:3000';
 const client_name = "Davids IoT-Raspberry";
-var socket = require('socket.io-client').connect(server_url, {query: 'mode=client&client_name=' + client_name});
+var io = require('socket.io-client');
+var socket = io.connect(server_url, {query: 'mode=client&connected_at=' + (new Date) + '&client_name=' + client_name});
 var spawn = require('child_process').spawn;
+var exec = require('child_process').exec;
+var fs = require('fs');
+var logger = require('./logger');
 
 var dht11 = require('./sensors/dht11');
 var pir1 = require('./sensors/pir');
@@ -18,6 +22,9 @@ var ledGreen = require('./sensors/led-green');
 var ledRed = require('./sensors/led-red');
 var switchRc = require('./sensors/switchrc');
 var display = require('./sensors/display');
+var cam = require('./sensors/cam');
+
+logger.info(`client ${client_name} connecting to ${server_url}`);
 
 socket.on('connect', function()
 {
@@ -26,7 +33,7 @@ socket.on('connect', function()
         return;
     }
 
-	console.log(`connected to ${server_url}`);
+	logger.info(`connected to ${server_url}`);
 
     ledGreen.blink();
     ledRed.blink();
@@ -39,17 +46,17 @@ socket.on('connect', function()
         temp.type = 'temperature';
         temp.data = data.temperature;
         socket.emit('client:data', temp);
-        console.log(`sent to ${server_url}`, temp);
+        //logger.info(`sent to ${server_url}`, temp);
 
         var humidity = {};
         humidity.type = 'humidity';
         humidity.data = data.humidity;
         socket.emit('client:data', humidity);
-        console.log(`sent to ${server_url}`, humidity);
+        //logger.info(`sent to ${server_url}`, humidity);
     },
     function onclose(msg)
     {
-        console.log(data);
+        logger.info(data);
     });
 
     //##########################################################################
@@ -60,11 +67,13 @@ socket.on('connect', function()
         cpu.type = 'cputemp';
         cpu.data = data;
         socket.emit('client:data', cpu);
-        console.log(`sent to ${server_url}`, cpu);
+        //logger.info(`sent to ${server_url}`, cpu);
+
+        displayUpdate(data);
     },
     function onclose(msg)
     {
-        console.log(data);
+        logger.info(data);
     });
 
     //##########################################################################
@@ -75,14 +84,12 @@ socket.on('connect', function()
         sound.type = 'soundvol';
         sound.data = data.state;
 
-        display.display("sound volume: " + sound.data);
-
         socket.emit('client:data', sound);
-        console.log(`sent to ${server_url}`, sound);
+        //logger.info(`sent to ${server_url}`, sound);
     },
     function onclose(msg)
     {
-        console.log(data);
+        logger.info(data);
     });
 
     //##########################################################################
@@ -107,11 +114,11 @@ socket.on('connect', function()
         }
 
         socket.emit('client:data', movement);
-        console.log(`sent to ${server_url}`, movement);
+        //logger.info(`sent to ${server_url}`, movement);
     },
     function onclose(msg)
     {
-        console.log(msg);
+        logger.info(msg);
     },
     {
         port: 38
@@ -125,11 +132,11 @@ socket.on('connect', function()
         };
 
         socket.emit('client:data', movement);
-        console.log(`sent to ${server_url}`, movement);
+        //logger.info(`sent to ${server_url}`, movement);
     },
     function onclose(msg)
     {
-        console.log(msg);
+        logger.info(msg);
     },
     {
         port: 33
@@ -154,11 +161,11 @@ socket.on('connect', function()
         lastLightState = data.state;
 
         socket.emit('client:data', light);
-        console.log(`sent to ${server_url}`, light);
+        //logger.info(`sent to ${server_url}`, light);
     },
     function onclose(msg)
     {
-        console.log(data);
+        logger.info(data);
     });
 
     //##########################################################################
@@ -185,11 +192,11 @@ socket.on('connect', function()
         }
 
         socket.emit('client:data', sound);
-        console.log(`sent to ${server_url}`, sound);
+        //logger.info(`sent to ${server_url}`, sound);
     },
     function onclose(msg)
     {
-        console.log(data);
+        logger.info(data);
     });
 });
 
@@ -204,7 +211,7 @@ socket.on('actionrequest', function(msg)
 
     if (!msg.type)
     {
-        console.log("malformatted actionrequest");
+        logger.info("malformatted actionrequest");
         return;
     }
 
@@ -214,7 +221,7 @@ socket.on('actionrequest', function(msg)
         var switchNumber = msg.data.switchNumber;
         var onoff = msg.data.onoff;
 
-        console.log(`actionrequest for rc switch ${switchNumber} to status ${onoff}`);
+        logger.info(`actionrequest for rc switch ${switchNumber} to status ${onoff}`);
 
         switchRc.switch(1, switchNumber, onoff);
     }
@@ -222,7 +229,7 @@ socket.on('actionrequest', function(msg)
     //LED ------------------------------------------------------------------------------
     if (msg.type === "led")
     {
-        console.log(`actionrequest for LED ${msg.data.ledType}`);
+        logger.info(`actionrequest for LED ${msg.data.ledType}`);
 
         if (msg.data.ledType === "red")
         {
@@ -235,7 +242,60 @@ socket.on('actionrequest', function(msg)
     }
 });
 
+//request from server client (passed by ui)
+socket.on('start-start-stream', function(msg)
+{
+    var start = !!msg.start;
+
+    if (start)
+    {
+        logger.info("Received stream start request");
+        if (!cam.streamRunning) {
+            cam.startStreaming(socket);
+        } else {
+            cam.sendImage();
+        }
+    }
+    else
+    {
+        logger.info("Received stream stop request");
+        cam.stopStreaming();
+    }
+});
+
+socket.on('maintenance', function(msg)
+{
+    logger.info("received maintenance request", msg);
+
+    if (msg.mode === "shutdown")
+    {
+        spawn("/sbin/shutdown", ["now"]);
+    }
+    else
+    {
+        spawn("/sbin/reboot", ["now"]);
+    }
+});
+
 socket.on('disconnect', function()
 {
-	console.log(`disconnected from ${server_url}`)
-});
+	logger.info(`disconnected from ${server_url}`)
+
+        cam.stopStreaming();
+    });
+
+    function displayUpdate(cpuTemp)
+    {
+        exec("ps aux | grep python | wc -l", function(err, out1, stderr)
+        {
+            exec("ps aux | grep node | wc -l", function(err, out2, stderr)
+            {
+                display.display([
+                    "python proc: " + parseInt(out1, 10),
+                    "node proc: " + parseInt(out2, 10),
+                    "cpu temp " + cpuTemp + "C",
+                    "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
+                ]);
+        });
+    });
+}

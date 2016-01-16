@@ -1,4 +1,5 @@
 var fs = require("fs");
+var logger = require('../logger');
 const INTERVAL = 5000;
 
 var readTemp = function(cb)
@@ -30,7 +31,7 @@ var sendTempLoop = function(ondata)
 
 exports.watch = function(ondata, onclose)
 {
-    console.log("watching cpu temperature");
+    logger.info("watching cpu temperature");
 
     sendTempLoop(ondata);
 };
@@ -38,6 +39,6 @@ exports.watch = function(ondata, onclose)
 /*
 exports.watch(function(temp)
 {
-    console.log(temp);
+    logger.info(temp);
 });
 */
