@@ -22,7 +22,7 @@ function startStream()
     $("#startstream").hide();
     $("#stopstream").show();
 
-    $("#stream").attr("src", "http://www.airport-nuernberg.de/assets/webcam/webcam-big-loading.gif");
+    $("#stream").attr("src", "/img/loading.gif");
     $("#streamtime").html("Loading ...");
     $('#streamcontainer').show();
 
@@ -215,7 +215,7 @@ function startLiveMode()
             {
                 setTimeout(function()
                 {
-                    waitingDialog.hide();
+                    //waitingDialog.hide();
                 }, 200);
             }
         });

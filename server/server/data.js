@@ -13,6 +13,7 @@ var sio = require('socket.io');
 var moment = require('moment');
 var spawn = require('child_process').spawn;
 var storage = require('./storage');
+var config = require('./config');
 
 //---------------------------------------------------------------------------
 
@@ -20,9 +21,9 @@ var ssl_object = {};
 
 if (use_ssl)
 {
-	var privateKey = fs.readFileSync('/etc/letsencrypt/live/d1303.de/privkey.pem');
-	var certificate = fs.readFileSync('/etc/letsencrypt/live/d1303.de/cert.pem');
-	var ca = fs.readFileSync('/etc/letsencrypt/live/d1303.de/chain.pem');
+	var privateKey = fs.readFileSync(config.sslPrivateKeyPath);
+	var certificate = fs.readFileSync(config.sslCertificate);
+	var ca = fs.readFileSync(config.sslCa);
 	ssl_object = {
 		key: privateKey,
 		cert: certificate,
@@ -234,7 +235,7 @@ function getClientSocketByUiSocket(uiSocket)
     return responseClientSocket;
 }
 
-app.use(basicAuth('***', '******'));
+app.use(basicAuth(config.httpUser, config.httpPass));
 
 app.use(express.static('frontend'));
 

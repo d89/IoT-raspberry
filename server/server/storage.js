@@ -66,7 +66,7 @@ exports.aggregate = function(start, end, types, client_id, skipCache, cb)
 
     // --------------------------------------------------
 
-    var agg = function(cb)
+    var liveAggregate = function(cb)
     {
         var coll = db.collection('datapoints');
 
@@ -87,8 +87,9 @@ exports.aggregate = function(start, end, types, client_id, skipCache, cb)
             }
         ]).toArray(function(err, docs)
         {
-            ++queryAggregationCount;
+            logger.info("live aggregation for period " + start + " to " + end + " with " + docs.length + " docs");
 
+            ++queryAggregationCount;
             exports.sendProgress(queryAggregationCount);
 
             return cb(err, timeSpan, docs);
@@ -97,12 +98,7 @@ exports.aggregate = function(start, end, types, client_id, skipCache, cb)
 
     // --------------------------------------------------
 
-    if (skipCache)
-    {
-        logger.info("skipping cache");
-        agg(cb);
-    }
-    else
+    var cachedAggregate = function(cb)
     {
         var aggregationpoints = db.collection('aggregationpoints');
 
@@ -124,16 +120,43 @@ exports.aggregate = function(start, end, types, client_id, skipCache, cb)
             }
         ]).toArray(function(err, docs)
         {
-            console.log("aggregation for period " + start + " to " + end, docs)
+            //TODO what if empty, for example for the current day? Have to fetch from live then
+            logger.info("cached aggregation for period " + start + " to " + end + " with " + docs.length + " docs");
 
             ++queryAggregationCount;
-
             exports.sendProgress(queryAggregationCount);
-
-            //TODO what if empty, for example for the current day? Have to fetch from live then
 
             return cb(err, timeSpan, docs);
         });
+    };
+
+    // --------------------------------------------------
+
+    var interferesWithCurrentHour = function()
+    {
+        var now = moment();
+
+        //if the current date is within the range of start to end, we need to fetch the data live
+
+        return start < now && end > now;
+    };
+
+    // --------------------------------------------------
+
+    if (skipCache)
+    {
+        logger.info("skipping cache");
+        liveAggregate(cb);
+    }
+    else if (interferesWithCurrentHour())
+    {
+        logger.info("skipping cache: interferes with current hour");
+        liveAggregate(cb);
+    }
+    else
+    {
+        logger.info("using cache");
+        cachedAggregate(cb);
     }
 };
 
@@ -222,7 +245,7 @@ exports.getLastCount = function(client_id, cb)
 
     var count = coll.find({
         client_id: client_id,
-        created: { $gte: moment().subtract(1, "hour").toDate() }
+        created: { $gte: moment().subtract(10, "minutes").toDate() }
     }, {}).count(function(err, count)
     {
         return cb(err, count);
@@ -266,6 +289,27 @@ exports.fullAggregation = function()
             {
                 return logger.error("full aggregation delete: ", err);
             }
+
+            removeOld();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var removeOld = function()
+    {
+        logger.info("deleting already aggregated items");
+        logger.info("--------------------------------------------------");
+
+        coll.deleteMany({ aggregated: true }, function(err, res)
+        {
+            if (err)
+            {
+                return logger.error("delete aggregation: ", err);
+            }
+
+            logger.info("deleted " + res.result.n + " aggregated datapoints");
+            logger.info("--------------------------------------------------");
 
             fetchFirst();
         });
