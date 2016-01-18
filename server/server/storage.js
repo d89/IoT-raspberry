@@ -4,7 +4,6 @@ var async = require("async");
 var logger = require("winston");
 var db = null;
 var queryAggregationCount = 0;
-var globalCache = [];
 var progressNotifier = null;
 
 exports.setDatabase = function(database)
@@ -27,7 +26,8 @@ exports.setProgressNotifier = function(cb)
 
 exports.sendProgress = function(data)
 {
-    progressNotifier(data);
+    if (progressNotifier)
+        progressNotifier(data);
 };
 
 exports.persistDataPoint = function(type, data, client_id, cb)
@@ -60,7 +60,7 @@ exports.getDataPoints = function(type, client_id, cb)
     });
 };
 
-exports.aggregate = function(start, end, types, client_id, cb)
+exports.aggregate = function(start, end, types, client_id, skipCache, cb)
 {
     var timeSpan = { from: start, to: end};
 
@@ -91,105 +91,53 @@ exports.aggregate = function(start, end, types, client_id, cb)
 
             exports.sendProgress(queryAggregationCount);
 
-             if (docs)
-             {
-                 var cache = docs.slice();
-
-                 for (var i = 0; i < cache.length; i++)
-                 {
-                     cache[i].type = cache[i]['_id'];
-                     delete cache[i]['_id'];
-                     cache[i].from = start;
-                     cache[i].to = end;
-                     cache[i].client_id = client_id;
-                 }
-
-                 exports.saveForCache(cache);
-             }
-
             return cb(err, timeSpan, docs);
         });
     };
 
     // --------------------------------------------------
 
-    var aggregation = db.collection('aggregation');
-
-    aggregation.find({
-        from: start,
-        to: end,
-        client_id: client_id
-    }).toArray(function(err, docs)
+    if (skipCache)
     {
-        var fromCache = [];
+        logger.info("skipping cache");
+        agg(cb);
+    }
+    else
+    {
+        var aggregationpoints = db.collection('aggregationpoints');
 
-        if (docs)
-        {
-            //should look like this:
-            // [ {
-            //     avg: 84.97765363128492,
-            //     type: 'soundvol',
-            //     from: Sat Jan 16 2016 20:00:00 GMT+0100 (CET),
-            //     to: Sat Jan 16 2016 21:00:00 GMT+0100 (CET)
-            //    },
-            //    { ... }
-            // ]
-
-            docs.forEach(function(d)
+        aggregationpoints.aggregate
+        ([
             {
-                fromCache.push({
-                    avg: d.avg,
-                    type: d.type,
-                    from: d.from,
-                    to: d.to
-                });
-            });
-
-            //logger.info("from cache", fromCache);
-
-            if (fromCache.length > 0)
+                $match: {
+                    from: { $gte: start },
+                    to: { $lte: end },
+                    client_id: client_id
+                }
+            },
             {
-                logger.info("cache is filled");
-                return cb(err, timeSpan, fromCache);
+                $group:
+                {
+                    _id: '$type',
+                    avg: {$avg: '$avg'}
+                }
             }
-            else
-            {
-                logger.info("cache is empty, getting from live");
-                agg(cb);
-            }
-        }
-        else
+        ]).toArray(function(err, docs)
         {
-            logger.info("cache is empty, getting from live");
-            agg(cb);
-        }
-    });
+            console.log("aggregation for period " + start + " to " + end, docs)
+
+            ++queryAggregationCount;
+
+            exports.sendProgress(queryAggregationCount);
+
+            //TODO what if empty, for example for the current day? Have to fetch from live then
+
+            return cb(err, timeSpan, docs);
+        });
+    }
 };
 
-exports.saveForCache = function(cache)
-{
-    cache.forEach(function(c)
-    {
-        globalCache.push(c);
-    });
-}
-
-exports.storeInCache = function()
-{
-    logger.info("storing in cache: " + globalCache.length + " items");
-
-    //TODO
-    return;
-
-    var aggregation = db.collection('aggregation');
-
-    aggregation.insertMany(globalCache, function(err, res)
-    {
-        logger.info("stored in cache!");
-    });
-};
-
-exports.aggregateDaysOfMonth = function(types, client_id, progressCb, cb)
+exports.aggregation = function(start, end, interval, types, client_id, skipCache, progressCb, cb)
 {
     exports.setProgressNotifier(progressCb);
     var dataPointsTemplate = {};
@@ -199,13 +147,10 @@ exports.aggregateDaysOfMonth = function(types, client_id, progressCb, cb)
         dataPointsTemplate[type] = [];
     });
 
-    var end = moment();
-    var start = moment().subtract(30, 'days').startOf("day");
-
     while (start < end)
     {
         var startDate = moment(start).toDate();
-        start.add(1, 'day');
+        start.add(interval[0], interval[1]);
 
         types.forEach(function(type)
         {
@@ -217,74 +162,11 @@ exports.aggregateDaysOfMonth = function(types, client_id, progressCb, cb)
         });
     }
 
-    return exports.fullAggregation(dataPointsTemplate, client_id, cb);
+    return exports.aggregateWrapper(dataPointsTemplate, client_id, skipCache, cb);
 };
 
-exports.aggregateLastHour = function(types, client_id, progressCb, cb)
+exports.aggregateWrapper = function(dps, client_id, skipCache, cb)
 {
-    exports.setProgressNotifier(progressCb);
-    var dataPointsTemplate = {};
-
-    types.forEach(function(type)
-    {
-        dataPointsTemplate[type] = [];
-    });
-
-    var end = moment();
-    var start = moment().subtract(1, 'hour');
-
-    while (start < end)
-    {
-        var startDate = moment(start).toDate();
-        start.add(2, 'minute');
-
-        types.forEach(function(type)
-        {
-            dataPointsTemplate[type].push({
-                data: null,
-                from: startDate,
-                to: moment(start).toDate()
-            });
-        });
-    }
-
-    return exports.fullAggregation(dataPointsTemplate, client_id, cb);
-};
-
-exports.aggregateHoursOfDay = function(types, client_id, progressCb, cb)
-{
-    exports.setProgressNotifier(progressCb);
-    var dataPointsTemplate = {};
-
-    types.forEach(function(type)
-    {
-        dataPointsTemplate[type] = [];
-    });
-
-    var end = moment();
-    var start = moment().subtract(24, 'hours').startOf("hour");
-
-    while (start < end)
-    {
-        var startDate = moment(start).toDate();
-        start.add(1, 'hour');
-
-        types.forEach(function(type)
-        {
-            dataPointsTemplate[type].push({
-                data: null,
-                from: startDate,
-                to: moment(start).toDate()
-            });
-        });
-    }
-
-    return exports.fullAggregation(dataPointsTemplate, client_id, cb);
-};
-
-exports.fullAggregation = function(dps, client_id, cb)
-{
-    globalCache = [];
     queryAggregationCount = 0;
     var aggregations = [];
 
@@ -297,7 +179,7 @@ exports.fullAggregation = function(dps, client_id, cb)
     {
         aggregations.push(function(cb)
         {
-            exports.aggregate(o.from, o.to, types, client_id, cb);
+            exports.aggregate(o.from, o.to, types, client_id, skipCache, cb);
         });
     });
 
@@ -328,9 +210,210 @@ exports.fullAggregation = function(dps, client_id, cb)
             });
         });
 
-        exports.storeInCache();
-        //logger.info("full data returned", dps);
+        logger.info("full data returned");
 
         return cb(null, dps);
     });
+};
+
+exports.getLastCount = function(client_id, cb)
+{
+    var coll = db.collection('datapoints');
+
+    var count = coll.find({
+        client_id: client_id,
+        created: { $gte: moment().subtract(1, "hour").toDate() }
+    }, {}).count(function(err, count)
+    {
+        return cb(err, count);
+    });
+};
+
+exports.fullAggregation = function()
+{
+    var startTime = new Date();
+    var coll = db.collection('datapoints');
+    var agg = db.collection('aggregationpoints');
+    var overallEnd = moment().startOf("hour");
+
+    //--------------------------------------------------
+
+    var start = function()
+    {
+        logger.info("processing items until " + overallEnd.format("DD.MM.YYYY HH.mm"));
+        agg.createIndex( { from: 1, to: 1, type: 1, client_id: 1 }, { unique: true }, function(err, res)
+        {
+            if (err)
+                return logger.error("aggregation creating unique index", err);
+
+            logger.info("created unique index");
+            logger.info("--------------------------------------------------");
+
+            removeInvalid();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var removeInvalid = function()
+    {
+        logger.info("deleting invalid items");
+        logger.info("--------------------------------------------------");
+
+        coll.deleteMany({ created: null }, function(err, res)
+        {
+            if (err)
+            {
+                return logger.error("full aggregation delete: ", err);
+            }
+
+            fetchFirst();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var fetchFirst = function()
+    {
+        logger.info("fetching first item");
+        logger.info("--------------------------------------------------");
+
+        coll.find({ aggregated: null }, { sort: [['created', 1]], limit : 1 }).toArray(function(err, firstDoc)
+        {
+            if (err)
+            {
+                return logger.error("full aggregation fetch first: ", err);
+            }
+
+            var first = moment(firstDoc[0].created);
+
+            logger.info("first doc", firstDoc);
+            logger.info("first: " + first.format("DD.MM.YYYY HH.mm"));
+
+            var start = first.startOf("hour");
+            var end = moment(first).add(1, "hour");
+
+            if (overallEnd < end)
+            {
+                logger.warn("stopping aggregation, because the beginning of the current period has been reached");
+                process.exit(1);
+            }
+            else
+            {
+                aggregateHour(start, end);
+            }
+        });
+    };
+
+    //--------------------------------------------------
+
+    var aggregateHour = function(from, to)
+    {
+        logger.info("aggregation for hour " + moment(from).format("DD.MM.YYYY HH.mm") + " to " + moment(to).format("DD.MM.YYYY HH.mm"));
+        logger.info("--------------------------------------------------");
+
+        coll.aggregate
+        ([
+            {
+                $match: {
+                    created: { $gte: from.toDate(), $lt: to.toDate() },
+                    aggregated: null
+                }
+            },
+            {
+                $group:
+                {
+                    _id: {
+                        type: '$type',
+                        client_id: '$client_id'
+                    },
+                    avg: {$avg: '$data'}
+                }
+            }
+        ]).toArray(function(err, docs)
+        {
+            if (err)
+            {
+                return logger.error("full aggregation agg: ", err);
+            }
+
+            //process aggregation
+            var aggregatedDatapoints = [];
+
+            docs.forEach(function(d)
+            {
+                aggregatedDatapoints.push({
+                    type: d["_id"].type,
+                    client_id: d["_id"].client_id,
+                    avg: d["avg"],
+                    created: (new Date),
+                    from: from.toDate(),
+                    to: to.toDate()
+                });
+            });
+
+            logger.info("aggregation results: " + aggregatedDatapoints.length + " datapoints");
+            logger.info("--------------------------------------------------");
+
+            storeAggregation(aggregatedDatapoints, function()
+            {
+                flagAggregatedPoints(from, to);
+            });
+        });
+    };
+
+    //--------------------------------------------------
+
+    var storeAggregation = function(aggregatedDatapoints, cb)
+    {
+        logger.info("storing aggregation for " + aggregatedDatapoints.length + " datapoints");
+
+        agg.insertMany(aggregatedDatapoints, function(err, res)
+        {
+            if (err)
+                return logger.error("full aggregation storage: ", err);
+
+            logger.info("stored in aggregationpoints: " + aggregatedDatapoints.length + " datapoints");
+            logger.info("--------------------------------------------------");
+
+            cb();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var flagAggregatedPoints = function(from, to)
+    {
+        coll.update({
+            created: { $gte: from.toDate(), $lt: to.toDate()
+        }}, {
+            $set: { aggregated: true }
+        },  {
+            w:1, multi: true
+        }, function(err, res)
+        {
+            if (err)
+            {
+                return logger.error("flagged aggregation: ", err);
+            }
+
+            logger.info("flagged " + res.result.nModified + " datapoints");
+            logger.info("--------------------------------------------------");
+
+            roundDone();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var roundDone = function()
+    {
+        var timeSpend = ((new Date).getTime() - startTime.getTime()) / 1000;
+        logger.info("round done in " + timeSpend + " seconds");
+        logger.info("next round");
+        logger.info("--------------------------------------------------");
+        exports.fullAggregation();
+    };
+
+    start();
 };

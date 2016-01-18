@@ -58,16 +58,16 @@ function generateInitialChartData(labels, data)
     return 	{
         labels: labels,
         datasets: [
-            {
-                label: "IoT Graph",
-                fillColor: "rgba(151,187,205,0.2)",
-                strokeColor: "rgba(151,187,205,1)",
-                pointColor: "rgba(151,187,205,1)",
-                pointStrokeColor: "#fff",
-                pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(151,187,205,1)",
-                data: data
-            }]
+        {
+            label: "IoT Graph",
+            fillColor: "rgba(151,187,205,0.2)",
+            strokeColor: "rgba(151,187,205,1)",
+            pointColor: "rgba(151,187,205,1)",
+            pointStrokeColor: "#fff",
+            pointHighlightFill: "#fff",
+            pointHighlightStroke: "rgba(151,187,205,1)",
+            data: data
+        }]
     };
 }
 
@@ -105,14 +105,16 @@ function renderHistoryAggregation(query, ondone)
 {
     isLive = false;
 
-    socket.emit(query, { }, function(dps)
+    socket.emit("ui:aggregation", query, function(dps)
     {
-        resetUi();
+        resetUi(true);
 
         console.log("got it all", dps);
 
         for (var i = 0; i < types.length; i++)
         {
+            console.log("processing " + i);
+
             var type = types[i];
 
             var datapointsForType = dps[type];
@@ -125,22 +127,9 @@ function renderHistoryAggregation(query, ondone)
 
                 if (aggregated !== null)
                 {
-                    var time = "no data";
+                    var time = moment(aggregated.from).format(query.displayFormat) + " - " + moment(aggregated.to).format(query.displayFormat);
 
-                    switch (query)
-                    {
-                        case "ui:lasthour":
-                            time = moment(aggregated.from).format('HH:mm:ss') + " - " + moment(aggregated.to).format('HH:mm:ss');
-                            break;
-                        case "ui:hoursofday":
-                            time = moment(aggregated.from).format('HH:mm') + " - " + moment(aggregated.to).format('HH:mm');
-                            break;
-                        case "ui:daysofmonth":
-                            time = moment(aggregated.from).format('DD.MM.');
-                            break;
-                    }
-
-                    var dp = aggregated.data;
+                    var dp = ("avg" in aggregated) ? aggregated.avg : aggregated.data;
                     labels.push(time);
                     data.push(dp);
                 }
@@ -151,6 +140,7 @@ function renderHistoryAggregation(query, ondone)
                 }
             }
 
+            console.log("plotting " + i);
             plot(type, labels, data);
         }
 
@@ -170,7 +160,20 @@ function sendAction(type, transferObject)
     socket.emit("ui:action", action);
 }
 
-function resetUi()
+function getCount(cb)
+{
+    console.log("requesting count");
+
+    socket.emit('ui:data-count', {}, function(err, resp)
+    {
+        if (err)
+            return cb(err);
+
+        return cb(resp);
+    });
+}
+
+function resetUi(noSpinner)
 {
     $("#actionarea").css("visibility", "visible");
     $("#dataarea").html("").show();
@@ -183,13 +186,14 @@ function resetUi()
 
         charts = {};
 
-        $("#dataarea")[0].innerHTML += "<h2>" + type + "<canvas id='chart-" + type + "' class='chart'></canvas>";
+        var loadingClass = noSpinner ? "" : "loading";
+        $("#dataarea")[0].innerHTML += "<h2>" + type + "<div class='chartholder " + loadingClass + "'><canvas id='chart-" + type + "' class='chart'></canvas></div>";
     });
 }
 
 function startLiveMode()
 {
-    waitingDialog.show("Preparing live mode");
+    //TODO waitingDialog.show("Preparing live mode");
 
     isLive = true;
 
@@ -203,7 +207,9 @@ function startLiveMode()
         {
             ++loaded;
 
-            waitingDialog.show("Preparing live mode: " + loaded + " ready");
+            //TODO waitingDialog.show("Preparing live mode: " + loaded + " ready");
+
+            $("#chart-" + type).parents(".chartholder").removeClass("loading");
 
             if (types.length === loaded)
             {
@@ -228,6 +234,12 @@ function connectToDevice(id)
     socket.on("connect", function()
     {
         startLiveMode();
+    });
+
+    getCount(function(cnt)
+    {
+        $("#count p").text(cnt);
+        $("#refresh-count").show();
     });
 
     socket.on("client-disconnected", function(data)
@@ -279,6 +291,18 @@ function connectToDevice(id)
 
 $(document).ready(function()
 {
+    $("#refresh-count").on("click", function()
+    {
+        $("#refresh-count").hide();
+        $("#count p").text("Loading ...");
+
+        getCount(function(cnt)
+        {
+            $("#count p").text(cnt);
+            $("#refresh-count").show();
+        });
+    });
+
     $("#connectedClients").on("click", "a", function()
     {
         var id = $(this).attr("data-id");
@@ -307,44 +331,73 @@ $(document).ready(function()
         sendAction(type, transferObject);
     });
 
+    $("#sendAggregation").on("click", function()
+    {
+        try
+        {
+            var options = JSON.parse($("#aggregation-conf textarea").val());
+            options.start = eval(options.start);
+            options.end = eval(options.end);
+        }
+        catch (err)
+        {
+            alert(err);
+            return;
+        }
+
+        console.log("agg config", options);
+
+        waitingDialog.show("Data aggregation pending");
+
+        renderHistoryAggregation(options, function()
+        {
+            waitingDialog.hide();
+        });
+    });
+
     $("a#actionLive").on("click", function()
     {
-        $("#actionlinks a").removeClass("active");
+        $("#aggregation-conf").hide();
+
+        $("a.actionAggregation").removeClass("active");
         $(this).addClass("active");
         startLiveMode();
     });
 
-    $("a#actionLastHour").on("click", function()
+    $("a.actionAggregation").on("click", function()
     {
-        waitingDialog.show("Data aggregation pending");
-        $("#actionlinks a").removeClass("active");
-        $(this).addClass("active");
-        renderHistoryAggregation("ui:lasthour", function()
-        {
-            waitingDialog.hide();
-        });
-    });
+        var presets = {
+            lasthour : '{\n' +
+            '   "interval": [5, "minute"],\n' +
+            '   "start": "moment().subtract(1, \'hour\')",\n' +
+            '   "end": "moment()",\n' +
+            '   "skipcache": true,\n' +
+            '   "displayFormat": "HH:mm:ss"\n' +
+            '}',
+            daysofmonth: '{\n' +
+            '   "interval": [1, "day"],\n' +
+            '   "start": "moment().subtract(30, \'days\').startOf(\'day\')",\n' +
+            '   "end": "moment()",\n' +
+            '   "skipcache": false,\n' +
+            '   "displayFormat": "DD.MM."\n' +
+            '}',
+            hoursofday: '{\n' +
+            '   "interval": [1, "hour"],\n' +
+            '   "start": "moment().subtract(24, \'hours\').startOf(\'hour\')",\n' +
+            '   "end": "moment()",\n' +
+            '   "skipcache": false,\n' +
+            '   "displayFormat": "HH:mm"\n' +
+            '}',
+        };
 
-    $("a#actionHoursOfDay").on("click", function()
-    {
-        waitingDialog.show("Data aggregation pending");
-        $("#actionlinks a").removeClass("active");
-        $(this).addClass("active");
-        renderHistoryAggregation("ui:hoursofday", function()
-        {
-            waitingDialog.hide();
-        });
-    });
+        var preset = $(this).attr("data-preset");
+        $("a#actionLive, a.actionAggregation").removeClass("active");
+        $("a.actionAggregation[data-preset=" + preset + "]").addClass("active");
 
-    $("a#actionDaysOfMonth").on("click", function()
-    {
-        waitingDialog.show("Data aggregation pending");
-        $("#actionlinks a").removeClass("active");
-        $(this).addClass("active");
-        renderHistoryAggregation("ui:daysofmonth", function()
-        {
-            waitingDialog.hide();
-        });
+        var selectedPreset = presets[preset];
+        $("#aggregation-conf textarea").val(selectedPreset);
+
+        $("#aggregation-conf").show();
     });
 
     getClients(function(clients)

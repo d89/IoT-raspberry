@@ -6,9 +6,11 @@ const types = ["movement2", "sound", "humidity", "temperature", "cputemp", "ligh
 var logger = require("./logger");
 var fs = require('fs');
 var express = require('express')
+var basicAuth = require('basic-auth-connect');
 var app = express();
 var http = use_ssl ? require('https') : require('http');
 var sio = require('socket.io');
+var moment = require('moment');
 var spawn = require('child_process').spawn;
 var storage = require('./storage');
 
@@ -232,6 +234,8 @@ function getClientSocketByUiSocket(uiSocket)
     return responseClientSocket;
 }
 
+app.use(basicAuth('***', '******'));
+
 app.use(express.static('frontend'));
 
 app.get('/clients/get', function(req, res)
@@ -337,6 +341,25 @@ io.on('connection', function(socket)
         });
 	});
 
+    socketType === "ui" && socket.on('ui:data-count', function(msg, resp)
+    {
+        logger.info("getting data count");
+
+        var client_id = getClientName(getClientSocketByUiSocket(socket));
+
+        if (!client_id)
+        {
+            logger.error("could not execute request, client id missing");
+            return resp("error");
+        }
+
+        storage.getLastCount(client_id, function(err, count)
+        {
+            logger.info("responding to data count " + count);
+            resp(err, count);
+        })
+    });
+
     socketType === "ui" && socket.on('ui:start-stop-stream', function(msg)
     {
         logger.info("ui request to start/stop streaming", msg);
@@ -395,9 +418,18 @@ io.on('connection', function(socket)
 		});
 	});
 
-    socketType === "ui" && socket.on('ui:lasthour', function(msg, resp)
+    socketType === "ui" && socket.on('ui:aggregation', function(query, resp)
     {
-        logger.info("last hour request from ui: ", msg);
+        //-----------------------------------------------------------------
+
+        var start = moment(query.start);
+        var end = moment(query.end);
+        var interval = query.interval;
+        var skipcache = query.skipcache;
+
+        //-----------------------------------------------------------------
+
+        logger.info("aggregation request from ui from " + start + " to " + end + " in interval", interval);
         var client_id = getClientName(getClientSocketByUiSocket(socket));
 
         if (!client_id)
@@ -406,45 +438,9 @@ io.on('connection', function(socket)
             return resp([]);
         }
 
-        storage.aggregateLastHour(types, client_id, progressFunc(socket), function(err, dps)
+        storage.aggregation(start, end, interval, types, client_id, skipcache, progressFunc(socket), function(err, dps)
         {
             //logger.info("responding to last hour request", dps);
-            resp(dps);
-        });
-    });
-
-    socketType === "ui" && socket.on('ui:hoursofday', function(msg, resp)
-    {
-        logger.info("hours of day request from ui: ", msg);
-        var client_id = getClientName(getClientSocketByUiSocket(socket));
-
-        if (!client_id)
-        {
-            logger.error("could not execute request, client id missing");
-            return resp([]);
-        }
-
-        storage.aggregateHoursOfDay(types, client_id, progressFunc(socket), function(err, dps)
-        {
-            //logger.info("responding to hours of day request", dps);
-            resp(dps);
-        });
-    });
-
-    socketType === "ui" && socket.on('ui:daysofmonth', function(msg, resp)
-    {
-        logger.info("days of month request from ui: ", msg);
-        var client_id = getClientName(getClientSocketByUiSocket(socket));
-
-        if (!client_id)
-        {
-            logger.error("could not execute request, client id missing");
-            return resp([]);
-        }
-
-        storage.aggregateDaysOfMonth(types, client_id, progressFunc(socket), function(err, dps)
-        {
-            //logger.info("responding to days of month request", dps);
             resp(dps);
         });
     });

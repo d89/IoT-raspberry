@@ -9,7 +9,7 @@ exports.watch = function(ondata, onclose)
 
     prc.stderr.on('data', function (data)
     {
-        logger.info("received err: ", data);
+        logger.error("dht11 received err: ", data);
     });
 
     prc.stdout.on('data', function (data)

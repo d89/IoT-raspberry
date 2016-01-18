@@ -7,6 +7,10 @@ body {
     height: 300px;
 }
 
+.chartholder.loading {
+    background: url("../img/ajax-loader.gif") no-repeat 50% 50%;
+}
+
 #dataarea {
     display: none;
 }
@@ -47,4 +51,18 @@ body {
 a {
     color: blue;
     cursor: pointer;
+}
+
+#aggregation-conf {
+    display: none;
+}
+
+#aggregation-conf textarea {
+    height: 168px;
+    width: 100%;
+    font-size: 12px;
+}
+
+#refresh-count {
+    display: none;
 }

@@ -51,14 +51,27 @@
 
                <p><input type="button" value="send" class="send" /></p>
 			</div>
+            <div id="count" class="action">
+                <h4>Datapoints received in last hour</h4>
+                <p>loading ...</p>
+                <button id="refresh-count">Refresh</button>
+            </div>
             <div id="actionlinks" class="action">
                 <h4>Toggle Display Mode</h4>
                 <ul>
                     <li><a id="actionLive" class="active">Live</a></li>
-                    <li><a id="actionLastHour">Last hour</a></li>
-                    <li><a id="actionHoursOfDay">Hours of day</a></li>
-                    <li><a id="actionDaysOfMonth">Days of month</a></li>
+                    <li>Aggregation Presets:
+                        <ul>
+                            <li><a data-preset="lasthour" class="actionAggregation">Last hour</a></li>
+                            <li><a data-preset="hoursofday" class="actionAggregation">Hours of day</a></li>
+                            <li><a data-preset="daysofmonth" class="actionAggregation">Days of month</a></li>
+                        </ul>
+                    </li>
                 </ul>
+                <div id="aggregation-conf">
+                    <textarea></textarea>
+                    <button id="sendAggregation">Send</button>
+                </div>
             </div>
             <div id="maintenance" class="action">
                 <p>
