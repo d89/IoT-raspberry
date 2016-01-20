@@ -8,7 +8,6 @@ exports.display = function(displaycontent)
         displaycontent = [displaycontent];
     }
 
-    //logger.info("displaying on display", displaycontent);
     var spawn = require('child_process').spawn;
     var prc = spawn('/var/www/IoT-raspberry/sensors/display', displaycontent);
     prc.stdout.setEncoding('utf8');

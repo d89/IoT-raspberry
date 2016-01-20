@@ -9,7 +9,7 @@ exports.watch = function(ondata, onclose)
 
     prc.stderr.on('data', function (data)
     {
-        logger.error("dht11 received err: ", data);
+        logger.error("dht11 received err: ", data.toString());
     });
 
     prc.stdout.on('data', function (data)
@@ -24,15 +24,10 @@ exports.watch = function(ondata, onclose)
         {
             return;
         }
-
-        //logger.info(`received temperature ${data.temperature}°C`);
-        //logger.info(`received humidity ${data.humidity}°C`);
     });
 
     prc.on('close', function (code)
     {
-        //logger.info('sensor reader exited with ' + code);
-
         onclose('dht11 sensor reader exited with ' + code);
     });
 };

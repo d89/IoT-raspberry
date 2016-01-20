@@ -1,18 +1,18 @@
 exports.switch = function(channel, device, state)
 {
-    console.log(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
+    logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
     var spawn = require('child_process').spawn;
     var prc = spawn('/var/www/IoT-raspberry/sensors/switchrc', [channel, device, state]);
     prc.stdout.setEncoding('utf8');
 
     prc.stderr.on('data', function (data)
     {
-        console.log("received err: ", data);
+        logger.error("received err: ", data.toString());
     });
 
     prc.stdout.on('data', function (data)
     {
-        console.log("received data: ", data);
+        logger.info("received data: ", data);
     });
 };
 

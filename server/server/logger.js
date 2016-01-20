@@ -1,10 +1,12 @@
 var winston = require("winston");
 var moment = require("moment");
 
-var logger = new (winston.Logger)({
+var logger = new (winston.Logger)
+({
     level: 'verbose',
     transports: [
-        new (winston.transports.Console)({
+        new (winston.transports.Console)
+        ({
             json: false,
             colorize: true,
             level: 'debug',
@@ -13,11 +15,11 @@ var logger = new (winston.Logger)({
         {
             return moment().format("HH:mm:ss");
         }}),
-        new (winston.transports.File)({
+        new (winston.transports.File)
+        ({
             filename: '../logs/logfile.log',
-            datePattern: '.yyyy-MM-ddTHH-mm',
             maxFiles: 3,
-            level: 'info',
+            level: 'warn',
             maxsize: 1024 * 1024, //1mb
             timestamp: function()
             {

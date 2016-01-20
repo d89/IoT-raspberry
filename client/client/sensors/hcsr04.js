@@ -9,7 +9,7 @@ exports.watch = function(ondata, onclose)
 
     prc.stderr.on('data', function (data)
     {
-        logger.error("hcsr04 received err: ", data);
+        logger.error("hcsr04 received err: ", data.toString());
     });
 
     prc.stdout.on('data', function (data)
@@ -30,14 +30,3 @@ exports.watch = function(ondata, onclose)
         onclose('hcsr04 sensor reader exited with ' + code);
     });
 };
-
-/*
-exports.watch(function ondata(data)
-{
-    console.log("recived ", data);
-},
-function onclose(msg)
-{
-    logger.info(data);
-});
-*/

@@ -9,7 +9,7 @@ exports.watch = function(ondata, onclose)
 
     prc.stderr.on('data', function (data)
     {
-        logger.error("sound received err: ", data);
+        logger.error("sound received err: ", data.toString());
     });
 
     prc.stdout.on('data', function (data)
@@ -32,10 +32,3 @@ exports.watch = function(ondata, onclose)
         onclose('sound sensor reader exited with ' + code);
     });
 };
-
-/*
-exports.watch(function(succ, err)
-{
-   logger.info(succ, err);
-});
-*/

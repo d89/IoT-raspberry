@@ -9,7 +9,7 @@ exports.blink = function()
 
     prc.stderr.on('data', function (data)
     {
-        logger.info("received err: ", data);
+        logger.error("received err: ", data.toString());
     });
 
     prc.stdout.on('data', function (data)

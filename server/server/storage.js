@@ -120,7 +120,6 @@ exports.aggregate = function(start, end, types, client_id, skipCache, cb)
             }
         ]).toArray(function(err, docs)
         {
-            //TODO what if empty, for example for the current day? Have to fetch from live then
             logger.info("cached aggregation for period " + start + " to " + end + " with " + docs.length + " docs");
 
             ++queryAggregationCount;
@@ -273,7 +272,7 @@ exports.fullAggregation = function()
     var start = function()
     {
         logger.info("##################################################");
-        logger.info("processing items until " + overallEnd.format("DD.MM.YYYY HH.mm"));
+        logger.info("processing items until " + overallEnd.format("DD.MM.YYYY HH:mm"));
         agg.createIndex( { from: 1, to: 1, type: 1, client_id: 1 }, { unique: true }, function(err, res)
         {
             if (err)
@@ -294,6 +293,11 @@ exports.fullAggregation = function()
 
         coll.find({ aggregated: null }, { sort: [['created', 1]], limit : 1 }).toArray(function(err, firstDoc)
         {
+            if (!firstDoc || !firstDoc[0] || !firstDoc[0].created)
+            {
+                return logger.error("No or invalid item found in timespan!", firstDoc);
+            }
+
             if (err)
             {
                 return logger.error("full aggregation fetch first: ", err);
@@ -302,27 +306,28 @@ exports.fullAggregation = function()
             var first = moment(firstDoc[0].created);
 
             logger.info("first doc:", firstDoc);
-            logger.info("first date:" + first.format("DD.MM.YYYY HH.mm"));
+            logger.info("first date:" + first.format("DD.MM.YYYY HH:mm"));
 
             start = first.startOf("hour");
             end = moment(first).add(1, "hour");
 
             if (overallEnd < end)
             {
-                logger.warn("stopping aggregation, because the beginning of the current period has been reached");
+                logger.warn("stopping aggregation, because the first element + 1h >= end " + overallEnd.format("DD.MM.YYYY HH:mm"));
                 logger.info("##################################################");
                 process.exit(1);
             }
             else
             {
                 logger.info("--------------------------------------------------");
-                removeInvalid();
+                removeOld();
             }
         });
     };
 
     //--------------------------------------------------
 
+    /*
     var removeInvalid = function()
     {
         logger.info("deleting invalid items");
@@ -340,6 +345,7 @@ exports.fullAggregation = function()
             removeOld();
         });
     };
+    */
 
     //--------------------------------------------------
 
@@ -357,7 +363,7 @@ exports.fullAggregation = function()
                 return logger.error("delete aggregation: ", err);
             }
 
-            logger.info("deleted " + res.result.n + " aggregated datapoints");
+            logger.info("deleted " + res.result.n + " too old aggregated datapoints");
             logger.info("--------------------------------------------------");
 
             aggregateHour();
@@ -368,7 +374,7 @@ exports.fullAggregation = function()
 
     var aggregateHour = function()
     {
-        logger.info("aggregation for hour " + moment(start).format("DD.MM.YYYY HH.mm") + " to " + moment(end).format("DD.MM.YYYY HH.mm"));
+        logger.info("aggregation for hour " + moment(start).format("DD.MM.YYYY HH:mm") + " to " + moment(end).format("DD.MM.YYYY HH:mm"));
 
         coll.aggregate
         ([
@@ -455,7 +461,7 @@ exports.fullAggregation = function()
                 return logger.error("flagged aggregation: ", err);
             }
 
-            logger.info("flagged " + res.result.nModified + " datapoints");
+            logger.info("flagged " + res.result.nModified + " datapoints for deletion in next round");
             logger.info("--------------------------------------------------");
 
             roundDone();

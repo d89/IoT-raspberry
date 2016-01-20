@@ -1,5 +1,5 @@
 var backendUrl = 'https://d1303.de:3000';
-var types = ["temperature", "cputemp", "humidity", "distance", "light", "soundvol", "sound", "movement1", "movement2"];
+var types = ["temperature", "cputemp", "humidity", "distance", "lightintensity", "light", "soundvol", "sound", "movement1", "movement2"];
 var charts = {};
 var socket = null;
 var isLive = true;

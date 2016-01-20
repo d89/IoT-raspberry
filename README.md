@@ -106,6 +106,13 @@ defaults.pcm.card 1
 
 Danach reboot und das Soundvolumen anpassen per Befehl: alsamixer
 
+Wav Dateien spielen:
+aplay /home/pi/Music/gong.wav
+
+Mp3 Dateien spielen:
+sudo apt-get -y install mpg321
+mpg321 /home/pi/Music/siren.mp3
+
 Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei):
 http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
 

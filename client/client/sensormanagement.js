@@ -16,6 +16,7 @@ var ledRed = require('./sensors/led-red');
 var switchRc = require('./sensors/switchrc');
 var switchBtn = require('./sensors/switch');
 var hcsr04 = require('./sensors/hcsr04');
+var pcf8591 = require('./sensors/pcf8591');
 
 ledGreen.blink();
 ledRed.blink();
@@ -44,6 +45,7 @@ var sensormanagement =
             sensormanagement.registerSound();
             sensormanagement.registerSwitch();
             sensormanagement.registerHcsr04();
+            sensormanagement.registerPcf8591();
         }
         else
         {
@@ -73,6 +75,26 @@ var sensormanagement =
                     "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
                 ]);
             });
+        });
+    },
+
+    //##########################################################################
+
+    registerPcf8591: function()
+    {
+        pcf8591.watch(function ondata(data)
+        {
+            var acdc = {};
+            acdc.type = 'lightintensity';
+            acdc.data = data.light;
+            //acdc.poti = data.poti;
+            sensormanagement.sendSensorData(acdc);
+
+            //logger.info("sent", acdc);
+        },
+        function onclose(msg)
+        {
+            logger.info(data);
         });
     },
 
@@ -189,7 +211,8 @@ var sensormanagement =
             };
 
             //movement detected
-            if (data.state === 1 && sensormanagement.actionsEnabled)
+            //TODO
+            if (false && data.state === 1 && sensormanagement.actionsEnabled)
             {
                 spawn('/usr/bin/mpg321', ["/home/pi/Music/siren.mp3"]);
                 switchRc.switch(1, 1, 1);

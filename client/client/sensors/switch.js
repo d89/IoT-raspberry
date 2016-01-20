@@ -9,7 +9,7 @@ exports.watch = function(ondata, onclose)
 
     prc.stderr.on('data', function (data)
     {
-        logger.error("switch received err: ", data);
+        logger.error("switch received err: ", data.toString());
     });
 
     prc.stdout.on('data', function (data)
@@ -31,14 +31,3 @@ exports.watch = function(ondata, onclose)
         onclose('switch sensor reader exited with ' + code);
     });
 };
-
-/*
-exports.watch(function ondata(data)
-{
-    console.log("recived ", data.stateChange);
-},
-function onclose(msg)
-{
-    logger.info(data);
-});
-*/

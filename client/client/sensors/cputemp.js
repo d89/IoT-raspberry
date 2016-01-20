@@ -35,10 +35,3 @@ exports.watch = function(ondata, onclose)
 
     sendTempLoop(ondata);
 };
-
-/*
-exports.watch(function(temp)
-{
-    logger.info(temp);
-});
-*/

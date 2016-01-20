@@ -1,6 +1,6 @@
 var MongoClient = require('mongodb').MongoClient;
 var logger = require('./logger');
-const types = ["movement2", "sound", "humidity", "distance", "temperature", "cputemp", "light", "soundvol", "movement1"];
+const types = ["movement2", "sound", "humidity", "distance", "temperature", "cputemp", "lightintensity", "light", "soundvol", "movement1"];
 
 MongoClient.connect('mongodb://localhost/IoT', function(err, database)
 {
