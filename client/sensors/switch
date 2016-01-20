@@ -1,0 +1,37 @@
+#!/usr/bin/python
+import RPi.GPIO as GPIO
+import time
+import json
+import sys
+import datetime
+
+board_pin = 35
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(board_pin, GPIO.IN)
+GPIO.setup(board_pin, GPIO.HIGH)
+
+duration = 0.005
+json_template = { 'stateChange': True, 'time': str(datetime.datetime.now().time()) }
+lastState = -1
+stateChanged = False
+
+try:
+	while 1:
+		is_pressed = GPIO.input(board_pin) != 1
+
+		if lastState != is_pressed and lastState != True:
+			stateChanged = True
+			json_template['stateChange'] = True
+			json_template['time'] = str(datetime.datetime.now().time())
+			print json.dumps(json_template)
+			sys.stdout.flush()
+		else:
+			stateChanged = False
+
+		lastState = is_pressed
+
+		time.sleep(duration)
+
+finally:                   # run on exit
+	GPIO.cleanup()         # clean up

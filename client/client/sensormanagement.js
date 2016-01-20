@@ -14,6 +14,8 @@ var cputemp = require('./sensors/cputemp');
 var ledGreen = require('./sensors/led-green');
 var ledRed = require('./sensors/led-red');
 var switchRc = require('./sensors/switchrc');
+var switchBtn = require('./sensors/switch');
+var hcsr04 = require('./sensors/hcsr04');
 
 ledGreen.blink();
 ledRed.blink();
@@ -40,6 +42,8 @@ var sensormanagement =
             sensormanagement.registerPir1();
             sensormanagement.registerPir2();
             sensormanagement.registerSound();
+            sensormanagement.registerSwitch();
+            sensormanagement.registerHcsr04();
         }
         else
         {
@@ -74,6 +78,44 @@ var sensormanagement =
 
     //##########################################################################
 
+    registerHcsr04: function()
+    {
+        hcsr04.watch(function ondata(data)
+        {
+            var distance = {};
+            distance.type = 'distance';
+            distance.data = data.distance;
+            sensormanagement.sendSensorData(distance);
+
+            //logger.info("sent", hasChanged);
+        },
+        function onclose(msg)
+        {
+            logger.info(data);
+        });
+    },
+
+    //##########################################################################
+
+    registerSwitch: function()
+    {
+        switchBtn.watch(function ondata(data)
+        {
+            var hasChanged = {};
+            hasChanged.type = 'switch';
+            hasChanged.data = data.stateChange;
+            sensormanagement.sendSensorData(hasChanged);
+
+            //logger.info("sent", hasChanged);
+        },
+        function onclose(msg)
+        {
+            logger.info(data);
+        });
+    },
+
+    //##########################################################################
+
     registerDHT11: function()
     {
         dht11.watch(function ondata(data)
@@ -82,13 +124,13 @@ var sensormanagement =
             temp.type = 'temperature';
             temp.data = data.temperature;
             sensormanagement.sendSensorData(temp);
-            //logger.info(`sent to ${server_url}`, temp);
+            //logger.info("sent", temp);
 
             var humidity = {};
             humidity.type = 'humidity';
             humidity.data = data.humidity;
             sensormanagement.sendSensorData(humidity);
-            //logger.info(`sent to ${server_url}`, humidity);
+            //logger.info("sent", humidity);
         },
         function onclose(msg)
         {
@@ -106,7 +148,7 @@ var sensormanagement =
             cpu.type = 'cputemp';
             cpu.data = data;
             sensormanagement.sendSensorData(cpu);
-            //logger.info(`sent to ${server_url}`, cpu);
+            //logger.info("sent", cpu);
 
             sensormanagement.displayUpdate(data);
         },
@@ -127,7 +169,7 @@ var sensormanagement =
             sound.data = data.state;
 
             sensormanagement.sendSensorData(sound);
-            //logger.info(`sent to ${server_url}`, sound);
+            //logger.info("sent", sound);
         },
         function onclose(msg)
         {
@@ -159,7 +201,7 @@ var sensormanagement =
             }
 
             sensormanagement.sendSensorData(movement);
-            //logger.info(`sent to ${server_url}`, movement);
+            //logger.info("sent", movement);
         },
         function onclose(msg)
         {
@@ -182,7 +224,7 @@ var sensormanagement =
             };
 
             sensormanagement.sendSensorData(movement);
-            //logger.info(`sent to ${server_url}`, movement);
+            //logger.info("sent", movement);
         },
         function onclose(msg)
         {
@@ -214,7 +256,7 @@ var sensormanagement =
             lastLightState = data.state;
             sensormanagement.sendSensorData(light);
 
-            //logger.info(`sent to ${server_url}`, light);
+            //logger.info("sent", light);
         },
         function onclose(msg)
         {
@@ -248,7 +290,7 @@ var sensormanagement =
             }
 
             sensormanagement.sendSensorData(sound);
-            //logger.info(`sent to ${server_url}`, sound);
+            //logger.info("sent", sound);
         },
         function onclose(msg)
         {

@@ -1,5 +1,5 @@
 var backendUrl = 'https://d1303.de:3000';
-var types = ["temperature", "cputemp", "humidity", "light", "soundvol", "sound", "movement1", "movement2"];
+var types = ["temperature", "cputemp", "humidity", "distance", "light", "soundvol", "sound", "movement1", "movement2"];
 var charts = {};
 var socket = null;
 var isLive = true;
@@ -368,7 +368,7 @@ $(document).ready(function()
     {
         var presets = {
             lasthour : '{\n' +
-            '   "interval": [5, "minute"],\n' +
+            '   "interval": [2, "minute"],\n' +
             '   "start": "moment().subtract(1, \'hour\')",\n' +
             '   "end": "moment()",\n' +
             '   "skipcache": true,\n' +

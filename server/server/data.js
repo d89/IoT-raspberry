@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------
 const use_ssl = true;
 const port = 3000;
-const types = ["movement2", "sound", "humidity", "temperature", "cputemp", "light", "soundvol", "movement1"];
+const types = ["movement2", "sound", "humidity", "distance", "temperature", "cputemp", "light", "soundvol", "movement1"];
 
 var logger = require("./logger");
 var fs = require('fs');
@@ -160,6 +160,19 @@ function persistClientData(msg, cb)
             return cb(null, `extracted movement2 state ${data}`);
         });
 	}
+
+    if (msg.type === "distance")
+    {
+        data = msg.data;
+
+        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
+        {
+            if (err)
+                return cb(err);
+
+            return cb(null, `extracted distance ${data}`);
+        });
+    }
 
 	if (msg.type === "light")
 	{

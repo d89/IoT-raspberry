@@ -173,6 +173,7 @@ exports.aggregation = function(start, end, interval, types, client_id, skipCache
     while (start < end)
     {
         var startDate = moment(start).toDate();
+
         start.add(interval[0], interval[1]);
 
         types.forEach(function(type)
@@ -254,15 +255,24 @@ exports.getLastCount = function(client_id, cb)
 
 exports.fullAggregation = function()
 {
+    //--------------------------------------------------
     var startTime = new Date();
     var coll = db.collection('datapoints');
     var agg = db.collection('aggregationpoints');
+    //don't aggregate anything that is within the current hour
     var overallEnd = moment().startOf("hour");
-
+    //delete all the items with "aggregated: true", that are older than 1h
+    //we need this to keep the data points of the last hour for the "2 minutes in last hour" interval query
+    var deleteOlderThan = moment().subtract(1, "hour");
+    //--------------------------------------------------
+    //temp vars that will be set by fetchFirst
+    var start = null;
+    var end = null;
     //--------------------------------------------------
 
     var start = function()
     {
+        logger.info("##################################################");
         logger.info("processing items until " + overallEnd.format("DD.MM.YYYY HH.mm"));
         agg.createIndex( { from: 1, to: 1, type: 1, client_id: 1 }, { unique: true }, function(err, res)
         {
@@ -270,45 +280,6 @@ exports.fullAggregation = function()
                 return logger.error("aggregation creating unique index", err);
 
             logger.info("created unique index");
-            logger.info("--------------------------------------------------");
-
-            removeInvalid();
-        });
-    };
-
-    //--------------------------------------------------
-
-    var removeInvalid = function()
-    {
-        logger.info("deleting invalid items");
-        logger.info("--------------------------------------------------");
-
-        coll.deleteMany({ created: null }, function(err, res)
-        {
-            if (err)
-            {
-                return logger.error("full aggregation delete: ", err);
-            }
-
-            removeOld();
-        });
-    };
-
-    //--------------------------------------------------
-
-    var removeOld = function()
-    {
-        logger.info("deleting already aggregated items");
-        logger.info("--------------------------------------------------");
-
-        coll.deleteMany({ aggregated: true }, function(err, res)
-        {
-            if (err)
-            {
-                return logger.error("delete aggregation: ", err);
-            }
-
-            logger.info("deleted " + res.result.n + " aggregated datapoints");
             logger.info("--------------------------------------------------");
 
             fetchFirst();
@@ -320,7 +291,6 @@ exports.fullAggregation = function()
     var fetchFirst = function()
     {
         logger.info("fetching first item");
-        logger.info("--------------------------------------------------");
 
         coll.find({ aggregated: null }, { sort: [['created', 1]], limit : 1 }).toArray(function(err, firstDoc)
         {
@@ -331,36 +301,80 @@ exports.fullAggregation = function()
 
             var first = moment(firstDoc[0].created);
 
-            logger.info("first doc", firstDoc);
-            logger.info("first: " + first.format("DD.MM.YYYY HH.mm"));
+            logger.info("first doc:", firstDoc);
+            logger.info("first date:" + first.format("DD.MM.YYYY HH.mm"));
 
-            var start = first.startOf("hour");
-            var end = moment(first).add(1, "hour");
+            start = first.startOf("hour");
+            end = moment(first).add(1, "hour");
 
             if (overallEnd < end)
             {
                 logger.warn("stopping aggregation, because the beginning of the current period has been reached");
+                logger.info("##################################################");
                 process.exit(1);
             }
             else
             {
-                aggregateHour(start, end);
+                logger.info("--------------------------------------------------");
+                removeInvalid();
             }
         });
     };
 
     //--------------------------------------------------
 
-    var aggregateHour = function(from, to)
+    var removeInvalid = function()
     {
-        logger.info("aggregation for hour " + moment(from).format("DD.MM.YYYY HH.mm") + " to " + moment(to).format("DD.MM.YYYY HH.mm"));
-        logger.info("--------------------------------------------------");
+        logger.info("deleting invalid items");
+
+        coll.deleteMany({ created: null }, function(err, res)
+        {
+            if (err)
+            {
+                return logger.error("full aggregation delete: ", err);
+            }
+
+            logger.info("deleted " + res.result.n + " invalid datapoints");
+            logger.info("--------------------------------------------------");
+
+            removeOld();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var removeOld = function()
+    {
+        logger.info("deleting already aggregated items");
+
+        coll.deleteMany({
+            aggregated: true,
+            created: {$lt: deleteOlderThan.toDate()},
+        }, function(err, res)
+        {
+            if (err)
+            {
+                return logger.error("delete aggregation: ", err);
+            }
+
+            logger.info("deleted " + res.result.n + " aggregated datapoints");
+            logger.info("--------------------------------------------------");
+
+            aggregateHour();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var aggregateHour = function()
+    {
+        logger.info("aggregation for hour " + moment(start).format("DD.MM.YYYY HH.mm") + " to " + moment(end).format("DD.MM.YYYY HH.mm"));
 
         coll.aggregate
         ([
             {
                 $match: {
-                    created: { $gte: from.toDate(), $lt: to.toDate() },
+                    created: { $gte: start.toDate(), $lt: end.toDate() },
                     aggregated: null
                 }
             },
@@ -391,8 +405,8 @@ exports.fullAggregation = function()
                     client_id: d["_id"].client_id,
                     avg: d["avg"],
                     created: (new Date),
-                    from: from.toDate(),
-                    to: to.toDate()
+                    from: start.toDate(),
+                    to: end.toDate()
                 });
             });
 
@@ -401,7 +415,7 @@ exports.fullAggregation = function()
 
             storeAggregation(aggregatedDatapoints, function()
             {
-                flagAggregatedPoints(from, to);
+                flagAggregatedPoints();
             });
         });
     };
@@ -414,7 +428,7 @@ exports.fullAggregation = function()
 
         agg.insertMany(aggregatedDatapoints, function(err, res)
         {
-            if (err)
+            if (err && err.toString().indexOf("duplicate key") === -1)
                 return logger.error("full aggregation storage: ", err);
 
             logger.info("stored in aggregationpoints: " + aggregatedDatapoints.length + " datapoints");
@@ -426,10 +440,10 @@ exports.fullAggregation = function()
 
     //--------------------------------------------------
 
-    var flagAggregatedPoints = function(from, to)
+    var flagAggregatedPoints = function()
     {
         coll.update({
-            created: { $gte: from.toDate(), $lt: to.toDate()
+            created: { $gte: start.toDate(), $lt: end.toDate()
         }}, {
             $set: { aggregated: true }
         },  {
@@ -455,7 +469,7 @@ exports.fullAggregation = function()
         var timeSpend = ((new Date).getTime() - startTime.getTime()) / 1000;
         logger.info("round done in " + timeSpend + " seconds");
         logger.info("next round");
-        logger.info("--------------------------------------------------");
+        logger.info("##################################################");
         exports.fullAggregation();
     };
 
