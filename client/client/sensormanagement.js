@@ -17,6 +17,8 @@ var switchRc = require('./sensors/switchrc');
 var switchBtn = require('./sensors/switch');
 var hcsr04 = require('./sensors/hcsr04');
 var pcf8591 = require('./sensors/pcf8591');
+var load = require('./sensors/load');
+var mem = require('./sensors/mem');
 
 ledGreen.blink();
 ledRed.blink();
@@ -46,6 +48,8 @@ var sensormanagement =
             sensormanagement.registerSwitch();
             sensormanagement.registerHcsr04();
             sensormanagement.registerPcf8591();
+            sensormanagement.registerSystemLoad();
+            sensormanagement.registerMemUsage();
         }
         else
         {
@@ -75,6 +79,47 @@ var sensormanagement =
                     "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
                 ]);
             });
+        });
+    },
+
+    //##########################################################################
+
+    registerSystemLoad: function()
+    {
+        load.watch(function ondata(data)
+        {
+            var sysload = {};
+            sysload.type = 'load';
+            sysload.data = data;
+            sensormanagement.sendSensorData(sysload);
+            //logger.info("sent", sysload);
+
+            sensormanagement.displayUpdate(sysload);
+        },
+        function onclose(msg)
+        {
+            logger.info(data);
+        });
+    },
+
+
+    //##########################################################################
+
+    registerMemUsage: function()
+    {
+        mem.watch(function ondata(data)
+        {
+            var memusage = {};
+            memusage.type = 'mem';
+            memusage.data = data;
+            sensormanagement.sendSensorData(memusage);
+            //logger.info("sent", memusage);
+
+            sensormanagement.displayUpdate(memusage);
+        },
+        function onclose(msg)
+        {
+            logger.info(data);
         });
     },
 
