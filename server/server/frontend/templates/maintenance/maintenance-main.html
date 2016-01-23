@@ -1,0 +1,188 @@
+<!-- Main Container -->
+<main id="main-container">
+    <!-- Page Header -->
+    <div class="content bg-image overflow-hidden" style="background-image: url('assets/img/photos/photo3@2x.jpg');">
+        <div class="push-50-t push-15">
+            <h1 class="h2 text-white animated zoomIn">Maintenance</h1>
+            <h2 class="h5 text-white-op animated zoomIn">Connected to {{ clientName }}</h2>
+        </div>
+    </div>
+    <!-- END Page Header -->
+
+    <!-- Stats -->
+    <div class="content bg-white border-b">
+        <div class="row items-push text-uppercase">
+            <div class="col-xs-6 col-sm-3">
+                <div class="font-w700 text-gray-darker animated fadeIn">Datapoints in last 10min</div>
+                <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> click to refresh</small></div>
+                <a class="h2 font-w300 text-primary animated flipInX" ng-click="getCount()" style="cursor: pointer">{{ count }}</a>
+            </div>
+            <div class="col-xs-6 col-sm-3">
+                <div class="font-w700 text-gray-darker animated fadeIn">Connected Device</div>
+                <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> Identifier</small></div>
+                <a class="h2 font-w300 text-primary animated flipInX">{{ clientName }}</a>
+            </div>
+            <div class="col-xs-6 col-sm-3">
+                <div class="font-w700 text-gray-darker animated fadeIn">Received Datapoints</div>
+                <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> Since connection</small></div>
+                <a class="h2 font-w300 text-primary animated flipInX">{{ clientMessages }}</a>
+            </div>
+            <div class="col-xs-6 col-sm-3">
+                <div class="font-w700 text-gray-darker animated fadeIn">Connected at</div>
+                <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> Initial Connection</small></div>
+                <a class="h2 font-w300 text-primary animated flipInX">{{ connectedAt }}</a>
+            </div>
+        </div>
+    </div>
+    <!-- END Stats -->
+
+    <!-- Page Content -->
+    <div class="content">
+        <div class="row" ng-init="refreshData(chartType.id)" data-chart-type="{{ chartType.id }}" ng-repeat="chartType in getChartTypes()">
+            <div class="col-lg-12">
+                <!-- Main Dashboard Chart -->
+                <div class="block block-opt-refresh">
+                    <div class="block-header">
+                        <ul class="block-options">
+                            <li>
+                                <button ng-click="refreshData(chartType.id)" type="button" data-toggle="block-option" data-action="refresh_toggle" data-action-mode="demo"><i class="si si-refresh"></i></button>
+                            </li>
+                        </ul>
+                        <h3 class="block-title">{{ chartType.label }}</h3>
+                    </div>
+                    <div class="block-content block-content-full bg-gray-lighter text-center">
+                        <div class="chart-holder"><canvas class="chart"></canvas></div>
+                    </div>
+                    <div class="block-content text-center">
+                        <div class="row items-push text-center">
+                            <div class="col-xs-6 col-lg-3">
+                                <div class="push-10"><i class="si si-graph fa-2x"></i></div>
+                                <div class="h5 font-w300 text-muted">{{ stats[chartType.id].count }} datapoints</div>
+                            </div>
+                            <div class="col-xs-6 col-lg-3">
+                                <div class="push-10"><i class="si si-users fa-2x"></i></div>
+                                <div class="h5 font-w300 text-muted">Min value: {{ stats[chartType.id].min }}</div>
+                            </div>
+                            <div class="col-xs-6 col-lg-3 visible-lg">
+                                <div class="push-10"><i class="si si-star fa-2x"></i></div>
+                                <div class="h5 font-w300 text-muted">Max value: {{ stats[chartType.id].max }}</div>
+                            </div>
+                            <div class="col-xs-6 col-lg-3 visible-lg">
+                                <div class="push-10"><i class="si si-share fa-2x"></i></div>
+                                <div class="h5 font-w300 text-muted">Average: {{ stats[chartType.id].avg }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- END Main Dashboard Chart -->
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-xs-6 col-sm-4 col-lg-2">
+                <a style="cursor: pointer" class="block block-link-hover2 text-center" ng-click="restart()">
+                    <div class="block-content block-content-full bg-warning">
+                        <i class="si si-loop fa-4x text-white"></i>
+                        <div class="font-w600 text-white-op push-15-t">Restart</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-xs-6 col-sm-4 col-lg-2">
+                <a style="cursor: pointer" class="block block-link-hover2 text-center" ng-click="shutdown()">
+                    <div class="block-content block-content-full bg-danger">
+                        <i class="si si-arrow-down fa-4x text-white"></i>
+                        <div class="font-w600 text-white-op push-15-t">Shutdown</div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-lg-8">
+                <!-- News -->
+                <div class="block">
+                    <div class="block-header">
+                        <ul class="block-options">
+                            <li>
+                                <button type="button" data-toggle="block-option" data-action="refresh_toggle" data-action-mode="demo"><i class="si si-refresh"></i></button>
+                            </li>
+                        </ul>
+                        <h3 class="block-title"> Events</h3>
+                    </div>
+                    <div class="block-content">
+                        <ul class="list list-timeline pull-t">
+                            <!-- Twitter Notification -->
+                            <li>
+                                <div class="list-timeline-time">12 hrs ago</div>
+                                <i class="fa fa-twitter list-timeline-icon bg-info"></i>
+                                <div class="list-timeline-content">
+                                    <p class="font-w600">+ 1150 Followers</p>
+                                    <p class="font-s13">You’re getting more and more followers, keep it up!</p>
+                                </div>
+                            </li>
+                            <!-- END Twitter Notification -->
+
+                            <!-- Generic Notification -->
+                            <li>
+                                <div class="list-timeline-time">4 hrs ago</div>
+                                <i class="fa fa-briefcase list-timeline-icon bg-city"></i>
+                                <div class="list-timeline-content">
+                                    <p class="font-w600">+ 3 New Products were added!</p>
+                                    <p class="font-s13">Congratulations!</p>
+                                </div>
+                            </li>
+                            <!-- END Generic Notification -->
+
+                            <!-- System Notification -->
+                            <li>
+                                <div class="list-timeline-time">1 day ago</div>
+                                <i class="fa fa-check list-timeline-icon bg-success"></i>
+                                <div class="list-timeline-content">
+                                    <p class="font-w600">Database backup completed!</p>
+                                    <p class="font-s13">Download the <a href="javascript:void(0)">latest backup</a>.</p>
+                                </div>
+                            </li>
+                            <!-- END System Notification -->
+
+                            <!-- Facebook Notification -->
+                            <li>
+                                <div class="list-timeline-time">3 hrs ago</div>
+                                <i class="fa fa-facebook list-timeline-icon bg-default"></i>
+                                <div class="list-timeline-content">
+                                    <p class="font-w600">+ 290 Page Likes</p>
+                                    <p class="font-s13">This is great, keep it up!</p>
+                                </div>
+                            </li>
+                            <!-- END Facebook Notification -->
+
+                            <!-- Social Notification -->
+                            <li>
+                                <div class="list-timeline-time">2 days ago</div>
+                                <i class="fa fa-user-plus list-timeline-icon bg-modern"></i>
+                                <div class="list-timeline-content">
+                                    <p class="font-w600">+ 3 Friend Requests</p>
+
+                                </div>
+                            </li>
+                            <!-- END Social Notification -->
+
+                            <!-- System Notification -->
+                            <li class="push-5">
+                                <div class="list-timeline-time">1 week ago</div>
+                                <i class="fa fa-cog list-timeline-icon bg-primary-dark"></i>
+                                <div class="list-timeline-content">
+                                    <p class="font-w600">System updated to v2.02</p>
+                                    <p class="font-s13">Check the complete changelog at the <a href="javascript:void(0)">activity page</a>.</p>
+                                </div>
+                            </li>
+                            <!-- END System Notification -->
+                        </ul>
+                    </div>
+                </div>
+                <!-- END News -->
+            </div>
+        </div>
+
+    </div>
+    <!-- END Page Content -->
+</main>
+<!-- END Main Container -->

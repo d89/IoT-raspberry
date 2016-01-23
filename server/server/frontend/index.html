@@ -1,92 +1,63 @@
 <!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="UTF-8" />
-		<title>IoT server</title>
+<!--[if IE 9]>         <html ng-app="IoT" class="ie9 no-focus"> <![endif]-->
+<!--[if gt IE 9]><!--> <html ng-app="IoT" class="no-focus"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <title>IoT Server Platform</title>
+        <meta name="description" content="IoT Server Platform">
+        <meta name="robots" content="noindex, nofollow">
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0">
 
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap-theme.min.css" />
-        <link rel="stylesheet" href="css/style.css" />
+        <!-- Icons -->
+        <link rel="shortcut icon" href="assets/img/favicons/favicon.png">
+        <link rel="icon" type="image/png" href="assets/img/favicons/favicon-16x16.png" sizes="16x16">
+        <link rel="icon" type="image/png" href="assets/img/favicons/favicon-32x32.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="assets/img/favicons/favicon-96x96.png" sizes="96x96">
+        <link rel="icon" type="image/png" href="assets/img/favicons/favicon-160x160.png" sizes="160x160">
+        <link rel="icon" type="image/png" href="assets/img/favicons/favicon-192x192.png" sizes="192x192">
+        <!-- END Icons -->
 
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.0/socket.io.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/locale/de.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
-        <script src="js/bootstrap-waitingfor.min.js"></script>
-        <script src="js/main.js"></script>
-	</head>
-	<body>
-		<h1>IoT-Server</h1>
-		<div id="connectedClients"></div>
-		<div id="actionarea">
-			<div id="switchrc" class="action">
-                <h4>RC Switch</h4>
+        <!-- Stylesheets -->
+        <!-- Web fonts -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,600,700%7COpen+Sans:300,400,400italic,600,700">
 
-                <p>RC Switch Number
-                <select>
-                    <option>1</option>
-                    <option>2</option>
-                    <option>3</option>
-                </select></p>
+        <!-- Bootstrap and OneUI CSS framework -->
+        <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+        <link rel="stylesheet" id="css-main" href="assets/css/oneui.css">
+        <!-- END Stylesheets -->
+    </head>
+    <body>
 
-                <p>Turn...
-                    <input type="radio" name="switchrconoff" value="0" />off
-                    <input type="radio" name="switchrconoff" value="1" checked />on
-                </p>
+        <!-- main content -->
+        <div ng-view></div>
+        <!-- END main content -->
 
-                <p><input type="button" value="send" class="send" /></p>
-			</div>
-			<div id="led" class="action">
-                <h4>Flash LED</h4>
-                <p>color
-                <select>
-                    <option>green</option>
-                    <option>red</option>
-                </select></p>
+        <!-- OneUI Core JS: jQuery, Bootstrap, slimScroll, scrollLock, Appear, CountTo, Placeholder, Cookie and App.js -->
+        <script src="assets/js/core/jquery.min.js"></script>
+        <script src="assets/js/core/bootstrap.min.js"></script>
+        <script src="assets/js/core/jquery.slimscroll.min.js"></script>
+        <script src="assets/js/core/jquery.scrollLock.min.js"></script>
+        <script src="assets/js/core/jquery.appear.min.js"></script>
+        <script src="assets/js/core/jquery.countTo.min.js"></script>
+        <script src="assets/js/core/jquery.placeholder.min.js"></script>
+        <script src="assets/js/core/js.cookie.min.js"></script>
+        <script src="assets/js/styling.js"></script>
 
-               <p><input type="button" value="send" class="send" /></p>
-			</div>
-            <div id="count" class="action">
-                <h4>Datapoints received in last 10min</h4>
-                <p>loading ...</p>
-                <button id="refresh-count">Refresh</button>
-            </div>
-            <div id="actionlinks" class="action">
-                <h4>Toggle Display Mode</h4>
-                <ul>
-                    <li><a id="actionLive" class="active">Live</a></li>
-                    <li>Aggregation Presets:
-                        <ul>
-                            <li><a data-preset="lasthour" class="actionAggregation">Last hour</a></li>
-                            <li><a data-preset="hoursofday" class="actionAggregation">Hours of day</a></li>
-                            <li><a data-preset="daysofmonth" class="actionAggregation">Days of month</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                <div id="aggregation-conf">
-                    <textarea></textarea>
-                    <button id="sendAggregation">Send</button>
-                </div>
-            </div>
-            <div id="maintenance" class="action">
-                <p>
-                    <button type="button" id="shutdown" onclick="shutdown()">Shutdown</button>
-                    <button type="button" id="restart" onclick="restart()">Restart</button>
-                </p>
-            </div>
-            <div id="cam" class="action">
-                <p>
-                    <button type="button" id="startstream" onclick="startStream()">Start Stream</button>
-                    <button type="button" id="stopstream" onclick="stopStream()" style="display:none">Stop Stream</button>
-                </p>
-                <div id="streamcontainer">
-                    <img src="" id="stream" />
-                    <div id="streamtime"></div>
-                </div>
-            </div>
-		</div>
-		<div id="dataarea"></div>
-	</body>
+        <!-- Logic -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.0/socket.io.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/locale/de.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.9/angular-route.min.js"></script>
+
+        <!-- App -->
+        <script src="app/modules/app.js"></script>
+        <script src="app/modules/constants.js"></script>
+        <script src="app/controllers/MaintenanceController.js"></script>
+        <script src="app/controllers/DashboardController.js"></script>
+        <script src="app/controllers/ActionController.js"></script>
+        <script src="app/controllers/HistoryController.js"></script>
+        <script src="app/controllers/IndexController.js"></script>
+    </body>
 </html>

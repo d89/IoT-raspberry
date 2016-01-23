@@ -1,3 +1,5 @@
+var logger = require('../logger');
+
 exports.switch = function(channel, device, state)
 {
     logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);

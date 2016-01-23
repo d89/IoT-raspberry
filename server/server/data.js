@@ -77,6 +77,11 @@ function getClientId(socket)
 //client socket
 function getClientName(socket)
 {
+    if (!socket)
+    {
+        return false;
+    }
+
 	if (socket.handshake.query.mode === "client" && socket.handshake.query.client_name)
 	{
 		return socket.handshake.query.client_name;
@@ -303,7 +308,8 @@ app.get('/clients/get', function(req, res)
 			({
 				id: s.id,
 				address: s.client.conn.remoteAddress,
-				client_name: getClientName(s)
+				client_name: getClientName(s),
+                connected_at: s.handshake.query.connected_at
 			});
 		}
 	});
@@ -393,6 +399,24 @@ io.on('connection', function(socket)
             image: data.image
         });
 	});
+
+    socketType === "ui" && socket.on('ui:get-socket-info', function(msg, resp)
+    {
+        logger.info("getting client socket info");
+
+        var client_socket = getClientSocketByUiSocket(socket);
+
+        if (!client_socket)
+        {
+            logger.error("could not execute request, client id missing");
+            return resp("error");
+        }
+
+        resp(null, {
+            client_name: client_socket.handshake.query.client_name,
+            connected_at: client_socket.handshake.query.connected_at
+        });
+    });
 
     socketType === "ui" && socket.on('ui:data-count', function(msg, resp)
     {
