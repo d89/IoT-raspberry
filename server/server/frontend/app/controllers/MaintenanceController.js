@@ -1,4 +1,4 @@
-IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, constant)
+IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
 {
 //-----------------------------------------------------
 
@@ -11,6 +11,12 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             Styles.init();
         }
     });
+
+    $scope.handleDisconnect = function(isClientDisconnect)
+    {
+        var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
+        window.location = "/#/error/" + err;
+    };
 
     //-----------------------------------------------------
 
@@ -54,12 +60,12 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
 
         $scope.socket.on("client-disconnected", function(data)
         {
-            alert("client " + data.id + " disconnected!");
+            $scope.handleDisconnect(true);
         });
 
         $scope.socket.on("disconnect", function()
         {
-            alert("server disconnected!");
+            $scope.handleDisconnect(false);
         });
 
         $scope.socket.on("dataupdate", function(msg)
@@ -86,16 +92,19 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
 
     //-----------------------------------------------------
 
-    $scope.sidebar = [
-        {
+    $scope.sidebar =
+    {
+        "Sensor Data":
+        [{
             title: "Dashboard",
             href: "#dashboard/" + $routeParams.client_id
         },
         {
             title: "History",
             href: "#history/" + $routeParams.client_id
-        },
-        {
+        }],
+        "Actions":
+        [{
             title: "Action",
             href: "#action/" + $routeParams.client_id
         },
@@ -103,12 +112,13 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             title: "Maintenance",
             href: "#maintenance/" + $routeParams.client_id,
             active: true
-        },
-        {
+        }],
+        "Device Overview":
+        [{
             title: "Connected Devices",
             href: "#index"
-        }
-    ];
+        }]
+    };
 
     //-----------------------------------------------------
 

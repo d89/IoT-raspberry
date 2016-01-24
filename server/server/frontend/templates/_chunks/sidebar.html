@@ -57,8 +57,10 @@
 
             <!-- Side Content -->
             <div class="side-content">
-                <ul class="nav-main">
-                    <li ng-repeat="sidebarlink in sidebar">
+                <ul class="nav-main" ng-repeat="(key, menu) in sidebar">
+                    <li class="nav-main-heading"><span class="sidebar-mini-hide">{{ key }}</span></li>
+
+                    <li ng-repeat="sidebarlink in menu">
                         <a ng-class="{active: sidebarlink.active==true}" href="{{ sidebarlink.href }}"><i class="si si-speedometer"></i><span class="sidebar-mini-hide">{{ sidebarlink.title }}</span></a>
                     </li>
                 </ul>

@@ -11179,3 +11179,10 @@ div.tagsinput span.tag a:hover {
 .placeholder {
   color: #aaa;
 }
+
+/* ##################### USER STYLES ######################### */
+#global-headline {
+
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px;
+}

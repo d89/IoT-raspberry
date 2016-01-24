@@ -336,11 +336,29 @@ io.on('connection', function(socket)
 		case "ui":
 			socketType = "ui";
 			var clientId = getClientId(socket);
+
+            if (!clientId)
+            {
+                logger.error("invalid client id for ui socket.");
+                socket.disconnect();
+                return;
+            }
+
 			logger.info(`... is UI connection for ${clientId}`);
 			break;
 		case "client":
 			socketType = "client";
-			logger.info(`... is client connection`);
+
+            var clientName = getClientName(socket);
+
+            if (!clientName)
+            {
+                logger.error("invalid client id for client socket.");
+                socket.disconnect();
+                return;
+            }
+
+			logger.info(`... is client connection ${clientName}`);
 			break;
 		default:
 			logger.info("... is invalid connection", socket.handshake);
@@ -349,6 +367,7 @@ io.on('connection', function(socket)
 
 	if (!socketType)
 	{
+        socket.disconnect();
 		return;
 	}
 
@@ -382,7 +401,7 @@ io.on('connection', function(socket)
 		});
 	});
 
-	socketType === "client" && socket.on('client:live-stream', function(data)
+	socketType === "client" && socket.on('client:live-stream', function(data, resp)
     {
 		logger.info("got image from client @ " + data.date);
         //pipe stream to waiting ui
@@ -391,8 +410,18 @@ io.on('connection', function(socket)
 
         if (!uiSocket)
         {
+            resp({
+                received: false
+            });
+
             return logger.info(`no waiting ui client for stream`);
         }
+
+        logger.info("confirming stream to client");
+
+        resp({
+            received: true
+        });
 
         uiSocket.emit('cam-stream', {
             date: data.date,
@@ -408,7 +437,8 @@ io.on('connection', function(socket)
 
         if (!client_socket)
         {
-            logger.error("could not execute request, client id missing");
+            logger.error("could not execute request, no client waiting.");
+            socket.disconnect();
             return resp("error");
         }
 
@@ -426,7 +456,8 @@ io.on('connection', function(socket)
 
         if (!client_id)
         {
-            logger.error("could not execute request, client id missing");
+            logger.error("could not execute request, no client waiting.");
+            socket.disconnect();
             return resp("error");
         }
 
@@ -445,7 +476,9 @@ io.on('connection', function(socket)
 
         if (!clientSocket)
         {
-            return logger.info(`no waiting client for ui request`);
+            logger.error("could not execute request, no client waiting.");
+            socket.disconnect();
+            return;
         }
 
         //start or stop stream?
@@ -465,7 +498,8 @@ io.on('connection', function(socket)
 
         if (!client_id)
         {
-            logger.error("could not execute request, client id missing");
+            logger.error("could not execute request, no client waiting.");
+            socket.disconnect();
             return resp([]);
         }
 
@@ -511,7 +545,8 @@ io.on('connection', function(socket)
 
         if (!client_id)
         {
-            logger.error("could not execute request, client id missing");
+            logger.error("could not execute request, no client waiting.");
+            socket.disconnect();
             return resp([]);
         }
 
@@ -528,7 +563,9 @@ io.on('connection', function(socket)
 
         if (!clientSocket)
         {
-            return logger.info(`no waiting client for ui request`);
+            logger.error("could not execute request, no client waiting.");
+            socket.disconnect();
+            return;
         }
 
         var request = {
@@ -545,7 +582,9 @@ io.on('connection', function(socket)
 
         if (!clientSocket)
         {
-            return logger.info(`no waiting client for ui request`);
+            logger.error("could not execute request, no client waiting.");
+            socket.disconnect();
+            return;
         }
 
         var request = {

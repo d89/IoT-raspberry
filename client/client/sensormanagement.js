@@ -66,7 +66,7 @@ var sensormanagement =
 
     //##########################################################################
 
-    displayUpdate: function(cpuTemp)
+    displayUpdate: function(memUsage)
     {
         exec("ps aux | grep python | wc -l", function(err, out1, stderr)
         {
@@ -75,7 +75,7 @@ var sensormanagement =
                 display.display([
                     "python proc: " + parseInt(out1, 10),
                     "node proc: " + parseInt(out2, 10),
-                    "cpu temp " + cpuTemp + "C",
+                    "mem usage " + memUsage.toFixed(2) + "%",
                     "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
                 ]);
             });
@@ -93,8 +93,6 @@ var sensormanagement =
             sysload.data = data;
             sensormanagement.sendSensorData(sysload);
             //logger.info("sent", sysload);
-
-            sensormanagement.displayUpdate(sysload);
         },
         function onclose(msg)
         {
@@ -115,7 +113,7 @@ var sensormanagement =
             sensormanagement.sendSensorData(memusage);
             //logger.info("sent", memusage);
 
-            sensormanagement.displayUpdate(memusage);
+            sensormanagement.displayUpdate(memusage.data);
         },
         function onclose(msg)
         {
@@ -216,8 +214,6 @@ var sensormanagement =
             cpu.data = data;
             sensormanagement.sendSensorData(cpu);
             //logger.info("sent", cpu);
-
-            sensormanagement.displayUpdate(data);
         },
         function onclose(msg)
         {

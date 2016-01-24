@@ -1,4 +1,4 @@
-IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, constant)
+IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
 {
     //-----------------------------------------------------
 
@@ -11,6 +11,12 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             Styles.init();
         }
     });
+
+    $scope.handleDisconnect = function(isClientDisconnect)
+    {
+        var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
+        window.location = "/#/error/" + err;
+    };
 
     //-----------------------------------------------------
 
@@ -48,19 +54,19 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
         $scope.socket = io.connect(constant("serverUrl"), { query: "mode=ui&client=" + id });
 
-        $scope.socket.on("connect", function()
+        $scope.socket.on("connect", function(c)
         {
             console.log("connected!");
         });
 
         $scope.socket.on("client-disconnected", function(data)
         {
-            alert("client " + data.id + " disconnected!");
+            $scope.handleDisconnect(true);
         });
 
         $scope.socket.on("disconnect", function()
         {
-            alert("server disconnected!");
+            $scope.handleDisconnect(false);
         });
 
         $scope.socket.on("dataupdate", function(msg)
@@ -96,16 +102,19 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     //-----------------------------------------------------
 
-    $scope.sidebar = [
-        {
+    $scope.sidebar =
+    {
+        "Sensor Data":
+        [{
             title: "Dashboard",
             href: "#dashboard/" + $routeParams.client_id
         },
         {
             title: "History",
             href: "#history/" + $routeParams.client_id
-        },
-        {
+        }],
+        "Actions":
+        [{
             title: "Action",
             href: "#action/" + $routeParams.client_id,
             active: true
@@ -113,12 +122,13 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         {
             title: "Maintenance",
             href: "#maintenance/" + $routeParams.client_id
-        },
-        {
+        }],
+        "Device Overview":
+        [{
             title: "Connected Devices",
             href: "#index"
-        }
-    ];
+        }]
+    };
 
     //-----------------------------------------------------
 

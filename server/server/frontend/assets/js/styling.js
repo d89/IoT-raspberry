@@ -5,6 +5,8 @@
  *
  */
 
+//alert("loading styles");
+
 var Styles = function() {
     // Helper variables - set in uiInit()
     var $lHtml, $lBody, $lPage, $lSidebar, $lSidebarScroll, $lSideOverlay, $lSideOverlayScroll, $lHeader, $lMain, $lFooter;
@@ -91,8 +93,10 @@ var Styles = function() {
             });
         }
 
+        //alert("binding callback");
+
         // Call layout API on button click
-        jQuery('[data-toggle="layout"]').on('click', function(){
+        jQuery(document).on('[data-toggle="layout"]', 'click', function(){
             var $btn = jQuery(this);
 
             uiLayoutApi($btn.data('action'));
@@ -1175,6 +1179,9 @@ var Styles = function() {
 
     return {
         init: function($func) {
+
+            //alert("enabling styles");
+
             switch ($func) {
                 case 'uiInit':
                     uiInit();

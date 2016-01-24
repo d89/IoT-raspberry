@@ -1,4 +1,4 @@
-IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, constant)
+IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
 {
     //-----------------------------------------------------
 
@@ -11,6 +11,12 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             Styles.init();
         }
     });
+
+    $scope.handleDisconnect = function(isClientDisconnect)
+    {
+        var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
+        window.location = "/#/error/" + err;
+    };
 
     //-----------------------------------------------------
 
@@ -208,9 +214,12 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         var container = $("[data-chart-type='" + type + "'] canvas");
         $("[data-chart-type='" + type + "'] .block-opt-refresh").removeClass("block-opt-refresh");
 
+        var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        var isSmall = windowWidth < 500;
         var chartData = $scope.generateInitialChartData(labels, data)
         var ctx = container[0].getContext("2d");
-        $scope.charts[type] = new Chart(ctx).Line(chartData, {
+
+        var options = {
             animation: false,
             scaleFontFamily: "'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
             scaleFontColor: '#999',
@@ -218,8 +227,15 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             tooltipTitleFontFamily: "'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
             tooltipCornerRadius: 3,
             maintainAspectRatio: false,
-            responsive: true
-        });
+            responsive: true,
+            showTooltips: isSmall ? false : true,
+        };
+
+        if (isSmall) {
+            options.scaleFontSize = 8;
+        }
+
+        $scope.charts[type] = new Chart(ctx).Line(chartData, options);
     };
 
     $scope.generateInitialChartData = function(labels, data)
@@ -227,16 +243,16 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         return {
             labels: labels,
             datasets: [
-                {
-                    label: "IoT Graph",
-                    fillColor: "rgba(151,187,205,0.2)",
-                    strokeColor: "rgba(151,187,205,1)",
-                    pointColor: "rgba(151,187,205,1)",
-                    pointStrokeColor: "#fff",
-                    pointHighlightFill: "#fff",
-                    pointHighlightStroke: "rgba(151,187,205,1)",
-                    data: data
-                }]
+            {
+                label: "IoT Graph",
+                fillColor: "rgba(151,187,205,0.2)",
+                strokeColor: "rgba(151,187,205,1)",
+                pointColor: "rgba(151,187,205,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(151,187,205,1)",
+                data: data
+            }]
         };
     };
 
@@ -277,7 +293,12 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
 
         $scope.socket.on("client-disconnected", function(data)
         {
-            alert("client " + data.id + " disconnected!");
+            $scope.handleDisconnect(true);
+        });
+
+        $scope.socket.on("disconnect", function()
+        {
+            $scope.handleDisconnect(false);
         });
 
         $scope.socket.on("progress", function(data)
@@ -285,10 +306,6 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             console.log("onprogress " + data.progress);
         });
 
-        $scope.socket.on("disconnect", function()
-        {
-            alert("server disconnected!");
-        });
 
         $scope.socket.on("dataupdate", function(msg)
         {
@@ -336,8 +353,13 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             };
         }
 
-        var sum = datapoints.reduce(function(a, b) { return a + b; });
-        var avg = sum / datapoints.length;
+        var avg = 0;
+
+        if (datapoints.length)
+        {
+            var sum = datapoints.reduce(function(a, b) { return a + b; });
+            avg = sum / datapoints.length;
+        }
 
         $scope.stats[type].count++;
         $scope.stats[type].max = Math.max.apply(null, datapoints).toFixed(2);
@@ -345,8 +367,10 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         $scope.stats[type].avg = avg.toFixed(2);
     };
 
-    $scope.sidebar = [
-        {
+    $scope.sidebar =
+    {
+        "Sensor Data":
+        [{
             title: "Dashboard",
             href: "#dashboard/" + $routeParams.client_id
         },
@@ -354,20 +378,22 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             title: "History",
             href: "#history/" + $routeParams.client_id,
             active: true
-        },
-        {
+        }],
+        "Actions":
+        [{
             title: "Action",
             href: "#action/" + $routeParams.client_id
         },
         {
             title: "Maintenance",
             href: "#maintenance/" + $routeParams.client_id
-        },
-        {
+        }],
+        "Device Overview":
+        [{
             title: "Connected Devices",
             href: "#index"
-        }
-    ];
+        }]
+    };
 
     $scope.init = function()
     {

@@ -2,7 +2,7 @@
 <main id="main-container">
     <!-- Page Header -->
     <div class="content bg-image overflow-hidden" style="background-image: url('assets/img/photos/photo3@2x.jpg');">
-        <div class="push-50-t push-15">
+        <div id="global-headline" class="push-50-t push-15">
             <h1 class="h2 text-white animated zoomIn">History</h1>
             <h2 class="h5 text-white-op animated zoomIn">Connected to {{ clientName }}</h2>
         </div>
@@ -120,11 +120,11 @@
                                 <div class="push-10"><i class="si si-users fa-2x"></i></div>
                                 <div class="h5 font-w300 text-muted">Min value: {{ stats[chartType.id].min }}</div>
                             </div>
-                            <div class="col-xs-6 col-lg-3 visible-lg">
+                            <div class="col-xs-6 col-lg-3">
                                 <div class="push-10"><i class="si si-star fa-2x"></i></div>
                                 <div class="h5 font-w300 text-muted">Max value: {{ stats[chartType.id].max }}</div>
                             </div>
-                            <div class="col-xs-6 col-lg-3 visible-lg">
+                            <div class="col-xs-6 col-lg-3">
                                 <div class="push-10"><i class="si si-share fa-2x"></i></div>
                                 <div class="h5 font-w300 text-muted">Average: {{ stats[chartType.id].avg }}</div>
                             </div>

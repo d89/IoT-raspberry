@@ -8,6 +8,9 @@ IoT.config(['$routeProvider', function($routeProvider)
         .when('/index', {
             templateUrl: 'templates/index/index.html'
         })
+        .when('/error/:error_message', {
+            templateUrl: 'templates/index/index.html'
+        })
         .when('/maintenance/:client_id', {
             templateUrl: 'templates/maintenance/maintenance.html'
         })

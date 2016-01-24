@@ -38,7 +38,8 @@ var Cam = {
         Cam.streamProcess.on('exit', Cam.sendImage);
     },
 
-    sendImage: function() {
+    sendImage: function()
+    {
         if (!Cam.streamRunning)
         {
             logger.info('sending no image, stream is stopped');
@@ -52,6 +53,17 @@ var Cam = {
             Cam.socket.emit('client:live-stream', {
                 date: new Date(),
                 image: buffer.toString('base64')
+            }, function resp(response)
+            {
+                if (!response || !response.received)
+                {
+                    logger.error("no cam stream response from server - stopping streaming");
+                    Cam.stopStreaming();
+                }
+                else
+                {
+                    logger.info("cam stream confirmed by server: ", response);
+                }
             });
         });
     }
