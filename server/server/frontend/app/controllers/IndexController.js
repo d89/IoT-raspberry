@@ -1,4 +1,4 @@
-IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, constant)
+IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
 {
     //-----------------------------------------------------
 
@@ -32,6 +32,16 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 
             jQuery('#modal-error').modal('toggle');
         }
+    };
+
+    $scope.dismissModal = function()
+    {
+        jQuery('#modal-error').modal('toggle');
+
+        $timeout(function()
+        {
+            var loc = $location.path('/index');
+        }, 500);
     };
 
     //-----------------------------------------------------

@@ -14,6 +14,7 @@ var moment = require('moment');
 var spawn = require('child_process').spawn;
 var storage = require('./storage');
 var config = require('./config');
+var maintenance = require('./maintenance');
 
 //---------------------------------------------------------------------------
 
@@ -358,10 +359,12 @@ io.on('connection', function(socket)
                 return;
             }
 
-			logger.info(`... is client connection ${clientName}`);
+            var newConnection = `... is client connection ${clientName}`;
+			logger.info(newConnection);
+            storage.logEntry("info", newConnection);
 			break;
 		default:
-			logger.info("... is invalid connection", socket.handshake);
+			logger.error("... is invalid connection", socket.handshake);
 			socket.disconnect();
 	}
 
@@ -445,6 +448,21 @@ io.on('connection', function(socket)
         resp(null, {
             client_name: client_socket.handshake.query.client_name,
             connected_at: client_socket.handshake.query.connected_at
+        });
+    });
+
+    socketType === "ui" && socket.on('ui:maintenance-info', function(msg, resp)
+    {
+        logger.info("getting system maintenance info");
+
+        return maintenance.info(function(err, infotext, syslogEntries)
+        {
+            if (err)
+                logger.error("maintenance", err);
+            else
+                logger.info("maintenance", infotext, syslogEntries);
+
+            return resp(err, infotext, syslogEntries);
         });
     });
 

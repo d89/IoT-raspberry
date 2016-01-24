@@ -11,6 +11,12 @@ MongoClient.connect('mongodb://localhost/IoT', function(err, database)
     var storage = require("./storage");
     storage.setDatabase(database);
 
+    require("./maintenance").info(function(err, msg)
+    {
+        console.log(err, msg);
+    });
+
+    /*
     var aggregationpoints = database.collection('aggregationpoints');
 
     var start = moment().subtract(2, "day");
@@ -38,10 +44,7 @@ MongoClient.connect('mongodb://localhost/IoT', function(err, database)
 
         //TODO what if empty, for example for the current day? Have to fetch from live then
     });
-
-
-
-
+    */
 });
 
 

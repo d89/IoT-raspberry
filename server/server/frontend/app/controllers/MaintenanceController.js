@@ -15,7 +15,11 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
     $scope.handleDisconnect = function(isClientDisconnect)
     {
         var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-        window.location = "/#/error/" + err;
+
+        $rootScope.$apply(function() {
+            var loc = $location.path('/error/' + err);
+            console.log("after error redir", loc);
+        });
     };
 
     //-----------------------------------------------------
@@ -144,12 +148,58 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
         $scope.socket.emit("ui:maintenance", shutdown);
     };
 
+    $scope.getMaintenanceInfo = function()
+    {
+        console.log("fetching maintenance info");
+
+        $scope.socket.emit('ui:maintenance-info', {}, function(err, infotext, syslogentries)
+        {
+            if (!err)
+            {
+                $scope.infotext = infotext;
+
+                syslogentries.forEach(function(s)
+                {
+                    switch (s.loglevel)
+                    {
+                        case "info":
+                            s.icon = "fa fa-info-circle";
+                            break;
+                        case "warning":
+                        case "error":
+                            s.icon = "fa fa-warning";
+                            break;
+                        case "success":
+                            s.icon = "fa fa-check-circle";
+                            break;
+                        default:
+                            s.icon = "si si-question";
+                    }
+                });
+
+                $scope.syslogentries = syslogentries;
+
+                //loaded
+                setTimeout(function()
+                {
+                    $(".block-opt-refresh").removeClass("block-opt-refresh");
+                }, 1500);
+
+            }
+            else
+            {
+                alert("Error generating maintenance info: " + err);
+            }
+        });
+    };
+
     //-----------------------------------------------------
 
     $scope.init = function()
     {
         $scope.connectToDevice($routeParams.client_id);
         $scope.getCount();
+        $scope.getMaintenanceInfo();
     };
 
     $scope.init();

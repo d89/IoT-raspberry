@@ -15,7 +15,11 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
     $scope.handleDisconnect = function(isClientDisconnect)
     {
         var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-        window.location = "/#/error/" + err;
+
+        $rootScope.$apply(function() {
+            var loc = $location.path('/error/' + err);
+            console.log("after error redir", loc);
+        });
     };
 
     //-----------------------------------------------------
@@ -146,6 +150,22 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         };
 
         $scope.socket.emit("ui:action", rc);
+    };
+
+    $scope.servo = function(onoff)
+    {
+        onoff = !!onoff;
+
+        console.log("acting with servo ", onoff);
+
+        var servo = {
+            type: "servo",
+            data: {
+                onoff: onoff
+            }
+        };
+
+        $scope.socket.emit("ui:action", servo);
     };
 
     $scope.led = function(nr)

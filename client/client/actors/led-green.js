@@ -1,10 +1,10 @@
 var logger = require('../logger');
 
-exports.blink = function()
+exports.act = function()
 {
     logger.info("blinking LED");
     var spawn = require('child_process').spawn;
-    var prc = spawn('/var/www/IoT-raspberry/sensors/led-red',  []);
+    var prc = spawn('/var/www/IoT-raspberry/actors/led-green',  []);
     prc.stdout.setEncoding('utf8');
 
     prc.stderr.on('data', function (data)

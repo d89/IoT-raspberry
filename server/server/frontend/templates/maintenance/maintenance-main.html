@@ -78,7 +78,6 @@
             </div>
         </div>
 
-
         <div class="row">
             <div class="col-xs-6 col-sm-4 col-lg-2">
                 <a style="cursor: pointer" class="block block-link-hover2 text-center" ng-click="restart()">
@@ -97,81 +96,47 @@
                 </a>
             </div>
 
-            <div class="col-lg-8">
+            <div class="col-lg-4">
                 <!-- News -->
-                <div class="block">
+                <div class="block block-opt-refresh">
                     <div class="block-header">
-                        <ul class="block-options">
-                            <li>
-                                <button type="button" data-toggle="block-option" data-action="refresh_toggle" data-action-mode="demo"><i class="si si-refresh"></i></button>
-                            </li>
-                        </ul>
-                        <h3 class="block-title"> Events</h3>
+                         <h3 class="block-title"> Event Log</h3>
                     </div>
                     <div class="block-content">
                         <ul class="list list-timeline pull-t">
-                            <!-- Twitter Notification -->
-                            <li>
-                                <div class="list-timeline-time">12 hrs ago</div>
-                                <i class="fa fa-twitter list-timeline-icon bg-info"></i>
-                                <div class="list-timeline-content">
-                                    <p class="font-w600">+ 1150 Followers</p>
-                                    <p class="font-s13">You’re getting more and more followers, keep it up!</p>
-                                </div>
-                            </li>
-                            <!-- END Twitter Notification -->
-
-                            <!-- Generic Notification -->
-                            <li>
-                                <div class="list-timeline-time">4 hrs ago</div>
-                                <i class="fa fa-briefcase list-timeline-icon bg-city"></i>
-                                <div class="list-timeline-content">
-                                    <p class="font-w600">+ 3 New Products were added!</p>
-                                    <p class="font-s13">Congratulations!</p>
-                                </div>
-                            </li>
-                            <!-- END Generic Notification -->
 
                             <!-- System Notification -->
-                            <li>
-                                <div class="list-timeline-time">1 day ago</div>
-                                <i class="fa fa-check list-timeline-icon bg-success"></i>
+                            <li class="push-5" ng-repeat="syslog in syslogentries">
+                                <div class="list-timeline-time">{{ syslog.created }}</div>
+                                <i class="{{ syslog.icon }} list-timeline-icon bg-primary-dark"></i>
                                 <div class="list-timeline-content">
-                                    <p class="font-w600">Database backup completed!</p>
-                                    <p class="font-s13">Download the <a href="javascript:void(0)">latest backup</a>.</p>
+                                    <p class="font-w600">{{ syslog.loglevel }}</p>
+                                    <p class="font-s13">{{ syslog.message }}</p>
                                 </div>
                             </li>
                             <!-- END System Notification -->
+                        </ul>
+                    </div>
+                </div>
+                <!-- END News -->
+            </div>
 
-                            <!-- Facebook Notification -->
-                            <li>
-                                <div class="list-timeline-time">3 hrs ago</div>
-                                <i class="fa fa-facebook list-timeline-icon bg-default"></i>
-                                <div class="list-timeline-content">
-                                    <p class="font-w600">+ 290 Page Likes</p>
-                                    <p class="font-s13">This is great, keep it up!</p>
-                                </div>
-                            </li>
-                            <!-- END Facebook Notification -->
-
-                            <!-- Social Notification -->
-                            <li>
-                                <div class="list-timeline-time">2 days ago</div>
-                                <i class="fa fa-user-plus list-timeline-icon bg-modern"></i>
-                                <div class="list-timeline-content">
-                                    <p class="font-w600">+ 3 Friend Requests</p>
-
-                                </div>
-                            </li>
-                            <!-- END Social Notification -->
+            <div class="col-lg-4">
+                <!-- News -->
+                <div class="block block-opt-refresh">
+                    <div class="block-header">
+                        <h3 class="block-title"> System State</h3>
+                    </div>
+                    <div class="block-content">
+                        <ul class="list list-timeline pull-t">
 
                             <!-- System Notification -->
-                            <li class="push-5">
-                                <div class="list-timeline-time">1 week ago</div>
-                                <i class="fa fa-cog list-timeline-icon bg-primary-dark"></i>
+                            <li ng-repeat="info in infotext">
+                                <div class="list-timeline-time">{{ info.time }}</div>
+                                <i class="fa fa-cog list-timeline-icon bg-primary"></i>
                                 <div class="list-timeline-content">
-                                    <p class="font-w600">System updated to v2.02</p>
-                                    <p class="font-s13">Check the complete changelog at the <a href="javascript:void(0)">activity page</a>.</p>
+                                    <p class="font-w600">{{ info.type }}</p>
+                                    <p class="font-s13">{{ info.text }}</p>
                                 </div>
                             </li>
                             <!-- END System Notification -->

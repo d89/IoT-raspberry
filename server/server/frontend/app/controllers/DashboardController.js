@@ -15,7 +15,11 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
     $scope.handleDisconnect = function(isClientDisconnect)
     {
         var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-        window.location = "/#/error/" + err;
+
+        $rootScope.$apply(function() {
+            var loc = $location.path('/error/' + err);
+            console.log("after error redir", loc);
+        });
     };
 
     //-----------------------------------------------------

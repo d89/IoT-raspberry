@@ -1,10 +1,10 @@
 var logger = require('../logger');
 
-exports.blink = function()
+exports.act = function(channel, device, state)
 {
-    logger.info("blinking LED");
+    logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
     var spawn = require('child_process').spawn;
-    var prc = spawn('/var/www/IoT-raspberry/sensors/led-green',  []);
+    var prc = spawn('/var/www/IoT-raspberry/actors/switchrc', [channel, device, state]);
     prc.stdout.setEncoding('utf8');
 
     prc.stderr.on('data', function (data)
@@ -17,3 +17,5 @@ exports.blink = function()
         logger.info("received data: ", data);
     });
 };
+
+//exports.switch(1, 1, 0);

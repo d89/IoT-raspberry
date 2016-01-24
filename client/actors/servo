@@ -1,0 +1,33 @@
+#!/usr/bin/python
+
+import RPi.GPIO as GPIO
+import time
+
+servoPIN = 32
+sleepTime = 0.05
+intervals = 0.1
+cycleStart = 2
+cycleEnd = 11
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(servoPIN, GPIO.OUT)
+
+p = GPIO.PWM(servoPIN, 50) # GPIO 18 als PWM mit 50Hz
+p.start(cycleStart) # Initialisierung
+try:
+
+	cycle = cycleStart
+	while True:
+		#dutycycle = ((angle/180.0) + 1.0) * 5.0
+		cycle += intervals
+		#print cycle
+		p.ChangeDutyCycle(cycle)
+
+		if cycle > cycleEnd:
+			cycle = cycleStart
+
+		time.sleep(sleepTime)
+
+except KeyboardInterrupt:
+	p.stop()
+	GPIO.cleanup()

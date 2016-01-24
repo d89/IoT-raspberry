@@ -15,7 +15,11 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
     $scope.handleDisconnect = function(isClientDisconnect)
     {
         var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-        window.location = "/#/error/" + err;
+
+        $rootScope.$apply(function() {
+            var loc = $location.path('/error/' + err);
+            console.log("after error redir", loc);
+        });
     };
 
     //-----------------------------------------------------
@@ -127,7 +131,7 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
                 query = {
                     interval: [6, "hours"],
                     start: moment().subtract(7, 'days').startOf('day'),
-                    end: moment().endOf("day"),
+                    end: moment().startOf("hour"),
                     skipcache: false,
                     displayFormat: "DD.MM. HH:mm"
                 };

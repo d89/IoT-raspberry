@@ -11,17 +11,18 @@ var lm393 = require('./sensors/lm393');
 var sound = require('./sensors/sound');
 var light = require('./sensors/light');
 var cputemp = require('./sensors/cputemp');
-var ledGreen = require('./sensors/led-green');
-var ledRed = require('./sensors/led-red');
-var switchRc = require('./sensors/switchrc');
 var switchBtn = require('./sensors/switch');
 var hcsr04 = require('./sensors/hcsr04');
 var pcf8591 = require('./sensors/pcf8591');
 var load = require('./sensors/load');
 var mem = require('./sensors/mem');
 
-ledGreen.blink();
-ledRed.blink();
+var switchRc = require('./actors/switchrc');
+var ledGreen = require('./actors/led-green');
+var ledRed = require('./actors/led-red');
+
+ledGreen.act();
+ledRed.act();
 
 var sensormanagement = 
 {
@@ -256,11 +257,11 @@ var sensormanagement =
             if (false && data.state === 1 && sensormanagement.actionsEnabled)
             {
                 spawn('/usr/bin/mpg321', ["/home/pi/Music/siren.mp3"]);
-                switchRc.switch(1, 1, 1);
+                switchRc.act(1, 1, 1);
 
                 setTimeout(function()
                 {
-                    switchRc.switch(1, 1, 0);
+                    switchRc.act(1, 1, 0);
                 }, 5000);
             }
 

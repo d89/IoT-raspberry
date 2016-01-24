@@ -10,9 +10,11 @@ var fs = require('fs');
 var logger = require('./logger');
 var cam = require('./sensors/cam');
 var sensormanagement = require('./sensormanagement');
-var switchRc = require('./sensors/switchrc');
-var ledGreen = require('./sensors/led-green');
-var ledRed = require('./sensors/led-red');
+
+var switchRc = require('./actors/switchrc');
+var ledGreen = require('./actors/led-green');
+var ledRed = require('./actors/led-red');
+var servo = require('./actors/servo');
 
 logger.info(`client ${client_name} connecting to ${server_url}`);
 
@@ -55,7 +57,16 @@ socket.on('actionrequest', function(msg)
 
         logger.info(`actionrequest for rc switch ${switchNumber} to status ${onoff}`);
 
-        switchRc.switch(1, switchNumber, onoff);
+        switchRc.act(1, switchNumber, onoff);
+    }
+
+    if (msg.type === "servo")
+    {
+        var onoff = msg.data.onoff;
+
+        logger.info(`actionrequest for servo to status ${onoff}`);
+
+        servo.act(onoff);
     }
 
     //LED ------------------------------------------------------------------------------
@@ -65,11 +76,11 @@ socket.on('actionrequest', function(msg)
 
         if (msg.data.ledType === "red")
         {
-            ledRed.blink();
+            ledRed.act();
         }
         else if (msg.data.ledType === "green")
         {
-            ledGreen.blink();
+            ledGreen.act();
         }
     }
 });

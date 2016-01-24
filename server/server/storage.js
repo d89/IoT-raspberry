@@ -9,14 +9,11 @@ var progressNotifier = null;
 exports.setDatabase = function(database)
 {
     db = database;
+};
 
-    /*
-    var coll = db.collection('datapoints');
-    coll.update({}, {$set: {client_id:"Davids IoT-Raspberry"}},{w:1, multi: true}, function(err, res)
-    {
-        logger.info("!!!!!!!!!!!!!!!", err);
-    });
-    */
+exports.getDatabase = function()
+{
+    return db;
 };
 
 exports.setProgressNotifier = function(cb)
@@ -252,7 +249,26 @@ exports.getLastCount = function(client_id, cb)
     });
 };
 
-exports.fullAggregation = function()
+exports.logEntry = function(loglevel, message)
+{
+    var coll = db.collection('systemlog');
+
+    var logEntry = {
+        loglevel: loglevel,
+        message: message,
+        created: (new Date)
+    };
+
+    coll.insertOne(logEntry, function(err, result)
+    {
+        if (err)
+        {
+            logger.error("could not store log entry", logEntry, err);
+        }
+    });
+};
+
+exports.fullAggregation = function(cb)
 {
     //--------------------------------------------------
     var startTime = new Date();
@@ -276,7 +292,7 @@ exports.fullAggregation = function()
         agg.createIndex( { from: 1, to: 1, type: 1, client_id: 1 }, { unique: true }, function(err, res)
         {
             if (err)
-                return logger.error("aggregation creating unique index", err);
+                return cb("aggregation creating unique index" + err);
 
             logger.info("created unique index");
             logger.info("--------------------------------------------------");
@@ -295,12 +311,12 @@ exports.fullAggregation = function()
         {
             if (!firstDoc || !firstDoc[0] || !firstDoc[0].created)
             {
-                return logger.error("No or invalid item found in timespan!", firstDoc);
+                return cb("No or invalid item found in timespan!" + firstDoc);
             }
 
             if (err)
             {
-                return logger.error("full aggregation fetch first: ", err);
+                return cb("full aggregation fetch first: " + err);
             }
 
             var first = moment(firstDoc[0].created);
@@ -313,9 +329,7 @@ exports.fullAggregation = function()
 
             if (overallEnd < end)
             {
-                logger.warn("stopping aggregation, because the first element + 1h >= end " + overallEnd.format("DD.MM.YYYY HH:mm"));
-                logger.info("##################################################");
-                process.exit(1);
+                return cb(null, "stopping aggregation, because the first element + 1h >= end " + overallEnd.format("DD.MM.YYYY HH:mm"));
             }
             else
             {
@@ -324,28 +338,6 @@ exports.fullAggregation = function()
             }
         });
     };
-
-    //--------------------------------------------------
-
-    /*
-    var removeInvalid = function()
-    {
-        logger.info("deleting invalid items");
-
-        coll.deleteMany({ created: null }, function(err, res)
-        {
-            if (err)
-            {
-                return logger.error("full aggregation delete: ", err);
-            }
-
-            logger.info("deleted " + res.result.n + " invalid datapoints");
-            logger.info("--------------------------------------------------");
-
-            removeOld();
-        });
-    };
-    */
 
     //--------------------------------------------------
 
@@ -360,10 +352,12 @@ exports.fullAggregation = function()
         {
             if (err)
             {
-                return logger.error("delete aggregation: ", err);
+                return cb("delete aggregation: " + err);
             }
 
-            logger.info("deleted " + res.result.n + " too old aggregated datapoints");
+            var log = "deleted " + res.result.n + " too old aggregated datapoints";
+            exports.logEntry("info", log);
+            logger.info(log);
             logger.info("--------------------------------------------------");
 
             aggregateHour();
@@ -398,7 +392,7 @@ exports.fullAggregation = function()
         {
             if (err)
             {
-                return logger.error("full aggregation agg: ", err);
+                return cb("full aggregation agg: " + err);
             }
 
             //process aggregation
@@ -428,19 +422,21 @@ exports.fullAggregation = function()
 
     //--------------------------------------------------
 
-    var storeAggregation = function(aggregatedDatapoints, cb)
+    var storeAggregation = function(aggregatedDatapoints, next)
     {
         logger.info("storing aggregation for " + aggregatedDatapoints.length + " datapoints");
 
         agg.insertMany(aggregatedDatapoints, function(err, res)
         {
             if (err && err.toString().indexOf("duplicate key") === -1)
-                return logger.error("full aggregation storage: ", err);
+            {
+                return cb("full aggregation storage: " + err);
+            }
 
             logger.info("stored in aggregationpoints: " + aggregatedDatapoints.length + " datapoints");
             logger.info("--------------------------------------------------");
 
-            cb();
+            next();
         });
     };
 
@@ -458,10 +454,12 @@ exports.fullAggregation = function()
         {
             if (err)
             {
-                return logger.error("flagged aggregation: ", err);
+                return cb("flagged aggregation: " + err);
             }
 
-            logger.info("flagged " + res.result.nModified + " datapoints for deletion in next round");
+            var log = "flagged " + res.result.nModified + " datapoints for deletion in next round";
+            logger.info(log);
+            exports.logEntry("info", log);
             logger.info("--------------------------------------------------");
 
             roundDone();
@@ -473,10 +471,12 @@ exports.fullAggregation = function()
     var roundDone = function()
     {
         var timeSpend = ((new Date).getTime() - startTime.getTime()) / 1000;
-        logger.info("round done in " + timeSpend + " seconds");
+        var log = "aggregation round done in " + timeSpend + " seconds";
+        logger.info(log);
+        exports.logEntry("success", log);
         logger.info("next round");
         logger.info("##################################################");
-        exports.fullAggregation();
+        exports.fullAggregation(cb);
     };
 
     start();
