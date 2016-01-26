@@ -41,8 +41,6 @@ MongoClient.connect('mongodb://localhost/IoT', function(err, database)
     ]).toArray(function(err, docs)
     {
         console.log("aggregation for period " + start + " to " + end, docs)
-
-        //TODO what if empty, for example for the current day? Have to fetch from live then
     });
     */
 });

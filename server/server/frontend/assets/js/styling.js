@@ -96,7 +96,7 @@ var Styles = function() {
         //alert("binding callback");
 
         // Call layout API on button click
-        jQuery(document).on('[data-toggle="layout"]', 'click', function(){
+        $('[data-toggle="layout"]').on("click", function(){
             var $btn = jQuery(this);
 
             uiLayoutApi($btn.data('action'));
@@ -227,6 +227,7 @@ var Styles = function() {
                     .addClass('sidebar-r');
                 break;
             case 'sidebar_toggle':
+                console.log("!!!!!!!!!!!!!!!!!!!!! TOGGLE !!!!!!!!!!!!!!!!!!!!!!!!!!");
                 if ($windowW > 991) {
                     $lPage.toggleClass('sidebar-o');
                 } else {
@@ -244,6 +245,11 @@ var Styles = function() {
                 if ($windowW > 991) {
                     $lPage.removeClass('sidebar-o');
                 } else {
+                    $lPage.removeClass('sidebar-o-xs');
+                }
+                break;
+            case 'sidebar_close_on_small':
+                if ($windowW <= 991) {
                     $lPage.removeClass('sidebar-o-xs');
                 }
                 break;
@@ -308,6 +314,7 @@ var Styles = function() {
 
     // Main navigation functionality
     var uiNav = function() {
+
         // When a submenu link is clicked
         jQuery('[data-toggle="nav-submenu"]').on('click', function(e){
             // Get link
@@ -1180,7 +1187,12 @@ var Styles = function() {
     return {
         init: function($func) {
 
-            //alert("enabling styles");
+            if (OneUI.initialized)
+            {
+                return;
+            }
+
+            OneUI.initialized = true;
 
             switch ($func) {
                 case 'uiInit':

@@ -8,6 +8,7 @@ import sys
 
 #GPIO Modus (BOARD / BCM)
 GPIO.setmode(GPIO.BOARD)
+GPIO.setwarnings(False)
 
 #GPIO Pins zuweisen
 GPIO_TRIGGER = 31

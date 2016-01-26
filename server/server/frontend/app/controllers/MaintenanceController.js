@@ -1,102 +1,8 @@
-IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
+IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, IoTFactory)
 {
-//-----------------------------------------------------
-
-    $scope.templateLoadCount = 0;
-
-    $rootScope.$on('$includeContentLoaded', function()
-    {
-        if (++$scope.templateLoadCount >= 4)
-        {
-            Styles.init();
-        }
-    });
-
-    $scope.handleDisconnect = function(isClientDisconnect)
-    {
-        var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-
-        $rootScope.$apply(function() {
-            var loc = $location.path('/error/' + err);
-            console.log("after error redir", loc);
-        });
-    };
-
     //-----------------------------------------------------
 
-    $scope.socket = null;
-    $scope.clientMessages = 0;
-
-    $scope.getCount = function()
-    {
-        console.log("requesting count");
-
-        $scope.count = "Loading count";
-
-        $scope.socket.emit('ui:data-count', {}, function(err, resp)
-        {
-            if (err)
-            {
-                $scope.count = err;
-            }
-            else
-            {
-                $scope.count = resp;
-            }
-
-            $scope.$apply();
-        });
-    };
-
-    $scope.connectToDevice = function(id)
-    {
-        if ($scope.socket)
-        {
-            $scope.socket.disconnect();
-        }
-
-        $scope.socket = io.connect(constant("serverUrl"), { query: "mode=ui&client=" + id });
-
-        $scope.socket.on("connect", function()
-        {
-            console.log("connected!");
-        });
-
-        $scope.socket.on("client-disconnected", function(data)
-        {
-            $scope.handleDisconnect(true);
-        });
-
-        $scope.socket.on("disconnect", function()
-        {
-            $scope.handleDisconnect(false);
-        });
-
-        $scope.socket.on("dataupdate", function(msg)
-        {
-            $scope.clientMessages++;
-            $scope.$apply();
-        });
-
-        $scope.socket.emit('ui:get-socket-info', {}, function(err, resp)
-        {
-            if (err)
-            {
-                $scope.client_name = err;
-            }
-            else
-            {
-                $scope.clientName = resp.client_name;
-                $scope.connectedAt = moment(new Date(resp.connected_at)).format("DD.MM. HH:mm:ss").toString();
-            }
-
-            $scope.$apply();
-        });
-    };
-
-    //-----------------------------------------------------
-
-    $scope.sidebar =
+    $rootScope.sidebar =
     {
         "Sensor Data":
         [{
@@ -134,7 +40,7 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             mode: "restart"
         };
 
-        $scope.socket.emit("ui:maintenance", restart);
+        IoTFactory.socket.emit("ui:maintenance", restart);
     };
 
     $scope.shutdown = function()
@@ -145,14 +51,14 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             mode: "shutdown"
         };
 
-        $scope.socket.emit("ui:maintenance", shutdown);
+        IoTFactory.socket.emit("ui:maintenance", shutdown);
     };
 
     $scope.getMaintenanceInfo = function()
     {
         console.log("fetching maintenance info");
 
-        $scope.socket.emit('ui:maintenance-info', {}, function(err, infotext, syslogentries)
+        IoTFactory.socket.emit('ui:maintenance-info', {}, function(err, infotext, syslogentries)
         {
             if (!err)
             {
@@ -197,10 +103,17 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
 
     $scope.init = function()
     {
-        $scope.connectToDevice($routeParams.client_id);
-        $scope.getCount();
-        $scope.getMaintenanceInfo();
+        $rootScope.mainHeadline = "IoT Portal: Maintenance";
+        $rootScope.subHeadline = "See Recent Activities And Logs";
+
+        //TODO what if connection is not possible?
+        $scope.connect(false, function()
+        {
+            $scope.getMaintenanceInfo();
+        });
     };
+
+    //-----------------------------------------------------
 
     $scope.init();
 });

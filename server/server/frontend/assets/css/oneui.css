@@ -11186,3 +11186,7 @@ div.tagsinput span.tag a:hover {
   background: rgba(0, 0, 0, 0.6);
   padding: 12px;
 }
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
+}

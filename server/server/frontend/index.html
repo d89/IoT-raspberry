@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<!--[if IE 9]>         <html ng-app="IoT" class="ie9 no-focus"> <![endif]-->
-<!--[if gt IE 9]><!--> <html ng-app="IoT" class="no-focus"> <!--<![endif]-->
+<!--[if IE 9]>         <html ng-app="IoT" ng-controller="IoTBaseCtrl" class="ie9 no-focus"> <![endif]-->
+<!--[if gt IE 9]><!--> <html ng-app="IoT" ng-controller="IoTBaseCtrl" class="no-focus"> <!--<![endif]-->
     <head>
         <meta charset="utf-8">
         <title>IoT Server Platform</title>
@@ -28,36 +28,218 @@
     </head>
     <body>
 
-        <!-- main content -->
-        <div ng-view></div>
-        <!-- END main content -->
+    <div id="page-container" class="sidebar-l sidebar-o side-scroll header-navbar-fixed">
 
-        <!-- OneUI Core JS: jQuery, Bootstrap, slimScroll, scrollLock, Appear, CountTo, Placeholder, Cookie and App.js -->
-        <script src="assets/js/core/jquery.min.js"></script>
-        <script src="assets/js/core/bootstrap.min.js"></script>
-        <script src="assets/js/core/jquery.slimscroll.min.js"></script>
-        <script src="assets/js/core/jquery.scrollLock.min.js"></script>
-        <script src="assets/js/core/jquery.appear.min.js"></script>
-        <script src="assets/js/core/jquery.countTo.min.js"></script>
-        <script src="assets/js/core/jquery.placeholder.min.js"></script>
-        <script src="assets/js/core/js.cookie.min.js"></script>
-        <script src="assets/js/styling.js"></script>
+        <!-- ######################################################################## ->
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <!-- Sidebar Scroll Container -->
+            <div id="sidebar-scroll">
+                <!-- Sidebar Content -->
+                <!-- Adding .sidebar-mini-hide to an element will hide it when the sidebar is in mini mode -->
+                <div class="sidebar-content">
+                    <!-- Side Header -->
+                    <div class="side-header side-content bg-white-op">
+                        <!-- Layout API, functionality initialized in App() -> uiLayoutApi() -->
+                        <button class="btn btn-link text-gray pull-right hidden-md hidden-lg" type="button" data-toggle="layout" data-action="sidebar_close">
+                            <i class="fa fa-times"></i>
+                        </button>
+                        <!-- Themes functionality initialized in App() -> uiHandleTheme() -->
+                        <div class="btn-group pull-right">
+                            <button class="btn btn-link text-gray dropdown-toggle" data-toggle="dropdown" type="button">
+                                <i class="si si-drop"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right font-s13 sidebar-mini-hide">
+                                <li>
+                                    <a data-toggle="theme" data-theme="default" tabindex="-1" href="javascript:void(0)">
+                                        <i class="fa fa-circle text-default pull-right"></i> <span class="font-w600">Default</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a data-toggle="theme" data-theme="assets/css/themes/amethyst.min.css" tabindex="-1" href="javascript:void(0)">
+                                        <i class="fa fa-circle text-amethyst pull-right"></i> <span class="font-w600">Amethyst</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a data-toggle="theme" data-theme="assets/css/themes/city.min.css" tabindex="-1" href="javascript:void(0)">
+                                        <i class="fa fa-circle text-city pull-right"></i> <span class="font-w600">City</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a data-toggle="theme" data-theme="assets/css/themes/flat.min.css" tabindex="-1" href="javascript:void(0)">
+                                        <i class="fa fa-circle text-flat pull-right"></i> <span class="font-w600">Flat</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a data-toggle="theme" data-theme="assets/css/themes/modern.min.css" tabindex="-1" href="javascript:void(0)">
+                                        <i class="fa fa-circle text-modern pull-right"></i> <span class="font-w600">Modern</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a data-toggle="theme" data-theme="assets/css/themes/smooth.min.css" tabindex="-1" href="javascript:void(0)">
+                                        <i class="fa fa-circle text-smooth pull-right"></i> <span class="font-w600">Smooth</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <a class="h5 text-white" href="#index">
+                            <i class="fa fa-circle-o-notch text-primary"></i> <span class="h4 font-w600 sidebar-mini-hide">IoT Portal</span>
+                        </a>
+                    </div>
+                    <!-- END Side Header -->
 
-        <!-- Logic -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.0/socket.io.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/locale/de.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.9/angular-route.min.js"></script>
+                    <!-- Side Content -->
+                    <div class="side-content">
+                        <ul class="nav-main" ng-repeat="(key, menu) in sidebar">
+                            <li class="nav-main-heading"><span class="sidebar-mini-hide" ng-cloak>{{ key }}</span></li>
 
-        <!-- App -->
-        <script src="app/modules/app.js"></script>
-        <script src="app/modules/constants.js"></script>
-        <script src="app/controllers/MaintenanceController.js"></script>
-        <script src="app/controllers/DashboardController.js"></script>
-        <script src="app/controllers/ActionController.js"></script>
-        <script src="app/controllers/HistoryController.js"></script>
-        <script src="app/controllers/IndexController.js"></script>
+                            <li ng-repeat="sidebarlink in menu">
+                                <a ng-class="{active: sidebarlink.active==true}" href="{{ sidebarlink.href }}" ng-cloak onclick="Styles.layout('sidebar_close_on_small')"><i class="si si-speedometer"></i><span class="sidebar-mini-hide">{{ sidebarlink.title }}</span></a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- END Side Content -->
+                </div>
+                <!-- Sidebar Content -->
+            </div>
+            <!-- END Sidebar Scroll Container -->
+        </nav>
+        <!-- END Sidebar -->
+        <!-- ######################################################################## ->
+
+        <!-- ######################################################################## ->
+        <!-- Header -->
+        <header id="header-navbar" class="content-mini content-mini-full">
+            <!-- Header Navigation Left -->
+            <ul class="nav-header pull-left">
+                <li class="hidden-md hidden-lg">
+                    <!-- Layout API, functionality initialized in App() -> uiLayoutApi() -->
+                    <button class="btn btn-default" data-toggle="layout" data-action="sidebar_toggle" type="button">
+                        <i class="fa fa-navicon"></i>
+                    </button>
+                </li>
+                <li class="hidden-xs hidden-sm">
+                    <!-- Layout API, functionality initialized in App() -> uiLayoutApi() -->
+                    <button class="btn btn-default" data-toggle="layout" data-action="sidebar_mini_toggle" type="button">
+                        <i class="fa fa-ellipsis-v"></i>
+                    </button>
+                </li>
+            </ul>
+            <!-- END Header Navigation Left -->
+        </header>
+        <!-- END Header -->
+        <!-- ######################################################################## ->
+
+        <!-- ######################################################################## ->
+        <!-- Main Container -->
+        <main id="main-container">
+            <!-- Page Header -->
+            <div class="content bg-image overflow-hidden" style="background-image: url('assets/img/photos/photo3@2x.jpg');">
+                <div id="global-headline" class="push-50-t push-15">
+                    <h1 class="h2 text-white animated zoomIn" ng-cloak>{{ mainHeadline }}</h1>
+                    <h2 class="h5 text-white-op animated zoomIn" ng-cloak>{{ subHeadline }}</h2>
+                </div>
+            </div>
+            <!-- END Page Header -->
+
+            <!-- Stats -->
+            <div class="content bg-white border-b" ng-hide="hideStats">
+                <div class="row items-push text-uppercase">
+                    <div class="col-xs-6 col-sm-3">
+                        <div class="font-w700 text-gray-darker animated fadeIn">Datapoints in last 10min</div>
+                        <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> click to refresh</small></div>
+                        <a class="h2 font-w300 text-primary animated flipInX" ng-click="getCount()" ng-cloak style="cursor: pointer">{{ count }}</a>
+                    </div>
+                    <div class="col-xs-6 col-sm-3">
+                        <div class="font-w700 text-gray-darker animated fadeIn">Connected Device</div>
+                        <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> Identifier</small></div>
+                        <a class="h2 font-w300 text-primary animated flipInX" ng-cloak>{{ clientName }}</a>
+                    </div>
+                    <div class="col-xs-6 col-sm-3">
+                        <div class="font-w700 text-gray-darker animated fadeIn">Received Datapoints</div>
+                        <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> Since connection</small></div>
+                        <a class="h2 font-w300 text-primary animated flipInX" ng-cloak>{{ clientMessages }}</a>
+                    </div>
+                    <div class="col-xs-6 col-sm-3">
+                        <div class="font-w700 text-gray-darker animated fadeIn">Connected at</div>
+                        <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> Initial Connection</small></div>
+                        <a class="h2 font-w300 text-primary animated flipInX" ng-cloak>{{ connectedAt }}</a>
+                    </div>
+                </div>
+            </div>
+            <!-- END Stats -->
+
+            <div id="templateContent" ng-view onload="domReady()"></div>
+
+        </main>
+        <!-- END Main Container -->
+        <!-- ######################################################################## ->
+
+        <!-- ######################################################################## ->
+        <!-- Footer -->
+        <footer id="page-footer" class="content-mini content-mini-full font-s12 bg-gray-lighter clearfix">
+            <div class="pull-right">
+                <a href="#index">IoT Portal</a>
+            </div>
+            <div class="pull-left">
+                &copy; <span class="js-year-copy"></span>
+            </div>
+        </footer>
+        <!-- END Footer -->
+        <!-- ######################################################################## ->
+
+        <!-- ######################################################################## ->
+        <!-- Popup -->
+        <div class="modal fade" id="modal-error" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-popin">
+                <div class="modal-content">
+                    <div class="block block-themed block-transparent remove-margin-b">
+                        <div class="block-header bg-primary-dark">
+                            <h3 class="block-title">An Error Occurred</h3>
+                        </div>
+                        <div class="block-content">
+                            <p id="error-message">{{ errMessage }}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-sm btn-primary" ng-click="dismissModal()"><i class="fa fa-check"></i> Ok</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END Popup -->
+        <!-- ######################################################################## -->
+
+    </div>
+
+    <!-- OneUI Core JS: jQuery, Bootstrap, slimScroll, scrollLock, Appear, CountTo, Placeholder, Cookie and App.js -->
+    <script src="assets/js/core/jquery.min.js"></script>
+    <script src="assets/js/core/bootstrap.min.js"></script>
+    <script src="assets/js/core/jquery.slimscroll.min.js"></script>
+    <script src="assets/js/core/jquery.scrollLock.min.js"></script>
+    <script src="assets/js/core/jquery.appear.min.js"></script>
+    <script src="assets/js/core/jquery.countTo.min.js"></script>
+    <script src="assets/js/core/jquery.placeholder.min.js"></script>
+    <script src="assets/js/core/js.cookie.min.js"></script>
+    <script src="assets/js/styling.js"></script>
+
+    <!-- Logic -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.0/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.0/locale/de.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.9/angular-route.min.js"></script>
+
+    <!-- App -->
+    <script src="app/modules/app.js"></script>
+    <script src="app/modules/constants.js"></script>
+    <script src="app/factories/factory.js"></script>
+    <script src="app/controllers/BaseController.js"></script>
+    <script src="app/controllers/MaintenanceController.js"></script>
+    <script src="app/controllers/DashboardController.js"></script>
+    <script src="app/controllers/ActionController.js"></script>
+    <script src="app/controllers/HistoryController.js"></script>
+    <script src="app/controllers/IndexController.js"></script>
     </body>
 </html>

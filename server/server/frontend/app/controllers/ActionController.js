@@ -1,112 +1,8 @@
-IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
+IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, IoTFactory)
 {
     //-----------------------------------------------------
 
-    $scope.templateLoadCount = 0;
-
-    $rootScope.$on('$includeContentLoaded', function()
-    {
-        if (++$scope.templateLoadCount >= 4)
-        {
-            Styles.init();
-        }
-    });
-
-    $scope.handleDisconnect = function(isClientDisconnect)
-    {
-        var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-
-        $rootScope.$apply(function() {
-            var loc = $location.path('/error/' + err);
-            console.log("after error redir", loc);
-        });
-    };
-
-    //-----------------------------------------------------
-
-    $scope.socket = null;
-    $scope.clientMessages = 0;
-    $scope.streamActive = false;
-
-    $scope.getCount = function()
-    {
-        console.log("requesting count");
-
-        $scope.count = "Loading count";
-
-        $scope.socket.emit('ui:data-count', {}, function(err, resp)
-        {
-            if (err)
-            {
-                $scope.count = err;
-            }
-            else
-            {
-                $scope.count = resp;
-            }
-
-            $scope.$apply();
-        });
-    };
-
-    $scope.connectToDevice = function(id)
-    {
-        if ($scope.socket)
-        {
-            $scope.socket.disconnect();
-        }
-
-        $scope.socket = io.connect(constant("serverUrl"), { query: "mode=ui&client=" + id });
-
-        $scope.socket.on("connect", function(c)
-        {
-            console.log("connected!");
-        });
-
-        $scope.socket.on("client-disconnected", function(data)
-        {
-            $scope.handleDisconnect(true);
-        });
-
-        $scope.socket.on("disconnect", function()
-        {
-            $scope.handleDisconnect(false);
-        });
-
-        $scope.socket.on("dataupdate", function(msg)
-        {
-            $scope.clientMessages++;
-            $scope.$apply();
-        });
-
-        $scope.socket.on("cam-stream", function(msg)
-        {
-            var image = msg.image;
-            var date = msg.date;
-
-            $('#stream').attr('src', 'data:image/jpg;base64,' + image);
-            $scope.streamTime = "Now: " + moment().format("HH:mm:ss") + " | " + "Img: " + moment(date).format("HH:mm:ss");
-        });
-
-        $scope.socket.emit('ui:get-socket-info', {}, function(err, resp)
-        {
-            if (err)
-            {
-                $scope.client_name = err;
-            }
-            else
-            {
-                $scope.clientName = resp.client_name;
-                $scope.connectedAt = moment(new Date(resp.connected_at)).format("DD.MM. HH:mm:ss").toString();
-            }
-
-            $scope.$apply();
-        });
-    };
-
-    //-----------------------------------------------------
-
-    $scope.sidebar =
+    $rootScope.sidebar =
     {
         "Sensor Data":
         [{
@@ -136,6 +32,8 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     //-----------------------------------------------------
 
+    $scope.streamActive = false;
+
     $scope.rcSwitch = function(nr, state)
     {
         var text = "Turning " + (state ? "on" : "off") + " rc switch " + nr;
@@ -149,7 +47,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             }
         };
 
-        $scope.socket.emit("ui:action", rc);
+        IoTFactory.socket.emit("ui:action", rc);
     };
 
     $scope.servo = function(onoff)
@@ -165,7 +63,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             }
         };
 
-        $scope.socket.emit("ui:action", servo);
+        IoTFactory.socket.emit("ui:action", servo);
     };
 
     $scope.led = function(nr)
@@ -180,7 +78,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             }
         };
 
-        $scope.socket.emit("ui:action", led);
+        IoTFactory.socket.emit("ui:action", led);
     };
 
     $scope.startStream = function()
@@ -189,7 +87,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         $scope.streamTime = "Initialzing Camera";
         $("#stream").attr("src", "assets/img/various/loading-cam.gif");
 
-        $scope.socket.emit('ui:start-stop-stream', {
+        IoTFactory.socket.emit('ui:start-stop-stream', {
             start: true
         });
     };
@@ -199,7 +97,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         $scope.streamActive = false;
         $scope.streamTime = "Shutting Down Stream";
 
-        $scope.socket.emit('ui:start-stop-stream', {
+        IoTFactory.socket.emit('ui:start-stop-stream', {
             start: false
         });
     };
@@ -222,9 +120,22 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.init = function()
     {
-        $scope.connectToDevice($routeParams.client_id);
-        $scope.getCount();
+        $rootScope.mainHeadline = "IoT Portal: Actions";
+        $rootScope.subHeadline = "Trigger Actions On Your IoT device";
+        $scope.connect(false, function()
+        {
+            IoTFactory.socket.on("cam-stream", function(msg)
+            {
+                var image = msg.image;
+                var date = msg.date;
+
+                $('#stream').attr('src', 'data:image/jpg;base64,' + image);
+                $scope.streamTime = "Now: " + moment().format("HH:mm:ss") + " | " + "Img: " + moment(date).format("HH:mm:ss");
+            });
+        });
     };
+
+    //-----------------------------------------------------
 
     $scope.init();
 });

@@ -2,53 +2,7 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 {
     //-----------------------------------------------------
 
-    $scope.templateLoadCount = 0;
-
-    $rootScope.$on('$includeContentLoaded', function()
-    {
-        if (++$scope.templateLoadCount >= 4)
-        {
-            Styles.init();
-        }
-    });
-
-    $scope.errorMessageQuery = function()
-    {
-        if ($routeParams.error_message)
-        {
-            var err = $routeParams.error_message;
-            var errMessage = "Unknown Error";
-
-            if (err === "disconnect-server")
-            {
-                errMessage = "Disconnected from server";
-            }
-            else if (err === "disconnect-client")
-            {
-                errMessage = "Disconnected from IoT client";
-            }
-
-            $scope.errMessage = errMessage;
-
-            jQuery('#modal-error').modal('toggle');
-        }
-    };
-
-    $scope.dismissModal = function()
-    {
-        jQuery('#modal-error').modal('toggle');
-
-        $timeout(function()
-        {
-            var loc = $location.path('/index');
-        }, 500);
-    };
-
-    //-----------------------------------------------------
-
-    $scope.clients = [];
-
-    $scope.sidebar =
+    $rootScope.sidebar =
     {
         "Device Overview":
         [{
@@ -58,6 +12,10 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
         }]
     };
 
+    //-----------------------------------------------------
+
+    $scope.clients = [];
+
     $scope.getClients = function(cb)
     {
         $.get("/clients/get", function(clients)
@@ -66,8 +24,22 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
         });
     };
 
+    $scope.loadDashboard = function(id)
+    {
+        $routeParams.client_id = id;
+
+        $scope.connect(true, function()
+        {
+            $location.path('/dashboard/' + id);
+        });
+    };
+
     $scope.init = function()
     {
+        $rootScope.mainHeadline = "IoT Portal";
+        $rootScope.subHeadline = "Currently connected IoT Devices";
+        $rootScope.hideStats = true;
+
         $scope.clients = [];
 
         $scope.getClients(function(clients)
@@ -84,7 +56,11 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
                 $scope.$apply();
             }
         });
+
+        $scope.errorMessageQuery();
     };
+
+    //-----------------------------------------------------
 
     $scope.init();
 });

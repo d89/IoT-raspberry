@@ -1,25 +1,33 @@
-IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
+IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, IoTFactory)
 {
     //-----------------------------------------------------
 
-    $scope.templateLoadCount = 0;
-
-    $rootScope.$on('$includeContentLoaded', function()
+    $rootScope.sidebar =
     {
-        if (++$scope.templateLoadCount >= 4)
+        "Sensor Data":
+        [{
+            title: "Dashboard",
+            href: "#dashboard/" + $routeParams.client_id
+        },
         {
-            Styles.init();
-        }
-    });
-
-    $scope.handleDisconnect = function(isClientDisconnect)
-    {
-        var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-
-        $rootScope.$apply(function() {
-            var loc = $location.path('/error/' + err);
-            console.log("after error redir", loc);
-        });
+            title: "History",
+            href: "#history/" + $routeParams.client_id,
+            active: true
+        }],
+        "Actions":
+        [{
+            title: "Action",
+            href: "#action/" + $routeParams.client_id
+        },
+        {
+            title: "Maintenance",
+            href: "#maintenance/" + $routeParams.client_id
+        }],
+        "Device Overview":
+        [{
+            title: "Connected Devices",
+            href: "#index"
+        }]
     };
 
     //-----------------------------------------------------
@@ -42,8 +50,6 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
 
     //-----------------------------------------------------
 
-    $scope.socket = null;
-    $scope.clientMessages = 0;
     $scope.charts = {};
     $scope.stats = {};
 
@@ -52,9 +58,8 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         return constant("dataTypes");
     };
 
-    $scope.chartsLoaded = function()
+    $scope.loadCharts = function()
     {
-        console.log("charts loaded!");
         $scope.history("lastHourByMinute");
     };
 
@@ -168,7 +173,7 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             }
         }
 
-        $scope.socket.emit("ui:aggregation", query, function(dps)
+        IoTFactory.socket.emit("ui:aggregation", query, function(dps)
         {
             console.log("got it all", dps);
 
@@ -260,80 +265,6 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         };
     };
 
-    $scope.getCount = function()
-    {
-        console.log("requesting count");
-
-        $scope.count = "Loading count";
-
-        $scope.socket.emit('ui:data-count', {}, function(err, resp)
-        {
-            if (err)
-            {
-                $scope.count = err;
-            }
-            else
-            {
-                $scope.count = resp;
-            }
-
-            $scope.$apply();
-        });
-    };
-
-    $scope.connectToDevice = function(id)
-    {
-        if ($scope.socket)
-        {
-            $scope.socket.disconnect();
-        }
-
-        $scope.socket = io.connect(constant("serverUrl"), { query: "mode=ui&client=" + id });
-
-        $scope.socket.on("connect", function()
-        {
-            console.log("connected!");
-        });
-
-        $scope.socket.on("client-disconnected", function(data)
-        {
-            $scope.handleDisconnect(true);
-        });
-
-        $scope.socket.on("disconnect", function()
-        {
-            $scope.handleDisconnect(false);
-        });
-
-        $scope.socket.on("progress", function(data)
-        {
-            console.log("onprogress " + data.progress);
-        });
-
-
-        $scope.socket.on("dataupdate", function(msg)
-        {
-            $scope.clientMessages++;
-            $scope.$apply();
-            //console.log("dataupdate", msg);
-        });
-
-        $scope.socket.emit('ui:get-socket-info', {}, function(err, resp)
-        {
-            if (err)
-            {
-                $scope.client_name = err;
-            }
-            else
-            {
-                $scope.clientName = resp.client_name;
-                $scope.connectedAt = moment(new Date(resp.connected_at)).format("DD.MM. HH:mm:ss").toString();
-            }
-
-            $scope.$apply();
-        });
-    };
-
     $scope.updateStatsForChart = function(type)
     {
         if (!$scope.charts[type]) {
@@ -366,44 +297,34 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         }
 
         $scope.stats[type].count++;
-        $scope.stats[type].max = Math.max.apply(null, datapoints).toFixed(2);
-        $scope.stats[type].min = Math.min.apply(null, datapoints).toFixed(2);
-        $scope.stats[type].avg = avg.toFixed(2);
-    };
 
-    $scope.sidebar =
-    {
-        "Sensor Data":
-        [{
-            title: "Dashboard",
-            href: "#dashboard/" + $routeParams.client_id
-        },
+        if (datapoints.length)
         {
-            title: "History",
-            href: "#history/" + $routeParams.client_id,
-            active: true
-        }],
-        "Actions":
-        [{
-            title: "Action",
-            href: "#action/" + $routeParams.client_id
-        },
+            $scope.stats[type].max = Math.max.apply(null, datapoints).toFixed(2);
+            $scope.stats[type].min = Math.min.apply(null, datapoints).toFixed(2);
+        }
+        else
         {
-            title: "Maintenance",
-            href: "#maintenance/" + $routeParams.client_id
-        }],
-        "Device Overview":
-        [{
-            title: "Connected Devices",
-            href: "#index"
-        }]
+            $scope.stats[type].max = 0;
+            $scope.stats[type].min = 0;
+        }
+
+        $scope.stats[type].avg = avg.toFixed(2);
     };
 
     $scope.init = function()
     {
-        $scope.connectToDevice($routeParams.client_id);
-        $scope.getCount();
+        $rootScope.hideStats = false;
+        $rootScope.mainHeadline = "IoT Portal: History";
+        $rootScope.subHeadline = "See Historic Data Of Your IoT Device";
+
+        $scope.connect(false, function()
+        {
+            $scope.loadCharts();
+        });
     };
+
+    //-----------------------------------------------------
 
     $scope.init();
 });

@@ -453,14 +453,16 @@ io.on('connection', function(socket)
 
     socketType === "ui" && socket.on('ui:maintenance-info', function(msg, resp)
     {
-        logger.info("getting system maintenance info");
+        //logger.info("getting system maintenance info");
 
         return maintenance.info(function(err, infotext, syslogEntries)
         {
             if (err)
                 logger.error("maintenance", err);
             else
-                logger.info("maintenance", infotext, syslogEntries);
+            {
+                //logger.info("maintenance", infotext, syslogEntries);
+            }
 
             return resp(err, infotext, syslogEntries);
         });

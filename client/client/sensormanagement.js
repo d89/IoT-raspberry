@@ -97,7 +97,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
 
@@ -118,7 +118,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
 
@@ -138,7 +138,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
 
@@ -157,7 +157,8 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
+            sensormanagement.registerHcsr04();
         });
     },
 
@@ -176,7 +177,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
 
@@ -200,7 +201,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
 
@@ -218,7 +219,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
 
@@ -237,7 +238,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
 
@@ -270,7 +271,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(msg);
+            logger.error("stream closed", msg);
         },
         {
             port: 38
@@ -293,7 +294,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(msg);
+            logger.error("stream closed", msg);
         },
         {
             port: 33
@@ -325,7 +326,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     },
     
@@ -359,7 +360,7 @@ var sensormanagement =
         },
         function onclose(msg)
         {
-            logger.info(data);
+            logger.error("stream closed", msg);
         });
     }
 };
