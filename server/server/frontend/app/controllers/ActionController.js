@@ -32,6 +32,14 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     //-----------------------------------------------------
 
+    $scope.$on('$routeChangeStart', function(next, current)
+    {
+        //user leaves this page - if stream is still running: stop it.
+        $scope.stopStream();
+    });
+
+    //-----------------------------------------------------
+
     $scope.streamActive = false;
 
     $scope.rcSwitch = function(nr, state)
@@ -94,6 +102,8 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.stopStream = function()
     {
+        console.log("stopping stream!");
+
         $scope.streamActive = false;
         $scope.streamTime = "Shutting Down Stream";
 

@@ -30,7 +30,10 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         $scope.connect(true, function()
         {
-            $location.path('/dashboard/' + id);
+            $rootScope.$apply(function()
+            {
+                $location.path('/dashboard/' + id);
+            });
         });
     };
 

@@ -85,7 +85,8 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
     $scope.plot = function(type, labels, data)
     {
         var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-        var isSmall = windowWidth < 500;
+        var isSmall = windowWidth < 700;
+        //alert(windowWidth);
         var container = $("[data-chart-type='" + type + "'] canvas");
         var chartData = $scope.generateInitialChartData(labels, data)
         var ctx = container[0].getContext("2d");
@@ -100,6 +101,8 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
             maintainAspectRatio: false,
             responsive: true,
             showTooltips: isSmall ? false : true,
+            //because http://stackoverflow.com/questions/26498171/how-do-i-prevent-the-scale-labels-from-being-cut-off-in-chartjs
+            scaleLabel: "<%= ' ' + value%>"
         };
 
         if (isSmall) {
@@ -176,8 +179,6 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 
     $scope.receivedData = function(msg, totalCount)
     {
-        //console.log("RECEIVED DATA", msg, totalCount);
-
         var type = msg.type;
         var data = msg.data;
         var time = moment(msg.created).format('dd, HH:mm:ss');
@@ -199,10 +200,10 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
         $rootScope.mainHeadline = "IoT Portal: Dashboard";
         $rootScope.subHeadline = "Displaying Live Data";
 
-        //first page after login: always reconnect
-        $scope.connect();
-
-        $scope.registerDataUpdateHandlerSource($scope.receivedData); //TODO refactor me
+        $scope.connect(false, function()
+        {
+            IoTFactory.registerLifecycleCallback("dataupdate", $scope.receivedData);
+        });
     };
 
     //-----------------------------------------------------

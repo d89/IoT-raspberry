@@ -253,9 +253,9 @@ var sensormanagement =
                 data: data.state
             };
 
-            //movement detected
-            //TODO
-            if (false && data.state === 1 && sensormanagement.actionsEnabled)
+            //TODO movement detected
+            /*
+            if (data.state === 1 && sensormanagement.actionsEnabled)
             {
                 spawn('/usr/bin/mpg321', ["/home/pi/Music/siren.mp3"]);
                 switchRc.act(1, 1, 1);
@@ -265,6 +265,7 @@ var sensormanagement =
                     switchRc.act(1, 1, 0);
                 }, 5000);
             }
+            */
 
             sensormanagement.sendSensorData(movement);
             //logger.info("sent", movement);

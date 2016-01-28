@@ -94,7 +94,7 @@
                             <li class="nav-main-heading"><span class="sidebar-mini-hide" ng-cloak>{{ key }}</span></li>
 
                             <li ng-repeat="sidebarlink in menu">
-                                <a ng-class="{active: sidebarlink.active==true}" href="{{ sidebarlink.href }}" ng-cloak onclick="Styles.layout('sidebar_close_on_small')"><i class="si si-speedometer"></i><span class="sidebar-mini-hide">{{ sidebarlink.title }}</span></a>
+                                <a ng-class="{active: sidebarlink.active==true}" href="{{ sidebarlink.href }}" ng-cloak><i class="si si-speedometer"></i><span class="sidebar-mini-hide">{{ sidebarlink.title }}</span></a>
                             </li>
                         </ul>
                     </div>
@@ -161,7 +161,7 @@
                         <a class="h2 font-w300 text-primary animated flipInX" ng-cloak>{{ clientMessages }}</a>
                     </div>
                     <div class="col-xs-6 col-sm-3">
-                        <div class="font-w700 text-gray-darker animated fadeIn">Connected at</div>
+                        <div class="font-w700 text-gray-darker animated fadeIn">Started at</div>
                         <div class="text-muted animated fadeIn"><small><i class="si si-calendar"></i> Initial Connection</small></div>
                         <a class="h2 font-w300 text-primary animated flipInX" ng-cloak>{{ connectedAt }}</a>
                     </div>

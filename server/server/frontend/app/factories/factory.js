@@ -8,54 +8,84 @@ IoT.factory('IoTFactory', function(constant)
 
     IoT.getCount = function(cb)
     {
-        console.log("requesting count");
+        console.log("requesting count - 0");
 
         IoT.count = "Loading count";
 
         IoT.socket.emit('ui:data-count', {}, function(err, resp)
         {
+            console.log("data count response - 1");
+
             if (err)
             {
-                IoT.count = err;
-            }
-            else
-            {
-                IoT.count = resp;
+                console.log("data count error - 2");
+                return cb(err);
             }
 
-            return cb(IoT.count);
+            IoT.count = resp;
+
+            return cb(null, IoT.count);
         });
     };
 
     //------------------------------------------------------------
 
-    IoT.handleDisconnect = function() {};
-    IoT.registerDisconnectHandler = function(onDisconnect)
+    IoT.lifecycleCallbacks = {};
+
+    IoT.registerLifecycleCallback = function(eventType, callback)
     {
-        console.log("!!!!!!!!!!!!!!!!!!!!! registering disconnect handler");
-        IoT.handleDisconnect = onDisconnect;
+        if (!IoT.lifecycleCallbacks[eventType])
+        {
+            IoT.lifecycleCallbacks[eventType] = [];
+        }
+
+        IoT.lifecycleCallbacks[eventType].push(callback);
     };
 
-    IoT.handleSocketInfo = function() {};
-    IoT.registerSocketInfoHandler = function(onSocketInfo)
+    IoT.callLifecycleCallback = function(eventType)
     {
-        IoT.handleSocketInfo = onSocketInfo;
+        if (!IoT.lifecycleCallbacks[eventType])
+        {
+            console.log("no handler for lifecycle " + eventType);
+            return;
+        }
+
+        //remove first parameter from arguments list
+        var parameters = [];
+
+        for (var i = 1; i < arguments.length; i++)
+        {
+            parameters.push(arguments[i]);
+        }
+
+        if (eventType != "dataupdate")
+            console.log("called lifecycle callback for " + eventType, parameters);
+
+        IoT.lifecycleCallbacks[eventType].forEach(function(cb)
+        {
+            cb.apply(this, parameters);
+        })
     };
 
-    IoT.handleDataUpdate =  function() {};
-    IoT.registerDataUpdateHandler = function(onDataUpdate)
+    IoT.resetLifecycleCallbacks = function()
     {
-        IoT.handleDataUpdate = onDataUpdate;
-    };
-
-    IoT.isConnected = function()
-    {
-        return IoT.socket !== null;
+        IoT.lifecycleCallbacks = {};
     };
 
     //------------------------------------------------------------
 
-    IoT.connectToDevice = function(id, onConnected)
+    IoT.isConnected = function()
+    {
+        var isConnected = IoT.socket !== null && IoT.socket.connected === true;
+
+        console.log("is connected", isConnected);
+
+        return isConnected;
+    };
+
+    //------------------------------------------------------------
+
+    IoT.connectToDevice = function(id, cb)
     {
         if (IoT.isConnected())
         {
@@ -66,19 +96,34 @@ IoT.factory('IoTFactory', function(constant)
 
         IoT.socket.on("connect", function()
         {
-            if (onConnected)
-                onConnected();
+            if (cb)
+                cb(null, true);
+        });
+
+        IoT.socket.on('connect_error', function()
+        {
+            console.log('Connection failed');
+
+            if (cb)
+                cb('Connection failed');
+        });
+
+        IoT.socket.on('reconnect_failed', function()
+        {
+            console.log('Reconnection failed');
+
+            if (cb)
+                cb('Reconnection failed');
         });
 
         IoT.socket.on("client-disconnected", function(data)
         {
-            console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! CLIENT DISCONNECT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            IoT.handleDisconnect(true);
+            IoT.callLifecycleCallback("disconnect", true);
         });
 
         IoT.socket.on("disconnect", function()
         {
-            IoT.handleDisconnect(false);
+            IoT.callLifecycleCallback("disconnect", false);
         });
 
         IoT.socket.on("progress", function(data)
@@ -90,14 +135,14 @@ IoT.factory('IoTFactory', function(constant)
         {
             IoT.clientMessages++;
 
-            IoT.handleDataUpdate(msg, IoT.clientMessages);
+            IoT.callLifecycleCallback("dataupdate", msg, IoT.clientMessages);
         });
 
         IoT.socket.emit('ui:get-socket-info', {}, function(err, resp)
         {
             if (err)
             {
-                return IoT.handleSocketInfo(err);
+                return IoT.callLifecycleCallback("socketinfo", err);
             }
             else
             {
@@ -105,7 +150,7 @@ IoT.factory('IoTFactory', function(constant)
                 IoT.connectedAt = moment(new Date(resp.connected_at)).format("DD.MM. HH:mm:ss").toString();
             }
 
-            return IoT.handleSocketInfo(null, IoT.clientName, IoT.connectedAt);
+            return IoT.callLifecycleCallback("socketinfo", null, IoT.clientName, IoT.connectedAt);
         });
     };
 

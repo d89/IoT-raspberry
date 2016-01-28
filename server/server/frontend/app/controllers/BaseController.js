@@ -48,48 +48,43 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
     $scope.onSocketInfo = function(err, clientName, connectedAt)
     {
-        if (!err)
+        if (err)
         {
-            $scope.clientName = clientName;
-            $scope.connectedAt = connectedAt;
+            IoTFactory.callLifecycleCallback("disconnect", true);
+            return;
         }
-        else
-        {
-            //TODO
-        }
+
+        $scope.clientName = clientName;
+        $scope.connectedAt = connectedAt;
     };
 
     $scope.onDataUpdate = function(message, messageCount)
     {
-        //console.log("new message", message);
         $scope.clientMessages = messageCount;
-
-        if ($scope.dataUpdateCallback) //TODO
-        {
-            $scope.dataUpdateCallback(message, messageCount);
-        }
-
         $scope.$apply();
     };
 
     //-----------------------------------------------------
 
-    $scope.registerDataUpdateHandlerSource = function(cb)
-    {
-        $scope.dataUpdateCallback = cb;
-    };
-
     $scope.getCount = function()
     {
-        IoTFactory.getCount(function(count)
+        IoTFactory.getCount(function(err, count)
         {
+            if (err)
+            {
+                IoTFactory.callLifecycleCallback("disconnect", false);
+                return;
+            }
+
             $scope.count = count;
             $scope.$apply();
         });
     };
 
-    $scope.connect = function(reconnect, onConnected)
+    $scope.connect = function(reconnect, connectCallback)
     {
+        console.log("connect in base");
+
         if (reconnect)
         {
             console.log("RESETTING client message count");
@@ -107,21 +102,33 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
             {
                 console.log("do not reconnect, connection already established!");
 
-                if (onConnected)
-                    return onConnected();
+                if (connectCallback)
+                    return connectCallback();
 
                 return;
             }
         }
 
-        //TODO refactor me
-        IoTFactory.registerDisconnectHandler($scope.onDisconnect);
-        IoTFactory.registerSocketInfoHandler($scope.onSocketInfo);
-        IoTFactory.registerDataUpdateHandler($scope.onDataUpdate);
+        IoTFactory.resetLifecycleCallbacks();
+        IoTFactory.registerLifecycleCallback("disconnect", $scope.onDisconnect);
+        IoTFactory.registerLifecycleCallback("socketinfo", $scope.onSocketInfo);
+        IoTFactory.registerLifecycleCallback("dataupdate", $scope.onDataUpdate);
 
-        IoTFactory.connectToDevice($routeParams.client_id, onConnected);
+        IoTFactory.connectToDevice($routeParams.client_id, function(err, isConnected)
+        {
+            if (err)
+            {
+                IoTFactory.callLifecycleCallback("disconnect", true);
+                return;
+            }
+            else
+            {
+                $scope.getCount();
+                connectCallback();
+            }
+        });
 
-        $scope.getCount();
+        console.log("connection attempt");
     };
 
     $scope.domReady = function()
@@ -129,6 +136,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         angular.element(document).ready(function ()
         {
             Styles.init();
+            Styles.changePage();
         });
     };
 });

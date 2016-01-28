@@ -224,7 +224,7 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         $("[data-chart-type='" + type + "'] .block-opt-refresh").removeClass("block-opt-refresh");
 
         var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-        var isSmall = windowWidth < 500;
+        var isSmall = windowWidth < 700;
         var chartData = $scope.generateInitialChartData(labels, data)
         var ctx = container[0].getContext("2d");
 
@@ -238,6 +238,8 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             maintainAspectRatio: false,
             responsive: true,
             showTooltips: isSmall ? false : true,
+            //because http://stackoverflow.com/questions/26498171/how-do-i-prevent-the-scale-labels-from-being-cut-off-in-chartjs
+            scaleLabel: "<%= ' ' + value%>"
         };
 
         if (isSmall) {

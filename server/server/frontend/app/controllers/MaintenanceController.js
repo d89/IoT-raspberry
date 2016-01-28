@@ -106,7 +106,6 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
         $rootScope.mainHeadline = "IoT Portal: Maintenance";
         $rootScope.subHeadline = "See Recent Activities And Logs";
 
-        //TODO what if connection is not possible?
         $scope.connect(false, function()
         {
             $scope.getMaintenanceInfo();

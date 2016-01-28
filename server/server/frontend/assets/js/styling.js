@@ -1185,6 +1185,24 @@ var Styles = function() {
     };
 
     return {
+
+        changePage: function()
+        {
+            Styles.layout('sidebar_close_on_small');
+            Styles.scrollToContentOnMobile();
+        },
+
+        scrollToContentOnMobile: function()
+        {
+            var $windowW = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+            if ($windowW >= 991 || $("#templateContent").length === 0) return;
+
+            $('html, body').animate({
+                scrollTop: $("#templateContent").offset().top - 50
+            }, 500);
+        },
+
         init: function($func) {
 
             if (OneUI.initialized)
