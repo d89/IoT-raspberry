@@ -2,7 +2,6 @@
   "name": "iot-server",
   "description": "IoT Server backend",
   "main": "index.js",
-  "directory": "frontend",
   "authors": [
     "David Mueller"
   ],

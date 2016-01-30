@@ -4,7 +4,6 @@
  *  Description: UI Framework Custom Functionality (available to all pages)
  *
  */
-
 var Styles = function() {
     // Helper variables - set in uiInit()
     var $lHtml, $lBody, $lPage, $lSidebar, $lSidebarScroll, $lSideOverlay, $lSideOverlayScroll, $lHeader, $lMain, $lFooter;
@@ -1182,6 +1181,10 @@ var Styles = function() {
     };
 
     return {
+        clickNavLink: function()
+        {
+            Styles.layout('sidebar_close_on_small');
+        },
 
         changePage: function()
         {

@@ -295,7 +295,9 @@ function getClientSocketByUiSocket(uiSocket)
 
 app.use(basicAuth(config.httpUser, config.httpPass));
 
-app.use(express.static('dist'));
+app.use(express.static('dist', {
+    index: "templates/index.html"
+}));
 
 app.get('/clients/get', function(req, res)
 {

@@ -3,16 +3,20 @@ var cssnano = require('gulp-cssnano');
 var concat = require('gulp-concat');
 var sourcemaps = require('gulp-sourcemaps');
 var uglify = require('gulp-uglify');
-var del = require('del');
+var clean = require('gulp-clean');
 var browserSync = require('browser-sync');
 var reload =  browserSync.reload;
+var config = require('./config');
+var gutil = require('gulp-util');
+var runSequence = require('gulp-run-sequence');
 
 var DIST_DIR = './dist';
 
 //sync
 gulp.task('clean', function(cb)
 {
-    del([DIST_DIR], cb);
+    gutil.log("started clean procedure for " + DIST_DIR);
+    return gulp.src(DIST_DIR).pipe(clean());
 });
 
 gulp.task('css', function ()
@@ -20,12 +24,14 @@ gulp.task('css', function ()
     return gulp.src
     ([
         './frontend/bower_components/bootstrap/dist/css/bootstrap.min.css',
-        './frontend/assets/css/*.css'
+        './frontend/css/*.css'
     ])
     .pipe(concat("style.css"))
+    /*
     .pipe(sourcemaps.init())
     .pipe(cssnano())
     .pipe(sourcemaps.write('.'))
+    */
     .pipe(gulp.dest(DIST_DIR + '/css'));
 });
 
@@ -56,25 +62,13 @@ gulp.task('js-libs', function ()
     .pipe(gulp.dest(DIST_DIR + '/js'));
 });
 
-gulp.task('js-style', function()
-{
-    return gulp.src
-    ([
-        './frontend/assets/js/styling.js'
-    ])
-    .pipe(concat("style.js"))
-    .pipe(sourcemaps.init())
-    .pipe(uglify({mangle: false}))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(DIST_DIR + '/js'));
-});
-
 gulp.task('js-app', function()
 {
     return gulp.src
     ([
-        "./frontend/app/modules/app.js",
-        "./frontend/app/**/*.js"
+        './frontend/js/frontend/frontend.js',
+        "./frontend/js/modules/app.js",
+        "./frontend/js/**/*.js"
     ])
     .pipe(concat("app.js"))
     .pipe(sourcemaps.init())
@@ -85,39 +79,62 @@ gulp.task('js-app', function()
 
 gulp.task('move', function()
 {
-    gulp.src
-    ([
-        './frontend/assets/fonts/*.*',
-    ], { base: './frontend/assets' })
-    .pipe(gulp.dest(DIST_DIR));
+    gutil.log("started moving");
 
-    gulp.src
+    return gulp.src
     ([
-        './frontend/index.html',
-        './frontend/assets/img/**/*.*',
-        './frontend/templates/**/*.*'
+        './frontend/assets/**/*.*',
+        './frontend/templates/**/*.*',
     ], { base: './frontend' })
     .pipe(gulp.dest(DIST_DIR));
 });
 
 gulp.task('browser-sync', function()
 {
+    gutil.log("Starting browser sync in SSL mode");
+
+    var privateKey = config.sslPrivateKeyPath;
+    var certificate = config.sslCertificate;
+    var ca = config.sslCa;
+    var ssl_object = {
+        key: privateKey,
+        cert: certificate,
+        ca: [ ca ]
+    };
+
     browserSync.init(null,
     {
         port: 7777,
-        proxy: "https://d1303.de:3000"
+        proxy: {
+            target: "https://d1303.de:3000",
+            ws: true
+        },
+        https: ssl_object
     });
 });
 
 gulp.task('watch', ['browser-sync'], function()
 {
-    /*
-    gulp.watch("./frontend/app/*.js", ['js-app', reload]);
-    gulp.watch("./frontend/assets/js/styling.js", ['js-style', reload]);
-    //gulp.watch("./frontend/assets/*.js", ['js-style', reload]);
-    */
+    //watch static assets
+    gulp.watch([
+        "./frontend/assets/**/*.*",
+        "./frontend/templates/**/*.*"
+    ], ['default', reload]);
 
-    gulp.watch("./**/*.*", ['default', reload]);
+    //watch css
+    gulp.watch([
+        './frontend/css/*.css'
+    ], ['default', reload]);
+
+    //watch js
+    gulp.watch([
+        "./frontend/js/**/*.js"
+    ], ['default', reload]);
 });
 
-gulp.task('default', ['clean', 'move', 'css', 'js-style', 'js-libs', 'js-app']);
+gulp.task('default', function(cb)
+{
+    //let clean and move run in sequence. The others run in parallel
+    runSequence('clean', 'move', ['css', 'js-libs', 'js-app'], cb);
+});
+

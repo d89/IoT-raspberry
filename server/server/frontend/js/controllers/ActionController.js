@@ -126,6 +126,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         }
     };
 
+
     //-----------------------------------------------------
 
     $scope.init = function()
