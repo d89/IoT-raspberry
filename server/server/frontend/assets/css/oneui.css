@@ -11194,3 +11194,21 @@ div.tagsinput span.tag a:hover {
 #stream {
   width: 100%;
 }
+
+.chart-holder {
+  height: 325px;
+}
+
+@media screen and (max-width: 991px) {
+  .chart-holder {
+    height: 170px;
+  }
+}
+
+
+@media screen and (max-width: 500px) {
+  .chart-details {
+    display: none;
+  }
+}
+

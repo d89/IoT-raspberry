@@ -295,7 +295,7 @@ function getClientSocketByUiSocket(uiSocket)
 
 app.use(basicAuth(config.httpUser, config.httpPass));
 
-app.use(express.static('frontend'));
+app.use(express.static('dist'));
 
 app.get('/clients/get', function(req, res)
 {

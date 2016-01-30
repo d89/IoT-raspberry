@@ -156,6 +156,18 @@ exports.aggregate = function(start, end, types, client_id, skipCache, cb)
     }
 };
 
+exports.dateDiff = function(from, to)
+{
+    from = moment(from);
+    to = moment(to);
+
+    var diffToStart = to.diff(from, "seconds");
+
+    //logger.info("diff to start from " + from.format("HH:mm:ss") + " to " + to.format("HH:mm:ss") + " : ", diffToStart)
+
+    return diffToStart;
+};
+
 exports.aggregation = function(start, end, interval, types, client_id, skipCache, progressCb, cb)
 {
     exports.setProgressNotifier(progressCb);
@@ -171,6 +183,15 @@ exports.aggregation = function(start, end, interval, types, client_id, skipCache
         var startDate = moment(start).toDate();
 
         start.add(interval[0], interval[1]);
+
+        //if the start point of the timespan is less than 15 seconds in the past, we
+        //skip it. It is very likely that there is no datapoint yet
+        var diff = exports.dateDiff(startDate, moment());
+
+        if (diff < 15)
+        {
+            continue;
+        }
 
         types.forEach(function(type)
         {

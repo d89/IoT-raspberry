@@ -5,8 +5,6 @@
  *
  */
 
-//alert("loading styles");
-
 var Styles = function() {
     // Helper variables - set in uiInit()
     var $lHtml, $lBody, $lPage, $lSidebar, $lSidebarScroll, $lSideOverlay, $lSideOverlayScroll, $lHeader, $lMain, $lFooter;
@@ -210,7 +208,6 @@ var Styles = function() {
     // Layout API
     var uiLayoutApi = function($mode) {
         var $windowW = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-
         // Mode selection
         switch($mode) {
             case 'sidebar_pos_toggle':

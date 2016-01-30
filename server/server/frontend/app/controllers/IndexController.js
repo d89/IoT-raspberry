@@ -16,6 +16,16 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.clients = [];
 
+    $scope.randImage = (function()
+    {
+        var randomIntFromInterval = function(min, max)
+        {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        };
+
+        return randomIntFromInterval(1, 27);
+    })();
+
     $scope.getClients = function(cb)
     {
         $.get("/clients/get", function(clients)

@@ -1,5 +1,34 @@
 var logger = require('../logger');
 
+exports.transformLightValue = function(lightValue)
+{
+    //value is always between ~oldMaxLight (super light) and 255 (complete darkness)
+    var oldMaxLight = 170;
+
+    //value is now between
+    // 0 -> super light
+    // (255 - oldMaxLight) -> complete darkness
+    lightValue = lightValue - oldMaxLight;
+
+    //no negative numbers in case of "too light"
+    if (lightValue < 0)
+    {
+        lightValue = 0;
+    }
+
+    //invert:
+    //value is now between
+    // (255 - oldMaxLight) -> complete darkness
+    // 255 -> super light
+    lightValue = 255 - lightValue;
+
+    lightValue = lightValue - oldMaxLight;
+
+    lightValue = 100 * (lightValue / (255 - oldMaxLight));
+
+    return lightValue;
+};
+
 exports.watch = function(ondata, onclose)
 {
     logger.info("watching pcf8591");
@@ -17,6 +46,14 @@ exports.watch = function(ondata, onclose)
         try
         {
             data = JSON.parse("" + data);
+
+            //logger.info("light value before: " + data.light);
+
+            data.light = exports.transformLightValue(parseFloat(data.light, 10));
+
+            //logger.info("light value after: " + data.light);
+            //logger.info("---------------------------------------------------");
+
             ondata(data);
         }
         catch (err)
