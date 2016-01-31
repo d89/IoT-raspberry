@@ -2,15 +2,7 @@
   "short_name": "IoT Portal",
   "name": "IoT Portal",
   "display": "fullscreen",
-  "manifest_version": 2,
-  "gcm_sender_id": "171978904881",
-  "display": "standalone",
-  "gcm_user_visible_only": true,
-  "permissions": [
-    "gcm"
-  ],
-  "start_url": "/#index",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "icons": [
     {
       "src": "/assets/img/favicons/touchicon.png",

@@ -289,6 +289,72 @@ exports.logEntry = function(loglevel, message)
     });
 };
 
+exports.savePushToken = function(token, client, cb)
+{
+    if (!token)
+    {
+        return cb("no token");
+    }
+
+    var coll = db.collection('pushtokens');
+
+    coll.createIndex( { token: 1 }, { unique: true }, function(err, res)
+    {
+        if (err)
+            return cb("pushtoken creating unique index" + err);
+
+        logger.info("created unique index");
+
+        client = "TODO"; //TODO
+
+        var entry = {
+            token: token,
+            created: (new Date),
+            client: client
+        };
+
+        coll.insertOne(entry, function(err, result)
+        {
+            if (err && err.toString().indexOf("duplicate key") !== -1)
+            {
+                return cb(null, "token already present");
+            }
+
+            return cb(err, result);
+        });
+    });
+};
+
+exports.getPushTokens = function(client, cb)
+{
+    var coll = db.collection('pushtokens');
+
+    coll.find({ client: client }).toArray(function(err, docs)
+    {
+        return cb(err, docs);
+    });
+};
+
+exports.removePushTokens = function(tokens, cb)
+{
+    var coll = db.collection('pushtokens');
+    coll.deleteMany
+    ({
+        token:
+        {
+            '$in': tokens
+        }
+    }, function(err, res)
+    {
+        if (err)
+        {
+            return cb("delete token error: " + err);
+        }
+
+        return cb(null, "deleted " + res.result.n + " push tokens");
+    });
+};
+
 exports.fullAggregation = function(cb)
 {
     //--------------------------------------------------

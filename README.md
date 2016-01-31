@@ -1,7 +1,21 @@
 # IoT-raspberry
 Home control client server unit
 
-## A little setup guide
+## Server-Setup
+
+```
+npm install -g bower gulp forever
+npm install
+bower install
+gulp (default task builds the "dist" folder from the "frontend" folder - this is where the frontend is served from)
+node index.js (or use forever)
+```
+
+* Mongo-DB is required (default port)
+* Config needs to be adjusted (in config.js) - for GCM Push token and SSL certs.
+* Server starts on port 3000
+
+## A little general guide for the CLIENT-part (on the raspberry)
 
 ### SSH aktivieren
 

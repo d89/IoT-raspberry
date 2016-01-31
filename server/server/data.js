@@ -345,6 +345,25 @@ app.use(express.static('dist', {
     index: "templates/index.html"
 }));
 
+app.post('/pushtoken', function(req, res)
+{
+    var token = req.body.token;
+
+    storage.savePushToken(token, false, function(err, resp)
+    {
+        if (err)
+        {
+            logger.error("could not store push token", err);
+        }
+        else
+        {
+            logger.info("saved push tokens: " + resp);
+        }
+
+        return res.end();
+    });
+});
+
 app.post('/remotecommands/:command/:param', function(req, res)
 {
     var command = req.params.command;
