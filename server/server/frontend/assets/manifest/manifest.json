@@ -1,0 +1,14 @@
+{
+  "short_name": "IoT Portal",
+  "name": "IoT Portal",
+  "display": "fullscreen",
+  "manifest_version": 2,
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/assets/img/favicons/touchicon.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    }
+  ]
+}

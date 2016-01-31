@@ -7,6 +7,7 @@ var logger = require("./logger");
 var fs = require('fs');
 var express = require('express')
 var basicAuth = require('basic-auth-connect');
+var bodyParser = require('body-parser')
 var app = express();
 var http = use_ssl ? require('https') : require('http');
 var sio = require('socket.io');
@@ -293,11 +294,101 @@ function getClientSocketByUiSocket(uiSocket)
     return responseClientSocket;
 }
 
-app.use(basicAuth(config.httpUser, config.httpPass));
+function getClientSocketByClientName(clientName)
+{
+    if (!clientName)
+    {
+        return false;
+    }
+
+    var responseClientSocket = null;
+
+    io.sockets.sockets.forEach(function(s)
+    {
+        if (getSocketType(s) === "client" && getClientName(s) === clientName)
+        {
+            logger.info(`found listening client socket for name ${clientName}: ${s.id}!`);
+            responseClientSocket = s;
+            return;
+        }
+    });
+
+    return responseClientSocket;
+}
+
+//-----------------------------------------------------------------
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(function(req, res, next) {
+
+    if (req.url.indexOf("worker.js") !== -1)
+    {
+        res.set('Service-Worker-Allowed', '/');
+    }
+
+    if (req.url.indexOf("manifest.json") !== -1)
+    {
+        res.set('Content-Type', 'application/manifest+json');
+    }
+
+    //TODO
+    return next();
+
+    false && basicAuth(function(user, pass) {
+        return true || req.method === "POST" || (user === config.httpUser && pass === config.httpPass);
+    })(req, res, next);
+});
 
 app.use(express.static('dist', {
     index: "templates/index.html"
 }));
+
+app.post('/remotecommands/:command/:param', function(req, res)
+{
+    var command = req.params.command;
+    var clientSocket = getClientSocketByClientName(req.body.client);
+    var param = req.params.param;
+
+    if (!command || !clientSocket)
+    {
+        logger.error("invalid remotecommand for " + command, req.body);
+        return res.end("invalid");
+    }
+
+    if (command === "rcswitch")
+    {
+        logger.info(`Valid request "${command}" for client "${req.body.client}" - ID = ${clientSocket.id}`, "param:", param);
+
+        var request = {
+            type: "switchrc",
+            data: {
+                switchNumber: 1,
+                onoff: (parseInt(param, 10) ? 1 : 0)
+            }
+        };
+
+        clientSocket.emit("actionrequest", request);
+
+        return res.end("command succeeded");
+    }
+
+    if (command === "restartshutdown")
+    {
+        logger.info(`Valid request "${command}" for client "${req.body.client}" - ID = ${clientSocket.id}`, "param:", param);
+
+        var request = {
+            mode: param === "shutdown" ? "shutdown" : "restart"
+        };
+
+        clientSocket.emit("maintenance", request);
+
+        return res.end("command succeeded");
+    }
+
+    return res.end("invalid command type");
+});
 
 app.get('/clients/get', function(req, res)
 {
@@ -319,6 +410,8 @@ app.get('/clients/get', function(req, res)
 	
 	res.end(JSON.stringify(clients));
 });
+
+//-----------------------------------------------------------------
 
 function progressFunc(socket)
 {

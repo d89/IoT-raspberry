@@ -1212,6 +1212,19 @@ var Styles = function() {
 
             OneUI.initialized = true;
 
+            window.addEventListener('load', function()
+            {
+                navigator.serviceWorker.register('/assets/serviceworker/worker.js', { scope: './' })
+                    .then(function(r) {
+                        //alert("reg!");
+                        console.log('registered service worker', r);
+                    })
+                    .catch(function(whut) {
+                        console.error('uh oh... ');
+                        console.error(whut);
+                    });
+            });
+
             switch ($func) {
                 case 'uiInit':
                     uiInit();
