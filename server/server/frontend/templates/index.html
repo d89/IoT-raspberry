@@ -129,7 +129,7 @@
             <!-- END Page Header -->
 
             <!-- Stats -->
-            <div class="content bg-white border-b" ng-hide="hideStats">
+            <div class="content bg-white border-b" ng-hide="hideStats" ng-cloak>
                 <div class="row items-push text-uppercase">
                     <div class="col-xs-6 col-sm-3">
                         <div class="font-w700 text-gray-darker animated fadeIn">Datapoints in last 10min</div>
@@ -188,7 +188,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <a class="btn btn-sm btn-primary" ng-click="dismissModal()"><i class="fa fa-check"></i> Ok</a>
+                        <a class="btn btn-sm btn-primary" ng-click="dismissModal()"><i class="si si-logout"></i> Go to Dashboard</a>
+                        <a class="btn btn-sm btn-primary" ng-click="refresh()"><i class="si si-login"></i> Try Reconnecting</a>
                     </div>
                 </div>
             </div>

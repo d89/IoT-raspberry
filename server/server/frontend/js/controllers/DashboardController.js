@@ -1,4 +1,4 @@
-IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, IoTFactory)
+IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, SocketFactory)
 {
     //-----------------------------------------------------
 
@@ -60,7 +60,7 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 
     $scope.renderInitialChart = function(type, cb)
     {
-        IoTFactory.socket.emit("ui:full", { type: type }, function(dps)
+        SocketFactory.socket.emit("ui:full", { type: type }, function(dps)
         {
             var labels = [];
             var data = [];
@@ -202,7 +202,7 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 
         $scope.connect(false, function()
         {
-            IoTFactory.registerLifecycleCallback("dataupdate", $scope.receivedData);
+            SocketFactory.registerLifecycleCallback("dataupdate", $scope.receivedData);
         });
     };
 

@@ -11,36 +11,15 @@ MongoClient.connect('mongodb://localhost/IoT', function(err, database)
     var storage = require("./storage");
     storage.setDatabase(database);
 
-    require("./maintenance").info(function(err, msg)
+    require("./storage").dailySummary("Davids IoT-Raspberry", function(res, err)
     {
-        console.log(err, msg);
+        console.log(res, err);
     });
 
     /*
-    var aggregationpoints = database.collection('aggregationpoints');
-
-    var start = moment().subtract(2, "day");
-    var end = moment().subtract(1, "day");
-
-    aggregationpoints.aggregate
-    ([
-        {
-            $match: {
-                from: { $gte: start.toDate() },
-                to: { $lte: end.toDate() },
-                client_id: "Davids IoT-Raspberry"
-            }
-        },
-        {
-            $group:
-            {
-                _id: '$type',
-                avg: {$avg: '$avg'}
-            }
-        }
-    ]).toArray(function(err, docs)
+    require("./maintenance").info(function(err, msg)
     {
-        console.log("aggregation for period " + start + " to " + end, docs)
+        console.log(err, msg);
     });
     */
 });

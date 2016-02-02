@@ -1,4 +1,4 @@
-IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, IoTFactory)
+IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, SocketFactory)
 {
     //-----------------------------------------------------
 
@@ -173,7 +173,7 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             }
         }
 
-        IoTFactory.socket.emit("ui:aggregation", query, function(dps)
+        SocketFactory.socket.emit("ui:aggregation", query, function(dps)
         {
             console.log("got it all", dps);
 

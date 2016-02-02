@@ -3,7 +3,7 @@
 const server_url = 'https://d1303.de:3000';
 const client_name = "Davids IoT-Raspberry";
 var io = require('socket.io-client');
-var socket = io.connect(server_url, {query: 'mode=client&connected_at=' + (new Date) + '&client_name=' + client_name});
+var socket = getConnectionHandle();
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var fs = require('fs');
@@ -124,4 +124,16 @@ socket.on('disconnect', function()
 {
 	logger.info(`disconnected from ${server_url}`);
     cam.stopStreaming();
+
+    //if we receive a real "disconnect" event, the reconnection is not automatically being established again
+    setTimeout(function()
+    {
+        logger.info(`establishing reconnection`);
+        socket = getConnectionHandle();
+    }, 2000);
 });
+
+function getConnectionHandle()
+{
+    return io.connect(server_url, {query: 'mode=client&connected_at=' + (new Date) + '&client_name=' + client_name});
+}

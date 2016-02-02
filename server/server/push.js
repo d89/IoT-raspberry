@@ -2,34 +2,70 @@ var storage = require('./storage');
 var gcm = require('node-gcm');
 var config = require('./config');
 var logger = require('./logger');
+var async = require("async");
 
-exports.push = function()
+exports.pushAll = function(cbFinished)
 {
-    storage.getPushTokens("TODO", function(err, docs)
+    var coll = storage.getDatabase().collection('pushtokens');
+
+    coll.distinct("client", function(err, docs)
     {
+        if (err)
+        {
+            return cbFinished("Error retrieving data: " + err);
+        }
+
+        logger.info("distinct push notification receivers", docs);
+
+        var queries = [];
+
+        docs.forEach(function(clientName)
+        {
+            queries.push(function(cb)
+            {
+                exports.push(clientName, cb);
+            });
+        });
+
+        async.series(queries, function(err, data)
+        {
+            cbFinished(err, data);
+        });
+    });
+};
+
+exports.push = function(clientName, cb)
+{
+    logger.info("pushing to " + clientName);
+    storage.getPushTokens(clientName, function(err, docs)
+    {
+        if (err)
+            return cb(err);
+
         var pushIds = [];
         docs.forEach(function(d)
         {
             pushIds.push(d.token);
         });
 
-        logger.info("pushing to", pushIds);
+        logger.info("pushing to ids:", pushIds);
 
         exports.pushMessage(config.gcmApiKey, pushIds, function(err, resp)
         {
             if (err)
             {
                 logger.error("push send error", err);
+                return cb(err);
             }
             else
             {
-                exports.processGcmResponse(pushIds, resp);
+                exports.processGcmResponse(pushIds, resp, cb);
             }
         });
     });
 };
 
-exports.processGcmResponse = function(pushIds, resp)
+exports.processGcmResponse = function(pushIds, resp, cb)
 {
     logger.info("processing GCM response", resp);
     logger.info("GCM successfuly sent push messages: " + resp.success);
@@ -53,10 +89,12 @@ exports.processGcmResponse = function(pushIds, resp)
         if (err)
         {
             logger.error("push token remove error", err);
+            return cb(err);
         }
         else
         {
             logger.info("push tokens removed ", delTokens, resp);
+            return cb("all successful!");
         }
     });
 };

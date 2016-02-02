@@ -266,7 +266,7 @@ function getUiSocketByClientSocket(clientSocket)
 
     io.sockets.sockets.forEach(function(s)
     {
-        if (getSocketType(s) === "ui" && getClientId(s) === clientSocket.id)
+        if (getSocketType(s) === "ui" && getClientId(s) === getClientName(clientSocket))
         {
             responseUiSocket = s;
             return;
@@ -283,7 +283,7 @@ function getClientSocketByUiSocket(uiSocket)
 
     io.sockets.sockets.forEach(function(s)
     {
-        if (getSocketType(s) === "client" && forClient === s.id)
+        if (getSocketType(s) === "client" && forClient === getClientName(s))
         {
             logger.info(`found listening client socket: ${s.id}!`);
             responseClientSocket = s;
@@ -348,8 +348,9 @@ app.use(express.static('dist', {
 app.post('/pushtoken', function(req, res)
 {
     var token = req.body.token;
+    var clientName = req.body.client;
 
-    storage.savePushToken(token, false, function(err, resp)
+    storage.savePushToken(clientName, token, false, function(err, resp)
     {
         if (err)
         {
@@ -361,6 +362,34 @@ app.post('/pushtoken', function(req, res)
         }
 
         return res.end();
+    });
+});
+
+app.post('/push', function(req, res)
+{
+    var clientName = req.body.client;
+    var response = { message: "" };
+
+    storage.dailySummary(clientName, function(err, data)
+    {
+        if (err)
+        {
+            response.message = "Received error aggregating push information";
+            return res.end(JSON.stringify(response));
+        }
+
+        var text = [];
+
+        data.forEach(function(d)
+        {
+            var type = d["_id"];
+            var value = parseFloat(d["avg"]).toFixed(2);
+
+            text.push(type + ": " + value);
+        });
+
+        response.message = "Last 24h overview for " + clientName + ":\n" + text.join(", ");
+        return res.end(JSON.stringify(response));
     });
 });
 
@@ -555,7 +584,6 @@ io.on('connection', function(socket)
         if (!client_socket)
         {
             logger.error("could not execute request, no client waiting.");
-            socket.disconnect();
             return resp("error");
         }
 
@@ -591,7 +619,6 @@ io.on('connection', function(socket)
         if (!client_id)
         {
             logger.error("could not execute request, no client waiting.");
-            socket.disconnect();
             return resp("error");
         }
 
@@ -611,7 +638,6 @@ io.on('connection', function(socket)
         if (!clientSocket)
         {
             logger.error("could not execute request, no client waiting.");
-            socket.disconnect();
             return;
         }
 
@@ -633,7 +659,6 @@ io.on('connection', function(socket)
         if (!client_id)
         {
             logger.error("could not execute request, no client waiting.");
-            socket.disconnect();
             return resp([]);
         }
 
@@ -680,7 +705,6 @@ io.on('connection', function(socket)
         if (!client_id)
         {
             logger.error("could not execute request, no client waiting.");
-            socket.disconnect();
             return resp([]);
         }
 
@@ -698,7 +722,6 @@ io.on('connection', function(socket)
         if (!clientSocket)
         {
             logger.error("could not execute request, no client waiting.");
-            socket.disconnect();
             return;
         }
 
@@ -717,7 +740,6 @@ io.on('connection', function(socket)
         if (!clientSocket)
         {
             logger.error("could not execute request, no client waiting.");
-            socket.disconnect();
             return;
         }
 

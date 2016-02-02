@@ -42,6 +42,37 @@ exports.persistDataPoint = function(type, data, client_id, cb)
     });
 };
 
+exports.dailySummary = function(client_id, cb)
+{
+    var aggregationpoints = db.collection('aggregationpoints');
+
+    var start = moment().subtract(24, 'hours').startOf('hour');
+    var end = moment().startOf('hour');
+
+    aggregationpoints.aggregate
+    ([
+        {
+            $match: {
+                from: { $gte: start.toDate() },
+                to: { $lte: end.toDate() },
+                client_id: client_id
+            }
+        },
+        {
+            $group:
+            {
+                _id: '$type',
+                avg: {$avg: '$avg'}
+            }
+        }
+    ]).toArray(function(err, docs)
+    {
+        logger.info("cached aggregation for period " + start + " to " + end + " with " + docs.length + " docs");
+
+        return cb(err, docs);
+    });
+};
+
 exports.getDataPoints = function(type, client_id, cb)
 {
     var coll = db.collection('datapoints');
@@ -289,7 +320,7 @@ exports.logEntry = function(loglevel, message)
     });
 };
 
-exports.savePushToken = function(token, client, cb)
+exports.savePushToken = function(clientName, token, client, cb)
 {
     if (!token)
     {
@@ -305,12 +336,10 @@ exports.savePushToken = function(token, client, cb)
 
         logger.info("created unique index");
 
-        client = "TODO"; //TODO
-
         var entry = {
             token: token,
             created: (new Date),
-            client: client
+            client: clientName
         };
 
         coll.insertOne(entry, function(err, result)

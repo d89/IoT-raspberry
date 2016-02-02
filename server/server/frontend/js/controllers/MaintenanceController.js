@@ -1,4 +1,4 @@
-IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, IoTFactory)
+IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, SocketFactory)
 {
     //-----------------------------------------------------
 
@@ -40,7 +40,7 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             mode: "restart"
         };
 
-        IoTFactory.socket.emit("ui:maintenance", restart);
+        SocketFactory.socket.emit("ui:maintenance", restart);
     };
 
     $scope.shutdown = function()
@@ -51,14 +51,14 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             mode: "shutdown"
         };
 
-        IoTFactory.socket.emit("ui:maintenance", shutdown);
+        SocketFactory.socket.emit("ui:maintenance", shutdown);
     };
 
     $scope.getMaintenanceInfo = function()
     {
         console.log("fetching maintenance info");
 
-        IoTFactory.socket.emit('ui:maintenance-info', {}, function(err, infotext, syslogentries)
+        SocketFactory.socket.emit('ui:maintenance-info', {}, function(err, infotext, syslogentries)
         {
             if (!err)
             {
@@ -85,11 +85,13 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
 
                 $scope.syslogentries = syslogentries;
 
+                $scope.$apply();
+
                 //loaded
                 setTimeout(function()
                 {
                     $(".block-opt-refresh").removeClass("block-opt-refresh");
-                }, 1500);
+                }, 300);
 
             }
             else

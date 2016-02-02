@@ -1,25 +1,64 @@
-IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, IoTFactory)
+IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, SocketFactory, PushFactory)
 {
-    $scope.errorMessageQuery = function()
+    $scope.resumeCheck = function()
     {
-        if ($routeParams.error_message)
+        var lastTime = (new Date()).getTime();
+
+        setInterval(function()
         {
-            var err = $routeParams.error_message;
-            var errMessage = "Unknown Error";
+            var currentTime = (new Date()).getTime();
+            if (currentTime > (lastTime + 2000 * 2)) {  // ignore small delays
+                // Probably just woke up!
+                console.log("########################## " + new Date() + " Was dead, alive now!");
 
-            if (err === "disconnect-server")
-            {
-                errMessage = "Disconnected from server";
+                //immediately reload before the error becomes visible
+                if (!$scope.errorVisible())
+                {
+                    location.reload();
+                }
             }
-            else if (err === "disconnect-client")
+            else
             {
-                errMessage = "Disconnected from IoT client";
+                console.log("########################## " + new Date() + " Refresh");
             }
 
-            $rootScope.errMessage = errMessage;
+            lastTime = currentTime;
+        }, 2000);
+    };
 
-            jQuery('#modal-error').modal('toggle');
+    $scope.errorMessageQuery = function(err)
+    {
+        //error message already shown
+        if ($scope.errorVisible())
+        {
+            return;
         }
+
+        var errMessage = "Unknown Error";
+
+        if (err === "disconnect-server")
+        {
+            errMessage = "Disconnected - the client '" + $routeParams.client_id + "' is not known.";
+        }
+        else if (err === "disconnect-client")
+        {
+            errMessage = "Disconnected - the client '" + $routeParams.client_id + "' just went away.";
+        }
+
+        $scope.errMessage = errMessage;
+        $scope.$apply();
+
+        jQuery('#modal-error').modal('toggle');
+    };
+
+    $scope.errorVisible = function()
+    {
+        return $scope.errMessage || jQuery('#modal-error').is(":visible");
+    };
+
+    $scope.refresh = function()
+    {
+        location.reload();
     };
 
     $scope.dismissModal = function()
@@ -37,25 +76,25 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
     $scope.onDisconnect = function(isClientDisconnect)
     {
         console.log("handeling disconnection");
-
         var err = isClientDisconnect ? "disconnect-client" : "disconnect-server";
-
-        $rootScope.$apply(function()
-        {
-            var loc = $location.path('/error/' + err);
-        });
+        $scope.errorMessageQuery(err);
     };
 
     $scope.onSocketInfo = function(err, clientName, connectedAt)
     {
         if (err)
         {
-            IoTFactory.callLifecycleCallback("disconnect", true);
+            console.log("DISCONNECT on socket info client disconnect!");
+            SocketFactory.callLifecycleCallback("disconnect", true);
             return;
         }
 
+        //we know that we have a working connection here
+        PushFactory.registerPush(clientName);
+
         $scope.clientName = clientName;
         $scope.connectedAt = connectedAt;
+        $scope.$apply();
     };
 
     $scope.onDataUpdate = function(message, messageCount)
@@ -68,11 +107,12 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
     $scope.getCount = function()
     {
-        IoTFactory.getCount(function(err, count)
+        SocketFactory.getCount(function(err, count)
         {
             if (err)
             {
-                IoTFactory.callLifecycleCallback("disconnect", false);
+                console.log("DISCONNECT get count server disconnect!");
+                SocketFactory.callLifecycleCallback("disconnect", false);
                 return;
             }
 
@@ -89,10 +129,10 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         {
             console.log("RESETTING client message count");
 
-            IoTFactory.clientMessages = 0;
+            SocketFactory.clientMessages = 0;
         }
 
-        if (IoTFactory.isConnected())
+        if (SocketFactory.isConnected())
         {
             if (reconnect)
             {
@@ -109,16 +149,17 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
             }
         }
 
-        IoTFactory.resetLifecycleCallbacks();
-        IoTFactory.registerLifecycleCallback("disconnect", $scope.onDisconnect);
-        IoTFactory.registerLifecycleCallback("socketinfo", $scope.onSocketInfo);
-        IoTFactory.registerLifecycleCallback("dataupdate", $scope.onDataUpdate);
+        SocketFactory.resetLifecycleCallbacks();
+        SocketFactory.registerLifecycleCallback("disconnect", $scope.onDisconnect);
+        SocketFactory.registerLifecycleCallback("socketinfo", $scope.onSocketInfo);
+        SocketFactory.registerLifecycleCallback("dataupdate", $scope.onDataUpdate);
 
-        IoTFactory.connectToDevice($routeParams.client_id, function(err, isConnected)
+        SocketFactory.connectToDevice($routeParams.client_id, function(err, isConnected)
         {
             if (err)
             {
-                IoTFactory.callLifecycleCallback("disconnect", true);
+                console.log("DISCONNECT (re)connection disconnect!");
+                SocketFactory.callLifecycleCallback("disconnect", true);
                 return;
             }
             else
@@ -136,6 +177,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         angular.element(document).ready(function ()
         {
             Styles.init();
+            $scope.resumeCheck();
             Styles.changePage();
         });
     };
