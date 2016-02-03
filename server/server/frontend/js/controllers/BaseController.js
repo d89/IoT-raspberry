@@ -19,7 +19,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
             }
             else
             {
-                console.log("########################## " + new Date() + " Refresh");
+                //console.log("########################## " + new Date() + " Refresh");
             }
 
             lastTime = currentTime;
@@ -90,7 +90,10 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         }
 
         //we know that we have a working connection here
-        PushFactory.registerPush(clientName);
+        PushFactory.registerPush(clientName, function successfulyRegistered()
+        {
+            navigator.serviceWorker.controller.postMessage({'clientName': clientName});
+        });
 
         $scope.clientName = clientName;
         $scope.connectedAt = connectedAt;

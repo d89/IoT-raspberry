@@ -2,7 +2,7 @@ IoT.factory('PushFactory', function(constant)
 {
     var PushFactory = {};
 
-    PushFactory.registerPush = function(clientName)
+    PushFactory.registerPush = function(clientName, successfulyFinished)
     {
         console.log("INIT SERVICE WORKER for push client name " + clientName);
 
@@ -12,7 +12,9 @@ IoT.factory('PushFactory', function(constant)
             return;
         }
 
-        navigator.serviceWorker.register('/assets/serviceworker/worker.js', { scope: './' }).then(function(reg)
+        navigator.serviceWorker.register('/assets/serviceworker/worker.js', {
+            scope: './'
+        }).then(function(reg)
         {
             if (reg.installing) {
                 console.log('INIT SERVICE WORKER  Service worker installing');
@@ -47,6 +49,7 @@ IoT.factory('PushFactory', function(constant)
                     reg.pushManager.getSubscription().then(function(subscription)
                     {
                         if (subscription) {
+                            successfulyFinished();
                             throw new Error("INIT SERVICE WORKER already subscribed to push");
                         }
 
@@ -63,6 +66,7 @@ IoT.factory('PushFactory', function(constant)
                                 client: clientName
                             }).then(function (respText, state, xhr) {
                                 if (state === "success") {
+                                    successfulyFinished();
                                     console.log('INIT SERVICE WORKER registered for push', respText);
                                 }
                                 else {

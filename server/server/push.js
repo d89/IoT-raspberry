@@ -94,7 +94,7 @@ exports.processGcmResponse = function(pushIds, resp, cb)
         else
         {
             logger.info("push tokens removed ", delTokens, resp);
-            return cb("all successful!");
+            return cb(null, "all successful!");
         }
     });
 };

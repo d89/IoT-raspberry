@@ -5,6 +5,7 @@ console.log('SERVICE WORKER Started!', self);
 var ENDPOINT = "https://d1303.de:3000/push";
 var URL_TO_OPEN = "https://d13033.de:3000";
 var PUSH_TAG = 'IoT-push';
+var CLIENT_NAME = '';
 
 self.addEventListener('install', function(event)
 {
@@ -17,9 +18,20 @@ self.addEventListener('activate', function(event)
     console.log('SERVICE WORKER Activated!', event);
 });
 
+self.addEventListener('message', function (evt) {
+    console.log('SERVICE WORKER client name received', evt.data);
+
+    CLIENT_NAME = evt.data.clientName;
+});
+
 self.addEventListener('push', function(event)
 {
-    console.log('SERVICE WORKER Received Push Message!', event, "data", event.data);
+    console.log('SERVICE WORKER Received Push Message!', event, "data", event.data, "for client", CLIENT_NAME);
+
+    if (!CLIENT_NAME)
+    {
+        return console.error("SERVICE WORKER no client name - no fetch");
+    }
 
     // Since this is no payload data with the first version
     // of Push notifications, here we'll grab some data from
@@ -29,9 +41,9 @@ self.addEventListener('push', function(event)
         fetch(ENDPOINT, {
             method: 'post',
             headers: {
-                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
             },
-            body: 'client=Davids IoT-Raspberry' //TODO
+            body: 'client=' + CLIENT_NAME,
         }).then(function(response)
         {
             if (response.status !== 200) {

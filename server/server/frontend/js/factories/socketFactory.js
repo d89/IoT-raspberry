@@ -148,7 +148,7 @@ IoT.factory('SocketFactory', function(constant)
 
         SocketFactory.socket.on("dataupdate", function(msg)
         {
-            console.log(new Date() + " ======================== SOCKET DATA RECEIVED ========================");
+            //console.log(new Date() + " ======================== SOCKET DATA RECEIVED ========================");
             SocketFactory.clientMessages++;
 
             SocketFactory.callLifecycleCallback("dataupdate", msg, SocketFactory.clientMessages);
