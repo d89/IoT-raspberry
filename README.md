@@ -27,6 +27,16 @@ Und auch eine Repartitionierung ist hier möglich, um die SD Karte maximal zu nu
 
 ---
 
+### tmpfs auf Ram legen
+
+Gut für temporäre logfiles, die sonst die SD zu sehr schädigen könnten.
+
+```
+sudo nano /etc/fstab
+tmpfs /tmp tmpfs nodev,nosuid,relatime,size=300M 0 0
+sudo reboot now
+```
+
 ###Wiring Pi Mapping
 
 Wiring Pi ist ein Utility zum einfachen Setzen und Abfragen von Ports. Es ist

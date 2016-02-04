@@ -18,8 +18,8 @@ var logger = new (winston.Logger)
         new (winston.transports.File)
         ({
             filename: '../logs/logfile.log',
-            maxFiles: 3,
-            level: 'warn',
+            maxFiles: 5,
+            level: 'debug',
             maxsize: 1024 * 1024, //1mb
             timestamp: function()
             {

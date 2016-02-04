@@ -17,10 +17,10 @@ var logger = new (winston.Logger)
             }}),
         new (winston.transports.File)
         ({
-            filename: '../logs/logfile.log',
-            maxFiles: 3,
-            level: 'warn',
-            maxsize: 1024 * 1024, //1mb
+            filename: '/tmp/logfile.log',
+            maxFiles: 1,
+            level: 'debug',
+            maxsize: 200 * 1024 * 1024, //1mb
             timestamp: function()
             {
                 return moment().format("DD.MM.YYYY HH:mm:ss");

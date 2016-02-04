@@ -1,31 +1,5 @@
 IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, SocketFactory, PushFactory)
 {
-    $scope.resumeCheck = function()
-    {
-        var lastTime = (new Date()).getTime();
-
-        setInterval(function()
-        {
-            var currentTime = (new Date()).getTime();
-            if (currentTime > (lastTime + 2000 * 2)) {  // ignore small delays
-                // Probably just woke up!
-                console.log("########################## " + new Date() + " Was dead, alive now!");
-
-                //immediately reload before the error becomes visible
-                if (!$scope.errorVisible())
-                {
-                    location.reload();
-                }
-            }
-            else
-            {
-                //console.log("########################## " + new Date() + " Refresh");
-            }
-
-            lastTime = currentTime;
-        }, 2000);
-    };
-
     $scope.errorMessageQuery = function(err)
     {
         //error message already shown
@@ -58,16 +32,21 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
     $scope.refresh = function()
     {
+        $(".modal-footer").hide();
+        $("#error-message").text("Reloading ...");
+
         location.reload();
     };
 
-    $scope.dismissModal = function()
+    $scope.startPageAfterError = function()
     {
-        jQuery('#modal-error').modal('toggle');
+        $(".modal-footer").hide();
+        $("#error-message").text("Forwarding ...");
+        $location.path('/index');
 
         $timeout(function()
         {
-            $location.path('/index');
+            location.reload();
         }, 500);
     };
 
@@ -157,6 +136,27 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         SocketFactory.registerLifecycleCallback("socketinfo", $scope.onSocketInfo);
         SocketFactory.registerLifecycleCallback("dataupdate", $scope.onDataUpdate);
 
+        //reload, when the page regains visibility state and we are on a mobile device
+        //usually, the mobile browser kills the socket connection when it is in the background
+        //and we don't regain access after we are back
+        Styles.registerVisibilityChangeHandler(function(becameVisible, isMobile)
+        {
+            if (!becameVisible && isMobile)
+            {
+                $scope.infoMessage = "Reloading page, please wait ...";
+                $scope.$apply();
+                jQuery('#modal-info').modal('toggle');
+            }
+
+            if (becameVisible && isMobile)
+            {
+                $timeout(function()
+                {
+                    location.reload();
+                }, 1000);
+            }
+        });
+
         SocketFactory.connectToDevice($routeParams.client_id, function(err, isConnected)
         {
             if (err)
@@ -180,7 +180,6 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         angular.element(document).ready(function ()
         {
             Styles.init();
-            $scope.resumeCheck();
             Styles.changePage();
         });
     };

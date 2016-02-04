@@ -1203,6 +1203,19 @@ var Styles = function() {
             }, 500);
         },
 
+        isMobile: function()
+        {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        },
+
+        registerVisibilityChangeHandler: function(onVisibilityChanged)
+        {
+            document.addEventListener('visibilitychange', function()
+            {
+                onVisibilityChanged(!document.hidden, Styles.isMobile());
+            });
+        },
+
         init: function($func) {
 
             if (OneUI.initialized)
