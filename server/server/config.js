@@ -1,8 +1,10 @@
 module.exports = {
-    httpUser: "*******",
-    httpPass: "*******",
-    sslPrivateKeyPath: "/etc/letsencrypt/live/*******/privkey.pem",
-    sslCertificate: "/etc/letsencrypt/live/*******/cert.pem",
-    sslCa: "/etc/letsencrypt/live/*******/chain.pem",
-    gcmApiKey: "YOUR_GCM_KEY_FOR_PUSH"
+    httpUser: "yourUser",
+    httpPass: "yourPass",
+    useSsl: true,
+    port: 3000,
+    sslPrivateKeyPath: "/etc/letsencrypt/live/yourDomain/privkey.pem",
+    sslCertificate: "/etc/letsencrypt/live/yourDomain/cert.pem",
+    sslCa: "/etc/letsencrypt/live/yourDomain/chain.pem",
+    gcmApiKey: "yourKey"
 };

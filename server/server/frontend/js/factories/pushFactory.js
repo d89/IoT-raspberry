@@ -2,9 +2,9 @@ IoT.factory('PushFactory', function(constant)
 {
     var PushFactory = {};
 
-    PushFactory.registerPush = function(clientName, successfulyFinished)
+    PushFactory.registerPush = function(successfulyFinished)
     {
-        console.log("INIT SERVICE WORKER for push client name " + clientName);
+        console.log("INIT SERVICE WORKER");
 
         if (!('serviceWorker' in navigator))
         {
@@ -12,86 +12,58 @@ IoT.factory('PushFactory', function(constant)
             return;
         }
 
-        navigator.serviceWorker.register('/assets/serviceworker/worker.js', {
-            scope: './'
-        }).then(function(reg)
+        const WORKER_FILE = '/assets/serviceworker/worker.js';
+        const WORKER_SCOPE = { scope: './'  };
+
+        navigator.serviceWorker.register(WORKER_FILE, WORKER_SCOPE).then(function(registration)
         {
-            if (reg.installing) {
+            if (registration.installing)
                 console.log('INIT SERVICE WORKER  Service worker installing');
-            } else if (reg.waiting) {
+
+            if (registration.waiting)
                 console.log('INIT SERVICE WORKER  Service worker installed');
-            } else if (reg.active) {
+
+            if (registration.active)
                 console.log('INIT SERVICE WORKER  Service worker active');
-            }
-        }).then(function(reg)
-        {
-            navigator.serviceWorker.ready.then(function(reg)
-            {
-                // Check if push messaging is supported
-                if (!('PushManager' in window)) {
-                    throw new Error('INIT SERVICE WORKER Push messaging is not supported.');
+
+            return navigator.serviceWorker.ready;
+        }).then(function(swready) {
+            // Check if push messaging is supported
+            if (!('PushManager' in window))
+                throw new Error('INIT SERVICE WORKER Push messaging is not supported.');
+
+            if (!('showNotification' in ServiceWorkerRegistration.prototype))
+                throw new Error('INIT SERVICE WORKER Notifications are not supported.');
+
+            if (Notification.permission === 'denied')
+                throw new Error('INIT SERVICE WORKER Notifications are denied.');
+
+            console.log("INIT SERVICE WORKER ready");
+
+            navigator.permissions.query({name: 'push', userVisibleOnly: true}).then(function (perm) {
+                console.log("INIT SERVICE WORKER permission state", perm);
+
+                return swready.pushManager.getSubscription();
+            }).then(function (subscription) {
+                if (subscription) {
+                    if (successfulyFinished) successfregFinished();
+                    console.log("INIT SERVICE WORKER subscription done", subscription);
+                    throw new Error("INIT SERVICE WORKER already subscribed to push");
                 }
 
-                if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
-                    throw new Error('INIT SERVICE WORKER Notifications are not supported.');
-                }
-
-                if (Notification.permission === 'denied') {
-                    throw new Error('INIT SERVICE WORKER Notifications are denied.');
-                }
-
-                console.log("INIT SERVICE WORKER ready");
-
-                navigator.permissions.query({name: 'push', userVisibleOnly: true}).then(function(perm)
-                {
-                    console.log("INIT SERVICE WORKER permission state", perm);
-
-                    reg.pushManager.getSubscription().then(function(subscription)
-                    {
-                        if (subscription) {
-                            successfulyFinished();
-                            throw new Error("INIT SERVICE WORKER already subscribed to push");
-                        }
-
-                        reg.pushManager.subscribe
-                        ({
-                            userVisibleOnly: true
-                        }).
-                        then(function (sub)
-                        {
-                            var tkn = sub.endpoint.split("send/")[1];
-
-                            $.post("/pushtoken", {
-                                token: tkn,
-                                client: clientName
-                            }).then(function (respText, state, xhr) {
-                                if (state === "success") {
-                                    successfulyFinished();
-                                    console.log('INIT SERVICE WORKER registered for push', respText);
-                                }
-                                else {
-                                    console.error("INIT SERVICE WORKER error registering for push", respText, state, xhr);
-                                }
-                            });
-                        }).catch(function(error)
-                        {
-                            console.log('INIT SERVICE WORKER service worker not ready', error);
-                        });
-                    }).catch(function(error)
-                    {
-                        console.log('INIT SERVICE WORKER registration', error);
-                    });
-                }).catch(function(error)
-                {
-                    console.log('INIT SERVICE WORKER permission error', error);
+                return swready.pushManager.subscribe
+                ({
+                    userVisibleOnly: true
                 });
-            }).catch(function(error)
-            {
-                console.log('INIT SERVICE WORKER service worker not ready', error);
+            }).then(function (sub) {
+                console.log("INIT SERVICE WORKER subscription done!");
+                if (successfulyFinished) successfulyFinished();
+            }).catch(function (error) {
+                console.log('INIT SERVICE WORKER ACTIVATION', error);
             });
         }).catch(function(error)
         {
-            console.log('INIT SERVICE WORKER service worker error', error);
+            console.log('INIT SERVICE WORKER REGISTRATION', error);
         });
     };
 

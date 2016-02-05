@@ -53,11 +53,6 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
     $scope.charts = {};
     $scope.stats = {};
 
-    $scope.getChartTypes = function()
-    {
-        return constant("dataTypes");
-    };
-
     $scope.loadCharts = function()
     {
         $scope.history("lastHourByMinute");
@@ -177,10 +172,9 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         {
             console.log("got it all", dps);
 
-            constant("dataTypes").forEach(function(typeObject)
+            $scope.chartTypes.forEach(function(chart)
             {
-                var type = typeObject.id;
-
+                var type = chart.id;
                 var datapointsForType = dps[type];
                 var labels = [];
                 var data = [];

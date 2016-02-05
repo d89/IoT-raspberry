@@ -1,21 +1,22 @@
 //---------------------------------------------------------------------------
-const use_ssl = true;
-const port = 3000;
-const types = ["movement2", "sound", "humidity", "distance", "temperature", "cputemp", "mem", "load", "lightintensity", "light", "soundvol", "movement1"];
-
+//dependencies
 var logger = require("./logger");
 var fs = require('fs');
 var express = require('express')
 var basicAuth = require('basic-auth-connect');
 var bodyParser = require('body-parser')
 var app = express();
-var http = use_ssl ? require('https') : require('http');
 var sio = require('socket.io');
 var moment = require('moment');
 var spawn = require('child_process').spawn;
 var storage = require('./storage');
 var config = require('./config');
 var maintenance = require('./maintenance');
+
+//config
+const use_ssl = config.useSsl;
+const port = config.port;
+var http = use_ssl ? require('https') : require('http');
 
 //---------------------------------------------------------------------------
 
@@ -347,7 +348,7 @@ app.use(express.static('dist', {
 
 app.post('/pushtoken', function(req, res)
 {
-    var token = req.body.token;
+    var token = req.body.tkn;
     var clientName = req.body.client;
 
     storage.savePushToken(clientName, token, false, function(err, resp)
@@ -587,7 +588,10 @@ io.on('connection', function(socket)
             return resp("error");
         }
 
+        var caps = JSON.parse(client_socket.handshake.query.capabilities) || [];
+
         resp(null, {
+            capabilities: caps,
             client_name: client_socket.handshake.query.client_name,
             connected_at: client_socket.handshake.query.connected_at
         });
@@ -700,7 +704,8 @@ io.on('connection', function(socket)
         //-----------------------------------------------------------------
 
         logger.info("aggregation request from ui from " + start + " to " + end + " in interval", interval);
-        var client_id = getClientName(getClientSocketByUiSocket(socket));
+        var client_socket = getClientSocketByUiSocket(socket);
+        var client_id = getClientName(client_socket);
 
         if (!client_id)
         {
@@ -708,7 +713,9 @@ io.on('connection', function(socket)
             return resp([]);
         }
 
-        storage.aggregation(start, end, interval, types, client_id, skipcache, progressFunc(socket), function(err, dps)
+        var client_capabilities = JSON.parse(client_socket.handshake.query.capabilities) || [];
+
+        storage.aggregation(start, end, interval, client_capabilities, client_id, skipcache, progressFunc(socket), function(err, dps)
         {
             //logger.info("responding to last hour request", dps);
             resp(dps);

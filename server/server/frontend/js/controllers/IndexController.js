@@ -1,4 +1,4 @@
-IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant)
+IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, PushFactory)
 {
     //-----------------------------------------------------
 
@@ -54,6 +54,8 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
         $rootScope.hideStats = true;
 
         $scope.clients = [];
+
+        PushFactory.registerPush();
 
         $scope.getClients(function(clients)
         {

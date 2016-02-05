@@ -1,12 +1,14 @@
 IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, SocketFactory, PushFactory)
 {
-    $scope.errorMessageQuery = function(err)
+    $scope.errorMessageQuery = function(err, options)
     {
         //error message already shown
         if ($scope.errorVisible())
         {
             return;
         }
+
+        options = options || {};
 
         var errMessage = "Unknown Error";
 
@@ -18,11 +20,32 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         {
             errMessage = "Disconnected - the client '" + $routeParams.client_id + "' just went away.";
         }
+        else if (err === "inactive")
+        {
+            errMessage = "Reload necessary, please wait.";
+        }
+
+        if (options.hideButtons)
+        {
+            $(".modal-footer").hide();
+        }
+        else
+        {
+            $(".modal-footer").show();
+        }
 
         $scope.errMessage = errMessage;
         $scope.$apply();
 
         jQuery('#modal-error').modal('toggle');
+
+        if (options.reload)
+        {
+            setTimeout(function()
+            {
+                location.reload();
+            }, options.reload);
+        }
     };
 
     $scope.errorVisible = function()
@@ -59,7 +82,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         $scope.errorMessageQuery(err);
     };
 
-    $scope.onSocketInfo = function(err, clientName, connectedAt)
+    $scope.onSocketInfo = function(err, clientName, connectedAt, capabilities)
     {
         if (err)
         {
@@ -69,11 +92,31 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         }
 
         //we know that we have a working connection here
-        PushFactory.registerPush(clientName, function successfulyRegistered()
+        if (navigator.serviceWorker.controller)
         {
-            navigator.serviceWorker.controller.postMessage({'clientName': clientName});
+            var msg = {'clientName': clientName};
+            navigator.serviceWorker.controller.postMessage(msg);
+            console.log("posted message to service worker: ", msg);
+        }
+        else
+        {
+            console.error("no service worker registered yet!");
+        }
+
+        console.log("GOT the capabilities of the client", capabilities);
+
+        var chartTypes = [];
+        var trans = constant.get("chartTypeTranslations");
+
+        capabilities.forEach(function(c)
+        {
+            chartTypes.push({
+                id: c,
+                label: trans[c] || c
+            });
         });
 
+        $scope.chartTypes = chartTypes;
         $scope.clientName = clientName;
         $scope.connectedAt = connectedAt;
         $scope.$apply();
@@ -105,8 +148,6 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
     $scope.connect = function(reconnect, connectCallback)
     {
-        console.log("connect in base");
-
         if (reconnect)
         {
             console.log("RESETTING client message count");
@@ -143,9 +184,9 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         {
             if (!becameVisible && isMobile)
             {
-                $scope.infoMessage = "Reloading page, please wait ...";
-                $scope.$apply();
-                jQuery('#modal-info').modal('toggle');
+                $scope.errorMessageQuery("inactive", {
+                     hideButtons: true
+                });
             }
 
             if (becameVisible && isMobile)
@@ -171,8 +212,6 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
                 connectCallback();
             }
         });
-
-        console.log("connection attempt");
     };
 
     $scope.domReady = function()

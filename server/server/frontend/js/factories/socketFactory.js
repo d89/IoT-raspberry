@@ -8,17 +8,14 @@ IoT.factory('SocketFactory', function(constant)
 
     SocketFactory.getCount = function(cb)
     {
-        console.log("requesting count - 0");
+        console.log("requesting count");
 
         SocketFactory.count = "Loading count";
 
         SocketFactory.socket.emit('ui:data-count', {}, function(err, resp)
         {
-            console.log("data count response - 1");
-
             if (err)
             {
-                console.log("data count error - 2");
                 return cb(err);
             }
 
@@ -77,9 +74,6 @@ IoT.factory('SocketFactory', function(constant)
     SocketFactory.isConnected = function()
     {
         var isConnected = SocketFactory.socket !== null && SocketFactory.socket.connected === true;
-
-        console.log("is connected", isConnected);
-
         return isConnected;
     };
 
@@ -92,7 +86,7 @@ IoT.factory('SocketFactory', function(constant)
             //SocketFactory.socket.disconnect();
         }
 
-        SocketFactory.socket = io.connect(constant("serverUrl"), {
+        SocketFactory.socket = io.connect(constant.get("serverUrl"), {
             reconnect: true,
             query: "mode=ui&client=" + id,
             'connect timeout': 1000,
@@ -162,11 +156,12 @@ IoT.factory('SocketFactory', function(constant)
             }
             else
             {
+                SocketFactory.capabilities = resp.capabilities;
                 SocketFactory.clientName = resp.client_name;
                 SocketFactory.connectedAt = moment(new Date(resp.connected_at)).format("DD.MM. HH:mm:ss").toString();
             }
 
-            return SocketFactory.callLifecycleCallback("socketinfo", null, SocketFactory.clientName, SocketFactory.connectedAt);
+            return SocketFactory.callLifecycleCallback("socketinfo", null, SocketFactory.clientName, SocketFactory.connectedAt, SocketFactory.capabilities);
         });
     };
 

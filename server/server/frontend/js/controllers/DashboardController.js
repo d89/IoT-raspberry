@@ -35,14 +35,9 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
     $scope.charts = {};
     $scope.stats = {};
 
-    $scope.getChartTypes = function()
-    {
-        return constant("dataTypes");
-    };
-
     $scope.refreshData = function(type)
     {
-        console.log("refreshData for " + type);
+        //console.log("refreshData for " + type);
 
         if (type in $scope.charts) {
             $scope.charts[type].destroy();
@@ -52,7 +47,7 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 
         $scope.renderInitialChart(type, function()
         {
-            console.log("rendered " + type);
+            //console.log("rendered " + type);
 
             $("[data-chart-type='" + type + "'] .chart-wrapper").removeClass("block-opt-refresh");
         });

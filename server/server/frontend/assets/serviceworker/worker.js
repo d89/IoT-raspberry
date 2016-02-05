@@ -1,51 +1,95 @@
 'use strict';
 
+importScripts('https://cdnjs.cloudflare.com/ajax/libs/localforage/1.3.3/localforage.min.js');
+
 console.log('SERVICE WORKER Started!', self);
 
-var ENDPOINT = "https://d1303.de:3000/push";
-var URL_TO_OPEN = "https://d13033.de:3000";
+var ENDPOINT_FETCH = "/push";
+var ENDPOINT_REGISTER = "/pushtoken";
+var URL_TO_OPEN = "/";
 var PUSH_TAG = 'IoT-push';
-var CLIENT_NAME = '';
 
 self.addEventListener('install', function(event)
 {
-    self.skipWaiting();
+    //don't wait for other tabs to refresh to the newest sw version
+    //http://stackoverflow.com/questions/28069249/how-to-stop-older-service-workers
+    event.waitUntil(self.skipWaiting());
     console.log('SERVICE WORKER Installed!', event);
 });
 
 self.addEventListener('activate', function(event)
 {
     console.log('SERVICE WORKER Activated!', event);
+    //take over immediately - new service worker activated right away
+    //http://stackoverflow.com/questions/28069249/how-to-stop-older-service-workers
+    event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('message', function (evt) {
+self.addEventListener('message', function (evt)
+{
     console.log('SERVICE WORKER client name received', evt.data);
 
-    CLIENT_NAME = evt.data.clientName;
+    //saving client name
+    if (evt.data.clientName)
+    {
+        var clientName = evt.data.clientName;
+
+        localforage.setItem('clientName', clientName).then(function(resp) {
+            console.log("SERVICE WORKER SET clientName", resp);
+
+            return self.registration.pushManager.getSubscription();
+
+        }).then(function (subscription) {
+            if (!subscription)
+                throw new Error("SERVICE WORKER no subscription present!");
+
+            var tkn = subscription.endpoint.split("send/")[1];
+
+            return fetch(ENDPOINT_REGISTER, {
+                method: 'post',
+                headers: {
+                    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: 'tkn=' + tkn + "&client=" + clientName
+            });
+        }).then(function(response)
+        {
+            console.log("SERVICE WORKER saving token success", response);
+        }).catch(function(err)
+        {
+            console.error('SERVICE WORKER saving token error', err);
+        });
+    }
 });
 
 self.addEventListener('push', function(event)
 {
-    console.log('SERVICE WORKER Received Push Message!', event, "data", event.data, "for client", CLIENT_NAME);
-
-    if (!CLIENT_NAME)
-    {
-        return console.error("SERVICE WORKER no client name - no fetch");
-    }
-
     // Since this is no payload data with the first version
     // of Push notifications, here we'll grab some data from
     // an API and use it to populate a notification
     event.waitUntil
     (
-        fetch(ENDPOINT, {
-            method: 'post',
-            headers: {
-                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-            },
-            body: 'client=' + CLIENT_NAME,
-        }).then(function(response)
+        localforage.getItem('clientName').then(function(clientName)
         {
+            console.log("SERVICE WORKER GOT clientName", clientName);
+
+            if (!clientName)
+                throw new Error("unknown identifier from database");
+
+            console.log("SERVICE WORKER got client name " + clientName);
+
+            return fetch(ENDPOINT_FETCH, {
+                method: 'post',
+                headers: {
+                    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: 'client=' + clientName
+            });
+        })
+        .then(function(response)
+        {
+            console.log("SERVICE WORKER fetched push notification");
+
             if (response.status !== 200) {
                 // Throw an error so the promise is rejected and catch() is executed
                 throw new Error('SERVICE WORKER Invalid status code from Request: ' + response.status);
@@ -103,7 +147,7 @@ self.addEventListener('push', function(event)
                 {
                     return showNotification(message, notificationData);
                 }
-            });
+            })
         })
         .catch(function(err)
         {
@@ -137,7 +181,7 @@ self.addEventListener('notificationclick', function(event)
                     return client.focus();
             }
             if (clients.openWindow) {
-                return clients.openWindow('https://d1303.de:3000');
+                return clients.openWindow('/');
             }
         })
     );

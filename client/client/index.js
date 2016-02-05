@@ -1,20 +1,21 @@
 //---------------------------------------------------------------------------
 
-const server_url = 'https://d1303.de:3000';
-const client_name = "Davids IoT-Raspberry";
 var io = require('socket.io-client');
-var socket = getConnectionHandle();
+var config = require('./config');
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var fs = require('fs');
 var logger = require('./logger');
 var cam = require('./sensors/cam');
 var sensormanagement = require('./sensormanagement');
-
 var switchRc = require('./actors/switchrc');
 var ledGreen = require('./actors/led-green');
 var ledRed = require('./actors/led-red');
 var servo = require('./actors/servo');
+
+const server_url = config.serverUrl;
+const client_name = config.clientName;
+var socket = getConnectionHandle();
 
 logger.info(`client ${client_name} connecting to ${server_url}`);
 
@@ -135,5 +136,5 @@ socket.on('disconnect', function()
 
 function getConnectionHandle()
 {
-    return io.connect(server_url, {query: 'mode=client&connected_at=' + (new Date) + '&client_name=' + client_name});
+    return io.connect(server_url, {query: 'mode=client&connected_at=' + (new Date) + '&client_name=' + client_name + "&capabilities=" + JSON.stringify(config.chartTypes)});
 }
