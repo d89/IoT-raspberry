@@ -3,7 +3,6 @@
 var logger = require("./logger");
 var fs = require('fs');
 var express = require('express')
-var basicAuth = require('basic-auth-connect');
 var bodyParser = require('body-parser')
 var app = express();
 var io = require('socket.io')();
@@ -349,12 +348,7 @@ app.use(function(req, res, next) {
         res.set('Content-Type', 'application/manifest+json');
     }
 
-    //TODO
     return next();
-
-    false && basicAuth(function(user, pass) {
-        return true || req.method === "POST" || (user === config.httpUser && pass === config.httpPass);
-    })(req, res, next);
 });
 
 app.use(express.static('dist', {

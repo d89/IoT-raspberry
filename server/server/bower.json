@@ -19,7 +19,7 @@
     "test",
     "tests"
   ],
-  "devDependencies": {
+  "dependencies": {
     "angular-route": "^1.4.9",
     "Chart.js": "chartjs#^1.0.2",
     "angular": "^1.4.9",
@@ -32,6 +32,7 @@
     "jquery": "^2.2.0",
     "jquery-countTo": "^1.2.0",
     "jquery-appear": "^0.2.4",
-    "bootstrap": "^3.3.6"
+    "bootstrap": "^3.3.6",
+    "jsSHA": "^2.0.2"
   }
 }
