@@ -2,6 +2,8 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
 {
     //-----------------------------------------------------
 
+    $rootScope.showLogout = true;
+
     $rootScope.sidebar =
     {
         "Sensor Data":
@@ -168,7 +170,7 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             }
         }
 
-        SocketFactory.socket.emit("ui:aggregation", query, function(dps)
+        SocketFactory.send("ui:aggregation", query, function(dps)
         {
             console.log("got it all", dps);
 

@@ -49,6 +49,7 @@ gulp.task('js-libs', function ()
         "./frontend/bower_components/jquery-scrollLock/jquery-scrollLock.min.js",
         "./frontend/bower_components/slimscroll/jquery.slimscroll.min.js",
         "./frontend/bower_components/js-cookie/src/js.cookie.js",
+        "./frontend/bower_components/jsSHA/src/sha512.js",
 
         //for app
         "./frontend/bower_components/socket.io-client/socket.io.js",

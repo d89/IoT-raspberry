@@ -2,6 +2,8 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 {
     //-----------------------------------------------------
 
+    $rootScope.showLogout = true;
+
     $rootScope.sidebar =
     {
         "Sensor Data":
@@ -55,7 +57,7 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 
     $scope.renderInitialChart = function(type, cb)
     {
-        SocketFactory.socket.emit("ui:full", { type: type }, function(dps)
+        SocketFactory.send("ui:full", { type: type }, function(dps)
         {
             var labels = [];
             var data = [];

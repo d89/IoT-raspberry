@@ -6,13 +6,21 @@ IoT.factory('SocketFactory', function(constant)
     SocketFactory.clientMessages = 0;
     SocketFactory.stats = {};
 
+    SocketFactory.send = function(event, payload, callback)
+    {
+        payload = payload || {};
+        callback = callback || null;
+        payload.password = constant.get("password");
+        SocketFactory.socket.emit(event, payload, callback);
+    };
+
     SocketFactory.getCount = function(cb)
     {
         console.log("requesting count");
 
         SocketFactory.count = "Loading count";
 
-        SocketFactory.socket.emit('ui:data-count', {}, function(err, resp)
+        SocketFactory.send('ui:data-count', {}, function(err, resp)
         {
             if (err)
             {
@@ -55,8 +63,16 @@ IoT.factory('SocketFactory', function(constant)
             parameters.push(arguments[i]);
         }
 
+        //if the event response data is the notification of the password being wrong -> switch the event
+        if (parameters && parameters.length === 1 && parameters[0] === "wrongpassword")
+        {
+            eventType = "wrongpassword";
+        }
+
         if (eventType != "dataupdate")
+        {
             console.log("called lifecycle callback for " + eventType, parameters);
+        }
 
         SocketFactory.lifecycleCallbacks[eventType].forEach(function(cb)
         {
@@ -148,7 +164,7 @@ IoT.factory('SocketFactory', function(constant)
             SocketFactory.callLifecycleCallback("dataupdate", msg, SocketFactory.clientMessages);
         });
 
-        SocketFactory.socket.emit('ui:get-socket-info', {}, function(err, resp)
+        SocketFactory.send('ui:get-socket-info', {}, function(err, resp)
         {
             if (err)
             {

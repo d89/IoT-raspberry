@@ -1,6 +1,6 @@
 'use strict';
 
-importScripts('https://cdnjs.cloudflare.com/ajax/libs/localforage/1.3.3/localforage.min.js');
+importScripts('localforage.min.js');
 
 console.log('SERVICE WORKER Started!', self);
 

@@ -2,6 +2,8 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
 {
     //-----------------------------------------------------
 
+    $rootScope.showLogout = true;
+
     $rootScope.sidebar =
     {
         "Sensor Data":
@@ -40,7 +42,7 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             mode: "restart"
         };
 
-        SocketFactory.socket.emit("ui:maintenance", restart);
+        SocketFactory.send("ui:maintenance", restart);
     };
 
     $scope.shutdown = function()
@@ -51,18 +53,45 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             mode: "shutdown"
         };
 
-        SocketFactory.socket.emit("ui:maintenance", shutdown);
+        SocketFactory.send("ui:maintenance", shutdown);
     };
 
     $scope.getMaintenanceInfo = function()
     {
         console.log("fetching maintenance info");
 
-        SocketFactory.socket.emit('ui:maintenance-info', {}, function(err, infotext, syslogentries)
+        SocketFactory.send('ui:maintenance-info', {}, function(err, infotext, syslogentries, logfileText)
         {
             if (!err)
             {
                 $scope.infotext = infotext;
+
+                $scope.logfile = [];
+
+                logfileText.forEach(function(l)
+                {
+                    var logEntry = {};
+
+                    logEntry.loglevel = l.level;
+
+                    switch (logEntry.loglevel)
+                    {
+                        case "info":
+                            logEntry.icon = "fa fa-info-circle";
+                            break;
+                        case "warn":
+                        case "error":
+                            logEntry.icon = "fa fa-warning";
+                            break;
+                         default:
+                             logEntry.icon = "si si-question";
+                    }
+
+                    logEntry.message = l.message;
+                    logEntry.created = moment(l.timestamp).format("DD.MM. HH:mm:ss");
+
+                    $scope.logfile.push(logEntry);
+                });
 
                 syslogentries.forEach(function(s)
                 {

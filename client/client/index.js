@@ -12,6 +12,7 @@ var switchRc = require('./actors/switchrc');
 var ledGreen = require('./actors/led-green');
 var ledRed = require('./actors/led-red');
 var servo = require('./actors/servo');
+var crypto = require('crypto');
 
 const server_url = config.serverUrl;
 const client_name = config.clientName;
@@ -107,7 +108,7 @@ socket.on('start-start-stream', function(msg)
     }
 });
 
-socket.on('maintenance', function(msg)
+socket.on('maintenance', function(msg, cb)
 {
     logger.info("received maintenance request", msg);
 
@@ -115,9 +116,49 @@ socket.on('maintenance', function(msg)
     {
         spawn("/sbin/shutdown", ["now"]);
     }
-    else
+    else if (msg.mode === "restart")
     {
         spawn("/sbin/reboot", ["now"]);
+    }
+    else //log
+    {
+        fs.readFile(config.logFile, "utf8", function(err, logfileRaw)
+        {
+            var logfile = [];
+
+            if (err) {
+                err = "" + err;
+            }
+            else {
+                var logfileRaw = logfileRaw.toString().split("\n").reverse();
+
+                var max = Math.min(logfileRaw.length, 30);
+
+                for (var i = 0; i < max; i++)
+                {
+                    if (!logfileRaw[i].length) continue;
+
+                    try {
+                        logfile.push(JSON.parse(logfileRaw[i]));
+                    } catch (err) {
+                        logger.info("JSON parse error for " + logfileRaw[i]);
+                    }
+                }
+            }
+
+            if (!logfile.length || (err && err.indexOf("no such file or directory") !== -1))
+            {
+                err = null;
+
+                logfile.push({
+                    level: "error",
+                    message: "log file " + config.logFile + " missing",
+                    timestamp: new Date()
+                });
+            }
+
+            return cb(err, logfile);
+        });
     }
 });
 
@@ -136,5 +177,12 @@ socket.on('disconnect', function()
 
 function getConnectionHandle()
 {
-    return io.connect(server_url, {query: 'mode=client&connected_at=' + (new Date) + '&client_name=' + client_name + "&capabilities=" + JSON.stringify(config.chartTypes)});
+    var connectionParams = [];
+    connectionParams.push("mode=client");
+    connectionParams.push("password=" + crypto.createHash('sha512').update(config.password).digest('hex'));
+    connectionParams.push("connected_at=" + (new Date));
+    connectionParams.push("client_name=" + client_name);
+    connectionParams.push("capabilities=" + JSON.stringify(config.chartTypes));
+
+    return io.connect(server_url, {query: connectionParams.join("&") });
 }

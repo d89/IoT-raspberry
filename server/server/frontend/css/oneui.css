@@ -11212,3 +11212,36 @@ div.tagsinput span.tag a:hover {
   }
 }
 
+a.navlink {
+  cursor: pointer;
+}
+
+.connection-link {
+  position: relative;
+}
+
+.login-mask {
+  position: absolute;
+  background: white;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.9;
+  display: none;
+  padding-left: 10%;
+}
+
+.password-input {
+  margin-top: 5%;
+  padding: 10px;
+  height: 45px;
+  width: 90%;
+  display: block;
+}
+
+.login-button {
+  width: 90%;
+  display: block;
+  margin-top: 5px;
+}

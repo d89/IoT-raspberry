@@ -19,7 +19,14 @@
 
                 <div class="row">
                     <div class="col-sm-6 col-lg-3" ng-repeat="client in clients">
-                        <a class="block block-link-hover2" style="cursor:pointer" ng-click="loadDashboard(client.client_name)" data-toggle="tooltip" data-placement="right" title="IP: {{ client.address }}">
+                        <a data-client-name="{{ client.client_name }}" class="block block-link-hover2 connection-link" style="cursor:pointer" ng-click="loadDashboard(client.client_name)" data-toggle="tooltip" data-placement="right" title="IP: {{ client.address }}">
+                            <div class="login-mask">
+                                <form>
+                                    <input type="password" class="password-input" placeholder="Enter password">
+                                    <button ng-click="performLogin(client.client_name)" type="submit" class="btn btn-sm btn-primary login-button"><i class="fa fa-arrow-right push-5-r"></i> Log in</button>
+                                    <button ng-click="cancelLogin(client.client_name)" class="btn btn-sm btn-danger login-button""><i class="fa fa-arrow-right push-5-r"></i> Cancel</button>
+                                </form>
+                            </div>
                             <div class="block-content block-content-full text-center bg-image" style="background-image: url('assets/img/photos/photo{{ randImage }}.jpg');">
                                 <img class="img-avatar img-avatar96 img-avatar-thumb" src="assets/img/avatars/avatar15.jpg" alt="">
                             </div>

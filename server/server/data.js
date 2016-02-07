@@ -6,12 +6,13 @@ var express = require('express')
 var basicAuth = require('basic-auth-connect');
 var bodyParser = require('body-parser')
 var app = express();
-var sio = require('socket.io');
+var io = require('socket.io')();
 var moment = require('moment');
 var spawn = require('child_process').spawn;
 var storage = require('./storage');
 var config = require('./config');
 var maintenance = require('./maintenance');
+var middleware = require('socketio-wildcard')();
 
 //config
 const use_ssl = config.useSsl;
@@ -47,7 +48,7 @@ else
 }
 //---------------------------------------------------------------------------
 
-var io = sio.listen(server, ssl_object);
+io.use(middleware);
 
 //---------------------------------------------------------------------------
 
@@ -277,7 +278,7 @@ function getUiSocketByClientSocket(clientSocket)
     return responseUiSocket;
 }
 
-function getClientSocketByUiSocket(uiSocket)
+function getClientSocketByUiSocket(uiSocket, dataReceived)
 {
     var forClient = getClientId(uiSocket);
     var responseClientSocket = null;
@@ -291,6 +292,20 @@ function getClientSocketByUiSocket(uiSocket)
             return;
         }
     });
+
+    if (!responseClientSocket)
+    {
+        return "disconnect";
+    }
+
+    var uiPassword = dataReceived && dataReceived.password;
+    var clientPassword = responseClientSocket.handshake.query.password;
+
+    if (uiPassword !== clientPassword)
+    {
+        logger.error("client socket found, password wrong!");
+        return "wrongpassword";
+    }
 
     return responseClientSocket;
 }
@@ -518,6 +533,11 @@ io.on('connection', function(socket)
 		return;
 	}
 
+    socketType === "ui" && socket.on('*', function(msg)
+    {
+
+    });
+
 	socketType === "client" && socket.on('client:data', function(msg)
 	{
         msg.client_id = getClientName(socket);
@@ -580,12 +600,12 @@ io.on('connection', function(socket)
     {
         logger.info("getting client socket info");
 
-        var client_socket = getClientSocketByUiSocket(socket);
+        var client_socket = getClientSocketByUiSocket(socket, msg);
 
-        if (!client_socket)
+        if (typeof client_socket == "string")
         {
-            logger.error("could not execute request, no client waiting.");
-            return resp("error");
+            logger.error("could not execute request: " + client_socket);
+            return resp(client_socket);
         }
 
         var caps = JSON.parse(client_socket.handshake.query.capabilities) || [];
@@ -603,14 +623,43 @@ io.on('connection', function(socket)
 
         return maintenance.info(function(err, infotext, syslogEntries)
         {
-            if (err)
-                logger.error("maintenance", err);
-            else
+            var errResponse = function(err)
             {
-                //logger.info("maintenance", infotext, syslogEntries);
+                logger.error(err);
+                return resp(err);
+            };
+
+            if (err)
+            {
+                return errResponse(err);
             }
 
-            return resp(err, infotext, syslogEntries);
+            //logger.info("maintenance", infotext, syslogEntries);
+
+            var clientSocket = getClientSocketByUiSocket(socket, msg);
+
+            if (typeof clientSocket == "string")
+            {
+                return errResponse("could not execute request " + clientSocket);
+            }
+
+            var data = {
+                start: msg.start
+            };
+
+            var request = {
+                mode: "log"
+            };
+
+            clientSocket.emit("maintenance", request, function(err, logResponse)
+            {
+                if (err)
+                {
+                    return errResponse(err);
+                }
+
+                return resp(err, infotext, syslogEntries, logResponse);
+            });
         });
     });
 
@@ -618,13 +667,15 @@ io.on('connection', function(socket)
     {
         logger.info("getting data count");
 
-        var client_id = getClientName(getClientSocketByUiSocket(socket));
+        var client_socket = getClientSocketByUiSocket(socket, msg);
 
-        if (!client_id)
+        if (typeof client_socket == "string")
         {
-            logger.error("could not execute request, no client waiting.");
-            return resp("error");
+            logger.error("could not execute request: " + client_socket);
+            return resp(client_socket);
         }
+
+        var client_id = getClientName(client_socket);
 
         storage.getLastCount(client_id, function(err, count)
         {
@@ -637,11 +688,11 @@ io.on('connection', function(socket)
     {
         logger.info("ui request to start/stop streaming", msg);
 
-        var clientSocket = getClientSocketByUiSocket(socket);
+        var clientSocket = getClientSocketByUiSocket(socket, msg);
 
-        if (!clientSocket)
+        if (typeof clientSocket == "string")
         {
-            logger.error("could not execute request, no client waiting.");
+            logger.error("could not execute request: " + clientSocket);
             return;
         }
 
@@ -658,13 +709,15 @@ io.on('connection', function(socket)
 		logger.info("full request from ui: ", msg);
 
 		var type = msg.type;
-        var client_id = getClientName(getClientSocketByUiSocket(socket));
+        var client_socket = getClientSocketByUiSocket(socket, msg);
 
-        if (!client_id)
+        if (typeof client_socket == "string")
         {
-            logger.error("could not execute request, no client waiting.");
+            logger.error("could not execute request: " + client_socket);
             return resp([]);
         }
+
+        var client_id = getClientName(client_socket);
 
         storage.getDataPoints(type, client_id, function(err, data)
 		{
@@ -704,14 +757,15 @@ io.on('connection', function(socket)
         //-----------------------------------------------------------------
 
         logger.info("aggregation request from ui from " + start + " to " + end + " in interval", interval);
-        var client_socket = getClientSocketByUiSocket(socket);
-        var client_id = getClientName(client_socket);
+        var client_socket = getClientSocketByUiSocket(socket, query);
 
-        if (!client_id)
+        if (typeof client_socket == "string")
         {
-            logger.error("could not execute request, no client waiting.");
+            logger.error("could not execute request: " + client_socket);
             return resp([]);
         }
+
+        var client_id = getClientName(client_socket);
 
         var client_capabilities = JSON.parse(client_socket.handshake.query.capabilities) || [];
 
@@ -724,11 +778,11 @@ io.on('connection', function(socket)
 
     socketType === "ui" && socket.on('ui:action', function(msg)
     {
-        var clientSocket = getClientSocketByUiSocket(socket);
+        var clientSocket = getClientSocketByUiSocket(socket, msg);
 
-        if (!clientSocket)
+        if (typeof clientSocket == "string")
         {
-            logger.error("could not execute request, no client waiting.");
+            logger.error("could not execute request: " + clientSocket);
             return;
         }
 
@@ -742,11 +796,11 @@ io.on('connection', function(socket)
 
     socketType === "ui" && socket.on('ui:maintenance', function(msg)
     {
-        var clientSocket = getClientSocketByUiSocket(socket);
+        var clientSocket = getClientSocketByUiSocket(socket, msg);
 
-        if (!clientSocket)
+        if (typeof clientSocket == "string")
         {
-            logger.error("could not execute request, no client waiting.");
+            logger.error("could not execute request: " + clientSocket);
             return;
         }
 
@@ -774,5 +828,7 @@ io.on('connection', function(socket)
 		logger.info(`socket ${socket.id} disconnected: ${msg}`);
 	});
 });
+
+io = io.listen(server, ssl_object);
 
 //---------------------------------------------------------------------------

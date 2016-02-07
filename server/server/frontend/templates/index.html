@@ -83,6 +83,15 @@
                                 <a onclick="Styles.clickNavLink()" class="navlink" ng-class="{active: sidebarlink.active==true}" href="{{ sidebarlink.href }}" ng-cloak><i class="si si-speedometer"></i><span class="sidebar-mini-hide">{{ sidebarlink.title }}</span></a>
                             </li>
                         </ul>
+
+                        <ul class="nav-main" ng-hide="!showLogout">
+                            <li class="nav-main-heading"><span class="sidebar-mini-hide" ng-cloak>Logout</span></li>
+
+                            <li>
+                                <a ng-click="logout()" class="navlink"><i class="si si-speedometer"></i><span class="sidebar-mini-hide">Logout</span></a>
+                            </li>
+                        </ul>
+
                     </div>
                     <!-- END Side Content -->
                 </div>

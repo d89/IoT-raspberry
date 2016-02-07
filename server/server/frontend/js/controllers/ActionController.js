@@ -2,6 +2,8 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 {
     //-----------------------------------------------------
 
+    $rootScope.showLogout = true;
+
     $rootScope.sidebar =
     {
         "Sensor Data":
@@ -55,7 +57,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             }
         };
 
-        SocketFactory.socket.emit("ui:action", rc);
+        SocketFactory.send("ui:action", rc);
     };
 
     $scope.servo = function(onoff)
@@ -71,7 +73,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             }
         };
 
-        SocketFactory.socket.emit("ui:action", servo);
+        SocketFactory.send("ui:action", servo);
     };
 
     $scope.led = function(nr)
@@ -86,7 +88,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             }
         };
 
-        SocketFactory.socket.emit("ui:action", led);
+        SocketFactory.send("ui:action", led);
     };
 
     $scope.startStream = function()
@@ -95,7 +97,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         $scope.streamTime = "Initialzing Camera";
         $("#stream").attr("src", "assets/img/various/loading-cam.gif");
 
-        SocketFactory.socket.emit('ui:start-stop-stream', {
+        SocketFactory.send('ui:start-stop-stream', {
             start: true
         });
     };
@@ -107,7 +109,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         $scope.streamActive = false;
         $scope.streamTime = "Shutting Down Stream";
 
-        SocketFactory.socket.emit('ui:start-stop-stream', {
+        SocketFactory.send('ui:start-stop-stream', {
             start: false
         });
     };

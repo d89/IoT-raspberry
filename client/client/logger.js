@@ -1,5 +1,6 @@
 var winston = require("winston");
 var moment = require("moment");
+var config = require("./config");
 
 var logger = new (winston.Logger)
 ({
@@ -13,17 +14,17 @@ var logger = new (winston.Logger)
             prettyPrint: true,
             timestamp: function()
             {
-                return moment().format("HH:mm:ss");
+                return moment().add(config.isoOffset, "hour").toISOString();
             }}),
         new (winston.transports.File)
         ({
-            filename: '/tmp/logfile.log',
+            filename: config.logFile,
             maxFiles: 1,
             level: 'debug',
             maxsize: 200 * 1024 * 1024, //1mb
             timestamp: function()
             {
-                return moment().format("DD.MM.YYYY HH:mm:ss");
+                return moment().add(config.isoOffset, "hour").toISOString();
             }
         })
     ],

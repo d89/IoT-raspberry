@@ -24,6 +24,14 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         {
             errMessage = "Reload necessary, please wait.";
         }
+        else if (err === "wrongpassword")
+        {
+            errMessage = "Wrong password, Performing logout.";
+        }
+        else if (err === "loggedout")
+        {
+            errMessage = "Logged out.";
+        }
 
         if (options.hideButtons)
         {
@@ -35,7 +43,9 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         }
 
         $scope.errMessage = errMessage;
-        $scope.$apply();
+
+        if (!$scope.$$phase)
+            $scope.$apply();
 
         jQuery('#modal-error').modal('toggle');
 
@@ -122,6 +132,27 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         $scope.$apply();
     };
 
+    $scope.onWrongPassword = function()
+    {
+        console.log("on wrong password");
+        $scope.logout("wrongpassword");
+    };
+
+    $scope.logout = function(messageKey)
+    {
+        messageKey = messageKey || "loggedout";
+
+        var id = $routeParams.client_id;
+        console.log("logout for " + id);
+        localStorage.removeItem(id);
+        $location.path('/index');
+
+        $scope.errorMessageQuery(messageKey, {
+            hideButtons: true,
+            reload: 1000
+        });
+    };
+
     $scope.onDataUpdate = function(message, messageCount)
     {
         $scope.clientMessages = messageCount;
@@ -136,8 +167,8 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         {
             if (err)
             {
-                console.log("DISCONNECT get count server disconnect!");
-                SocketFactory.callLifecycleCallback("disconnect", false);
+                console.log("DISCONNECT get count server disconnect!", err);
+                SocketFactory.callLifecycleCallback(err, false);
                 return;
             }
 
@@ -154,6 +185,9 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
             SocketFactory.clientMessages = 0;
         }
+
+        //init password storage
+        constant.set("password", localStorage.getItem($routeParams.client_id));
 
         if (SocketFactory.isConnected())
         {
@@ -175,6 +209,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         SocketFactory.resetLifecycleCallbacks();
         SocketFactory.registerLifecycleCallback("disconnect", $scope.onDisconnect);
         SocketFactory.registerLifecycleCallback("socketinfo", $scope.onSocketInfo);
+        SocketFactory.registerLifecycleCallback("wrongpassword", $scope.onWrongPassword);
         SocketFactory.registerLifecycleCallback("dataupdate", $scope.onDataUpdate);
 
         //reload, when the page regains visibility state and we are on a mobile device

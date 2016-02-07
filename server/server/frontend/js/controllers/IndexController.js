@@ -2,6 +2,8 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 {
     //-----------------------------------------------------
 
+    $rootScope.showLogout = false;
+
     $rootScope.sidebar =
     {
         "Device Overview":
@@ -34,8 +36,38 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
         });
     };
 
+    $scope.performLogin = function(id)
+    {
+        var pw = $("a[data-client-name='" + id + "'] .password-input").val();
+
+        if (pw.length)
+        {
+            var shaObj = new jsSHA("SHA-512", "TEXT");
+            shaObj.update(pw);
+            pw = shaObj.getHash("HEX");
+            localStorage.setItem(id, pw);
+
+            $scope.loadDashboard(id);
+        }
+    };
+
+    $scope.cancelLogin = function(id)
+    {
+        var loginMask = $("a[data-client-name='" + id + "'] .login-mask");
+        loginMask.fadeOut("fast");
+    };
+
     $scope.loadDashboard = function(id)
     {
+        var pw = localStorage.getItem(id);
+
+        if (!pw)
+        {
+            $("a[data-client-name='" + id + "'] .login-mask").show();
+            $("a[data-client-name='" + id + "'] .password-input").select();
+            return;
+        }
+
         $routeParams.client_id = id;
 
         $scope.connect(true, function()
