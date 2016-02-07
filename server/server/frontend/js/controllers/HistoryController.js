@@ -170,7 +170,7 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
             }
         }
 
-        SocketFactory.send("ui:aggregation", query, function(dps)
+        SocketFactory.send("ui:aggregation", query, function(err, dps)
         {
             console.log("got it all", dps);
 
@@ -190,6 +190,10 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
                         var time = moment(aggregated.from).format(query.displayFormat) + " - " + moment(aggregated.to).format(query.displayFormat);
 
                         var dp = ("avg" in aggregated) ? aggregated.avg : aggregated.data;
+
+                        if (dp !== null)
+                            dp = parseFloat(dp, 10).toFixed(3);
+
                         labels.push(time);
                         data.push(dp);
                     }

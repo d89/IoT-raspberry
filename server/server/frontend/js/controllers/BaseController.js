@@ -32,6 +32,15 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         {
             errMessage = "Logged out.";
         }
+        else if (err === "functional_error")
+        {
+            errMessage = "Application error.";
+        }
+
+        if (options.errorMessage)
+        {
+            errMessage += " " + options.errorMessage;
+        }
 
         if (options.hideButtons)
         {
@@ -96,8 +105,8 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
     {
         if (err)
         {
-            console.log("DISCONNECT on socket info client disconnect!");
-            SocketFactory.callLifecycleCallback("disconnect", true);
+            console.error("socket info error", err);
+            SocketFactory.callLifecycleCallback("functional_error", err);
             return;
         }
 
@@ -138,6 +147,21 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         $scope.logout("wrongpassword");
     };
 
+    $scope.onFunctionalError = function(err)
+    {
+        $scope.errorMessageQuery("functional_error", {
+            errorMessage: err
+        });
+    };
+
+    $scope.onDataUpdate = function(message, messageCount)
+    {
+        $scope.clientMessages = messageCount;
+        $scope.$apply();
+    };
+
+    //-----------------------------------------------------
+
     $scope.logout = function(messageKey)
     {
         messageKey = messageKey || "loggedout";
@@ -149,14 +173,8 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
         $scope.errorMessageQuery(messageKey, {
             hideButtons: true,
-            reload: 1000
+            reload: 1500
         });
-    };
-
-    $scope.onDataUpdate = function(message, messageCount)
-    {
-        $scope.clientMessages = messageCount;
-        $scope.$apply();
     };
 
     //-----------------------------------------------------
@@ -211,6 +229,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         SocketFactory.registerLifecycleCallback("socketinfo", $scope.onSocketInfo);
         SocketFactory.registerLifecycleCallback("wrongpassword", $scope.onWrongPassword);
         SocketFactory.registerLifecycleCallback("dataupdate", $scope.onDataUpdate);
+        SocketFactory.registerLifecycleCallback("functional_error", $scope.onFunctionalError);
 
         //reload, when the page regains visibility state and we are on a mobile device
         //usually, the mobile browser kills the socket connection when it is in the background

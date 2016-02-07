@@ -36,12 +36,21 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
         });
     };
 
+    $scope.loginBox = function(id)
+    {
+        return $("a[data-client-name='" + id + "']");
+    }
+
     $scope.performLogin = function(id)
     {
-        var pw = $("a[data-client-name='" + id + "'] .password-input").val();
+        var box = $scope.loginBox(id);
+        var pw = box.find(".password-input").val();
 
         if (pw.length)
         {
+            var btns = box.find(".login-button");
+            btns.text("Loading ...");
+
             var shaObj = new jsSHA("SHA-512", "TEXT");
             shaObj.update(pw);
             pw = shaObj.getHash("HEX");
@@ -53,8 +62,7 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.cancelLogin = function(id)
     {
-        var loginMask = $("a[data-client-name='" + id + "'] .login-mask");
-        loginMask.fadeOut("fast");
+        $scope.loginBox(id).find(".login-mask").fadeOut("fast");
     };
 
     $scope.loadDashboard = function(id)
@@ -63,8 +71,9 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         if (!pw)
         {
-            $("a[data-client-name='" + id + "'] .login-mask").show();
-            $("a[data-client-name='" + id + "'] .password-input").select();
+            var box = $scope.loginBox(id);
+            box.find(".login-mask").show();
+            box.find(".password-input").select();
             return;
         }
 
@@ -97,7 +106,8 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
                     id: clients[i].id,
                     client_name: clients[i].client_name,
                     address: clients[i].address,
-                    connected_at: moment(new Date(clients[i].connected_at)).format("DD.MM. HH:mm:ss").toString()
+                    connected_at: moment(new Date(clients[i].connected_at)).format("DD.MM. HH:mm:ss").toString(),
+                    logged_in: null !== localStorage.getItem(clients[i].client_name)
                 });
 
                 $scope.$apply();

@@ -125,7 +125,7 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             }
             else
             {
-                alert("Error generating maintenance info: " + err);
+                SocketFactory.callLifecycleCallback("functional_error", "Error generating maintenance info: " + err);
             }
         });
     };

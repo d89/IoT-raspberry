@@ -115,7 +115,7 @@ exports.aggregate = function(start, end, types, client_id, skipCache, cb)
             }
         ]).toArray(function(err, docs)
         {
-            logger.info("live aggregation for period " + start + " to " + end + " with " + docs.length + " docs");
+            //logger.info("live aggregation for period " + start + " to " + end + " with " + docs.length + " docs");
 
             ++queryAggregationCount;
             exports.sendProgress(queryAggregationCount);

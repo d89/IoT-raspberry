@@ -11230,6 +11230,7 @@ a.navlink {
   opacity: 0.9;
   display: none;
   padding-left: 10%;
+  z-index: 501;
 }
 
 .password-input {

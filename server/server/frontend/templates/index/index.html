@@ -24,10 +24,13 @@
                                 <form>
                                     <input type="password" class="password-input" placeholder="Enter password">
                                     <button ng-click="performLogin(client.client_name)" type="submit" class="btn btn-sm btn-primary login-button"><i class="fa fa-arrow-right push-5-r"></i> Log in</button>
-                                    <button ng-click="cancelLogin(client.client_name)" class="btn btn-sm btn-danger login-button""><i class="fa fa-arrow-right push-5-r"></i> Cancel</button>
+                                    <button ng-click="cancelLogin(client.client_name)" class="btn btn-sm btn-danger login-button"><i class="fa fa-arrow-right push-5-r"></i> Cancel</button>
                                 </form>
                             </div>
-                            <div class="block-content block-content-full text-center bg-image" style="background-image: url('assets/img/photos/photo{{ randImage }}.jpg');">
+                            <div class="block-content block-content-full text-center bg-image ribbon ribbon-modern" ng-class="{'ribbon-success': client.logged_in, 'ribbon-danger': !client.logged_in}" style="background-image: url('assets/img/photos/photo{{ randImage }}.jpg');">
+                                <div class="ribbon-box font-w600">
+                                    <i class="fa fa-fw" ng-class="{'fa-check': client.logged_in, 'fa-lock': !client.logged_in}"></i>
+                                </div>
                                 <img class="img-avatar img-avatar96 img-avatar-thumb" src="assets/img/avatars/avatar15.jpg" alt="">
                             </div>
                             <div class="block-content block-content-full text-center bg-gray-light">

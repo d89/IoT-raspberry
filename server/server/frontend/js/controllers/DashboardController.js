@@ -57,7 +57,7 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 
     $scope.renderInitialChart = function(type, cb)
     {
-        SocketFactory.send("ui:full", { type: type }, function(dps)
+        SocketFactory.send("ui:full", { type: type }, function(err, dps)
         {
             var labels = [];
             var data = [];
@@ -65,7 +65,7 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
             for (var i = dps.length - 1; i >= 0; i--)
             {
                 var time = moment(dps[i].created).format('dd, HH:mm:ss');
-                var dp = dps[i].data;
+                var dp = dps[i].data.toFixed(3);
 
                 labels.push(time);
                 data.push(dp);
@@ -177,7 +177,7 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
     $scope.receivedData = function(msg, totalCount)
     {
         var type = msg.type;
-        var data = msg.data;
+        var data = parseFloat(msg.data, 10).toFixed(3);
         var time = moment(msg.created).format('dd, HH:mm:ss');
 
          if ($scope.charts[type])

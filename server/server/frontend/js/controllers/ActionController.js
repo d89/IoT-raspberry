@@ -137,7 +137,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         $rootScope.subHeadline = "Trigger Actions On Your IoT device";
         $scope.connect(false, function()
         {
-            SocketFactory.socket.on("cam-stream", function(msg)
+            SocketFactory.receive("cam-stream", function(msg)
             {
                 var image = msg.image;
                 var date = msg.date;

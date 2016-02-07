@@ -11,29 +11,33 @@ IoT.factory('SocketFactory', function(constant)
         payload = payload || {};
         callback = callback || null;
         payload.password = constant.get("password");
-        SocketFactory.socket.emit(event, payload, callback);
-    };
-
-    SocketFactory.getCount = function(cb)
-    {
-        console.log("requesting count");
-
-        SocketFactory.count = "Loading count";
-
-        SocketFactory.send('ui:data-count', {}, function(err, resp)
+        SocketFactory.socket.emit(event, payload, function()
         {
-            if (err)
+            var err = arguments[0];
+
+            if (err && err === "wrongpassword")
             {
-                return cb(err);
+                SocketFactory.callLifecycleCallback("wrongpassword");
+                return;
             }
 
-            SocketFactory.count = resp;
+            if (err && err === "disconnect")
+            {
+                SocketFactory.callLifecycleCallback("disconnect", true);
+                return;
+            }
 
-            return cb(null, SocketFactory.count);
+            callback && callback.apply(this, arguments);
         });
     };
 
-    //------------------------------------------------------------
+    SocketFactory.receive = function(event, cb)
+    {
+        SocketFactory.socket.on(event, function()
+        {
+            cb.apply(this, arguments);
+        });
+    };
 
     SocketFactory.lifecycleCallbacks = {};
 
@@ -63,12 +67,6 @@ IoT.factory('SocketFactory', function(constant)
             parameters.push(arguments[i]);
         }
 
-        //if the event response data is the notification of the password being wrong -> switch the event
-        if (parameters && parameters.length === 1 && parameters[0] === "wrongpassword")
-        {
-            eventType = "wrongpassword";
-        }
-
         if (eventType != "dataupdate")
         {
             console.log("called lifecycle callback for " + eventType, parameters);
@@ -87,13 +85,30 @@ IoT.factory('SocketFactory', function(constant)
 
     //------------------------------------------------------------
 
+    SocketFactory.getCount = function(cb)
+    {
+        console.log("requesting count");
+
+        SocketFactory.count = "Loading count";
+
+        SocketFactory.send('ui:data-count', {}, function(err, resp)
+        {
+            if (err)
+            {
+                return cb(err);
+            }
+
+            SocketFactory.count = resp;
+
+            return cb(null, SocketFactory.count);
+        });
+    };
+
     SocketFactory.isConnected = function()
     {
         var isConnected = SocketFactory.socket !== null && SocketFactory.socket.connected === true;
         return isConnected;
     };
-
-    //------------------------------------------------------------
 
     SocketFactory.connectToDevice = function(id, cb)
     {
@@ -111,7 +126,7 @@ IoT.factory('SocketFactory', function(constant)
             'max reconnection attempts': Infinity
         });
 
-        SocketFactory.socket.on("connect", function()
+        SocketFactory.receive("connect", function()
         {
             if (cb)
                 cb(null, true);
@@ -123,7 +138,7 @@ IoT.factory('SocketFactory', function(constant)
         {
             (function(eventName)
             {
-                SocketFactory.socket.on(s, function(ev)
+                SocketFactory.receive(s, function(ev)
                 {
                     console.log(new Date() + " ======================== SOCKET EVENT: " + eventName + " ========================", ev);
                 });
@@ -131,32 +146,24 @@ IoT.factory('SocketFactory', function(constant)
 
         });
 
-        SocketFactory.socket.on('connect_error', function()
-        {
-            console.log('Connection failed');
-
-            if (cb)
-                cb('Connection failed');
-        });
-
-        SocketFactory.socket.on("client-disconnected", function(data)
+        SocketFactory.receive("client-disconnected", function()
         {
             console.log("DISCONNECT client disconnect event!");
             SocketFactory.callLifecycleCallback("disconnect", true);
         });
 
-        SocketFactory.socket.on("disconnect", function()
+        SocketFactory.receive("disconnect", function()
         {
             console.log("DISCONNECT server event");
             SocketFactory.callLifecycleCallback("disconnect", false);
         });
 
-        SocketFactory.socket.on("progress", function(data)
+        SocketFactory.receive("progress", function(data)
         {
             console.log("onprogress " + data.progress);
         });
 
-        SocketFactory.socket.on("dataupdate", function(msg)
+        SocketFactory.receive("dataupdate", function(msg)
         {
             //console.log(new Date() + " ======================== SOCKET DATA RECEIVED ========================");
             SocketFactory.clientMessages++;

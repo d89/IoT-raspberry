@@ -273,7 +273,7 @@ function getUiSocketByClientSocket(clientSocket)
             return;
         }
     });
-
+    
     return responseUiSocket;
 }
 
@@ -294,7 +294,9 @@ function getClientSocketByUiSocket(uiSocket, dataReceived)
 
     if (!responseClientSocket)
     {
-        return "disconnect";
+        return {
+            error: "disconnect"
+        };
     }
 
     var uiPassword = dataReceived && dataReceived.password;
@@ -303,10 +305,16 @@ function getClientSocketByUiSocket(uiSocket, dataReceived)
     if (uiPassword !== clientPassword)
     {
         logger.error("client socket found, password wrong!");
-        return "wrongpassword";
+
+        return {
+            error: "wrongpassword",
+            socket: responseClientSocket
+        };
     }
 
-    return responseClientSocket;
+    return {
+        socket: responseClientSocket
+    };
 }
 
 function getClientSocketByClientName(clientName)
@@ -474,7 +482,7 @@ app.get('/clients/get', function(req, res)
 function progressFunc(socket)
 {
     return function(progress) {
-        logger.info("setting progress " + progress);
+        //logger.info("setting progress " + progress);
         socket.emit('progress', { progress: progress });
     }
 }
@@ -527,287 +535,180 @@ io.on('connection', function(socket)
 		return;
 	}
 
+    //###########################################################################
+
     socketType === "ui" && socket.on('*', function(msg)
     {
-
-    });
-
-	socketType === "client" && socket.on('client:data', function(msg)
-	{
-        msg.client_id = getClientName(socket);
-
-		persistClientData(msg, function(err, resp)
-		{
-            if (err)
-            {
-                logger.error("could not store data point: ", err);
-                return;
-            }
-
-			//logger.info("PERSISTING: ", err, resp);
-
-            var uiSocket = getUiSocketByClientSocket(socket);
-
-            if (!uiSocket)
-            {
-                //logger.info(`no waiting ui client for client data`);
-                return;
-            }
-
-            msg.created = (new Date).getTime();
-
-            //logger.info("data update for ui", msg);
-
-            uiSocket.emit("dataupdate", msg);
-		});
-	});
-
-	socketType === "client" && socket.on('client:live-stream', function(data, resp)
-    {
-		logger.info("got image from client @ " + data.date);
-        //pipe stream to waiting ui
-
-        var uiSocket = getUiSocketByClientSocket(socket);
-
-        if (!uiSocket)
+        var ui =
         {
-            resp({
-                received: false
-            });
+            'ui:get-socket-info': function (clientSocket, msg, resp) {
+                logger.info("getting client socket info");
 
-            return logger.info(`no waiting ui client for stream`);
-        }
+                var caps = JSON.parse(clientSocket.handshake.query.capabilities) || [];
 
-        logger.info("confirming stream to client");
+                resp(null, {
+                    capabilities: caps,
+                    client_name: clientSocket.handshake.query.client_name,
+                    connected_at: clientSocket.handshake.query.connected_at
+                });
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:maintenance-info': function (clientSocket, msg, resp) {
+                //logger.info("getting system maintenance info");
 
-        resp({
-            received: true
-        });
+                return maintenance.info(function (err, infotext, syslogEntries) {
+                    var errResponse = function (err) {
+                        logger.error(err);
+                        return resp(err);
+                    };
 
-        uiSocket.emit('cam-stream', {
-            date: data.date,
-            image: data.image
-        });
-	});
+                    if (err) {
+                        return errResponse(err);
+                    }
 
-    socketType === "ui" && socket.on('ui:get-socket-info', function(msg, resp)
-    {
-        logger.info("getting client socket info");
+                    var data = {
+                        start: msg.start
+                    };
 
-        var client_socket = getClientSocketByUiSocket(socket, msg);
+                    var request = {
+                        mode: "log"
+                    };
 
-        if (typeof client_socket == "string")
-        {
-            logger.error("could not execute request: " + client_socket);
-            return resp(client_socket);
-        }
+                    clientSocket.emit("maintenance", request, function (err, logResponse) {
+                        if (err) {
+                            return errResponse(err);
+                        }
 
-        var caps = JSON.parse(client_socket.handshake.query.capabilities) || [];
+                        return resp(err, infotext, syslogEntries, logResponse);
+                    });
+                });
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:data-count': function (clientSocket, msg, resp) {
+                logger.info("getting data count");
 
-        resp(null, {
-            capabilities: caps,
-            client_name: client_socket.handshake.query.client_name,
-            connected_at: client_socket.handshake.query.connected_at
-        });
-    });
+                var client_id = getClientName(clientSocket);
 
-    socketType === "ui" && socket.on('ui:maintenance-info', function(msg, resp)
-    {
-        //logger.info("getting system maintenance info");
+                storage.getLastCount(client_id, function (err, count) {
+                    logger.info("responding to data count " + count);
+                    resp(err, count);
+                })
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:start-stop-stream': function (clientSocket, msg) {
+                logger.info("ui request to start/stop streaming", msg);
 
-        return maintenance.info(function(err, infotext, syslogEntries)
-        {
-            var errResponse = function(err)
-            {
-                logger.error(err);
-                return resp(err);
-            };
+                //start or stop stream?
+                var data = {
+                    start: msg.start
+                };
 
-            if (err)
-            {
-                return errResponse(err);
+                clientSocket.emit('start-start-stream', data);
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:full': function (clientSocket, msg, resp) {
+                //logger.info("full request from ui: ", msg);
+
+                var type = msg.type;
+
+                var client_id = getClientName(clientSocket);
+
+                storage.getDataPoints(type, client_id, function (err, data) {
+                    if (err) {
+                        logger.error("could not get data points", err);
+                        return resp(err);
+                    }
+
+                    //logger.info("data", data);
+
+                    var datapoints = [];
+
+                    for (var i = 0; i < data.length; i++) {
+                        datapoints.push({
+                            id: data[i]._id,
+                            data: data[i].data,
+                            type: data[i].type,
+                            created: data[i].created
+                        });
+                    }
+
+                    resp(null, datapoints);
+                });
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:aggregation': function (clientSocket, query, resp) {
+                var start = moment(query.start);
+                var end = moment(query.end);
+                var interval = query.interval;
+                var skipcache = query.skipcache;
+
+                logger.info("aggregation request from ui from " + start + " to " + end + " in interval", interval);
+
+                var client_id = getClientName(clientSocket);
+
+                var client_capabilities = JSON.parse(clientSocket.handshake.query.capabilities) || [];
+
+                storage.aggregation(start, end, interval, client_capabilities, client_id, skipcache, progressFunc(socket), function (err, dps) {
+                    //logger.info("responding to last hour request", dps);
+                    resp(null, dps);
+                });
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:action': function (clientSocket, msg) {
+                var request = {
+                    type: msg.type,
+                    data: msg.data
+                };
+
+                clientSocket.emit("actionrequest", request);
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:maintenance': function (clientSocket, msg) {
+                var request = {
+                    mode: msg.mode === "shutdown" ? "shutdown" : "restart"
+                };
+
+                clientSocket.emit("maintenance", request);
             }
+        };
 
-            //logger.info("maintenance", infotext, syslogEntries);
+        //-------------------------------------------------------------------------------------
 
-            var clientSocket = getClientSocketByUiSocket(socket, msg);
+        var eventType = msg.data[0];
+        var payload = msg.data[1];
+        var respFunc = msg.data[2];
 
-            if (typeof clientSocket == "string")
+        var resp = getClientSocketByUiSocket(socket, payload);
+
+        if (resp.error)
+        {
+            console.error("could not find client for ui: " + resp.error);
+
+            if (respFunc)
             {
-                return errResponse("could not execute request " + clientSocket);
-            }
+                respFunc(resp.error);
 
-            var data = {
-                start: msg.start
-            };
-
-            var request = {
-                mode: "log"
-            };
-
-            clientSocket.emit("maintenance", request, function(err, logResponse)
-            {
-                if (err)
+                if (resp.error === "wrongpassword")
                 {
-                    return errResponse(err);
+                    console.error("disconnecting from ui socket - wrong password!");
+                    socket.disconnect();
                 }
-
-                return resp(err, infotext, syslogEntries, logResponse);
-            });
-        });
-    });
-
-    socketType === "ui" && socket.on('ui:data-count', function(msg, resp)
-    {
-        logger.info("getting data count");
-
-        var client_socket = getClientSocketByUiSocket(socket, msg);
-
-        if (typeof client_socket == "string")
-        {
-            logger.error("could not execute request: " + client_socket);
-            return resp(client_socket);
-        }
-
-        var client_id = getClientName(client_socket);
-
-        storage.getLastCount(client_id, function(err, count)
-        {
-            logger.info("responding to data count " + count);
-            resp(err, count);
-        })
-    });
-
-    socketType === "ui" && socket.on('ui:start-stop-stream', function(msg)
-    {
-        logger.info("ui request to start/stop streaming", msg);
-
-        var clientSocket = getClientSocketByUiSocket(socket, msg);
-
-        if (typeof clientSocket == "string")
-        {
-            logger.error("could not execute request: " + clientSocket);
-            return;
-        }
-
-        //start or stop stream?
-        var data = {
-            start: msg.start
-        };
-
-        clientSocket.emit('start-start-stream', data);
-    });
-
-	socketType === "ui" && socket.on('ui:full', function(msg, resp)
-	{
-		logger.info("full request from ui: ", msg);
-
-		var type = msg.type;
-        var client_socket = getClientSocketByUiSocket(socket, msg);
-
-        if (typeof client_socket == "string")
-        {
-            logger.error("could not execute request: " + client_socket);
-            return resp([]);
-        }
-
-        var client_id = getClientName(client_socket);
-
-        storage.getDataPoints(type, client_id, function(err, data)
-		{
-            if (err)
-            {
-                logger.error("could not get data points", err);
-                return resp([]);
             }
 
-			//logger.info("data", data);
-
-			var datapoints = [];
-
-			for (var i = 0; i < data.length; i++)
-			{
-				datapoints.push({
-					id: data[i]._id,
-					data: data[i].data,
-					type: data[i].type,
-					created: data[i].created
-				});
-			}
-
-			resp(datapoints);
-		});
-	});
-
-    socketType === "ui" && socket.on('ui:aggregation', function(query, resp)
-    {
-        //-----------------------------------------------------------------
-
-        var start = moment(query.start);
-        var end = moment(query.end);
-        var interval = query.interval;
-        var skipcache = query.skipcache;
-
-        //-----------------------------------------------------------------
-
-        logger.info("aggregation request from ui from " + start + " to " + end + " in interval", interval);
-        var client_socket = getClientSocketByUiSocket(socket, query);
-
-        if (typeof client_socket == "string")
-        {
-            logger.error("could not execute request: " + client_socket);
-            return resp([]);
-        }
-
-        var client_id = getClientName(client_socket);
-
-        var client_capabilities = JSON.parse(client_socket.handshake.query.capabilities) || [];
-
-        storage.aggregation(start, end, interval, client_capabilities, client_id, skipcache, progressFunc(socket), function(err, dps)
-        {
-            //logger.info("responding to last hour request", dps);
-            resp(dps);
-        });
-    });
-
-    socketType === "ui" && socket.on('ui:action', function(msg)
-    {
-        var clientSocket = getClientSocketByUiSocket(socket, msg);
-
-        if (typeof clientSocket == "string")
-        {
-            logger.error("could not execute request: " + clientSocket);
             return;
         }
 
-        var request = {
-            type: msg.type,
-            data: msg.data
-        };
-
-        clientSocket.emit("actionrequest", request);
+        ui[eventType](resp.socket, payload, respFunc);
     });
 
-    socketType === "ui" && socket.on('ui:maintenance', function(msg)
+    //###########################################################################
+
+    //disconnect can not be caught by the "catch all" handler
+    socketType === "client" && socket.on("disconnect", function(msg, resp)
     {
-        var clientSocket = getClientSocketByUiSocket(socket, msg);
-
-        if (typeof clientSocket == "string")
-        {
-            logger.error("could not execute request: " + clientSocket);
-            return;
-        }
-
-        var request = {
-            mode: msg.mode === "shutdown" ? "shutdown" : "restart"
-        };
-
-        clientSocket.emit("maintenance", request);
-    });
-
-	socket.on('disconnect', function(msg)
-	{
         var uiSocket = getUiSocketByClientSocket(socket);
+
+        logger.error("client disconnected");
 
         if (!uiSocket)
         {
@@ -819,8 +720,80 @@ io.on('connection', function(socket)
             id: socket.id
         });
 
-		logger.info(`socket ${socket.id} disconnected: ${msg}`);
-	});
+        logger.info(`socket ${socket.id} disconnected: ${msg}`);
+    });
+
+    socketType === "client" && socket.on('*', function(msg)
+    {
+        var client =
+        {
+            'client:data': function(msg, resp)
+            {
+                msg.client_id = getClientName(socket);
+
+                persistClientData(msg, function(err, resp)
+                {
+                    if (err)
+                    {
+                        logger.error("could not store data point: ", err);
+                        return;
+                    }
+
+                    //logger.info("PERSISTING: ", err, resp);
+
+                    var uiSocket = getUiSocketByClientSocket(socket);
+
+                    if (!uiSocket)
+                    {
+                        //logger.info(`no waiting ui client for client data`);
+                        return;
+                    }
+
+                    msg.created = (new Date).getTime();
+
+                    //logger.info("data update for ui", msg);
+
+                    uiSocket.emit("dataupdate", msg);
+                });
+            },
+            //-------------------------------------------------------------------------------------
+            'client:live-stream': function(msg, resp)
+            {
+                logger.info("got image from client @ " + msg.date);
+                //pipe stream to waiting ui
+
+                var uiSocket = getUiSocketByClientSocket(socket);
+
+                if (!uiSocket)
+                {
+                    resp({
+                        received: false
+                    });
+
+                    return logger.info(`no waiting ui client for stream`);
+                }
+
+                logger.info("confirming stream to client");
+
+                resp({
+                    received: true
+                });
+
+                uiSocket.emit('cam-stream', {
+                    date: msg.date,
+                    image: msg.image
+                });
+            }
+        };
+
+        //-------------------------------------------------------------------------------------
+
+        var eventType = msg.data[0];
+        var payload = msg.data[1];
+        var respFunc = msg.data[2];
+
+        client[eventType](payload, respFunc);
+    });
 });
 
 io = io.listen(server, ssl_object);
