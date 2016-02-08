@@ -27,39 +27,66 @@ self.addEventListener('activate', function(event)
 
 self.addEventListener('message', function (evt)
 {
-    console.log('SERVICE WORKER client name received', evt.data);
+    console.log('SERVICE WORKER message received');
 
     //saving client name
-    if (evt.data.clientName)
+    if (!evt.data.clientName || !evt.data.password) {
+        return console.error("SERVICE WORKER message was incomplete");
+    }
+
+    var clientName = evt.data.clientName;
+    var password = evt.data.password;
+
+    console.log("SERVICE WORKER message was complete, register for " + clientName);
+
+    localforage.getItem('clientData').then(function(clientData)
     {
-        var clientName = evt.data.clientName;
+        clientData = clientData || {};
 
-        localforage.setItem('clientName', clientName).then(function(resp) {
-            console.log("SERVICE WORKER SET clientName", resp);
+        clientData[clientName] = {
+            password: password
+        };
 
-            return self.registration.pushManager.getSubscription();
+        return localforage.setItem('clientData', clientData);
+    }).then(function(resp)
+    {
+        console.log("SERVICE WORKER SET clientData", resp);
 
-        }).then(function (subscription) {
-            if (!subscription)
-                throw new Error("SERVICE WORKER no subscription present!");
+        if (!resp)
+            throw new Error("SERVICE WORKER could not save token");
 
-            var tkn = subscription.endpoint.split("send/")[1];
+        return self.registration.pushManager.getSubscription();
 
-            return fetch(ENDPOINT_REGISTER, {
-                method: 'post',
-                headers: {
-                    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-                },
-                body: 'tkn=' + tkn + "&client=" + clientName
-            });
-        }).then(function(response)
+    }).then(function (subscription) {
+
+        if (!subscription)
+            throw new Error("SERVICE WORKER no push permission or no subscription present!");
+
+        var tkn = subscription.endpoint.split("send/")[1];
+
+        return fetch(ENDPOINT_REGISTER, {
+            method: 'post',
+            headers: {
+                "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
+            body: 'tkn=' + tkn + "&client=" + clientName + "&password=" + password
+        });
+    }).then(function(response)
+    {
+        var ok = response.status === 200;
+
+        if (!ok)
+        {
+            throw new Error("SERVICE WORKER push subscription could not be saved: " + response.statusText);
+        }
+        else
         {
             console.log("SERVICE WORKER saving token success", response);
-        }).catch(function(err)
-        {
-            console.error('SERVICE WORKER saving token error', err);
-        });
-    }
+        }
+    }).catch(function(err)
+    {
+        console.error('SERVICE WORKER saving token error', err);
+    });
 });
 
 self.addEventListener('push', function(event)
@@ -69,21 +96,21 @@ self.addEventListener('push', function(event)
     // an API and use it to populate a notification
     event.waitUntil
     (
-        localforage.getItem('clientName').then(function(clientName)
+        localforage.getItem('clientData').then(function(clientData)
         {
-            console.log("SERVICE WORKER GOT clientName", clientName);
+            console.log("SERVICE WORKER GOT clientName", clientData);
 
-            if (!clientName)
-                throw new Error("unknown identifier from database");
+            if (!clientData)
+                throw new Error("SERVICE WORKER unknown identifier from database");
 
-            console.log("SERVICE WORKER got client name " + clientName);
+            console.log("SERVICE WORKER got client data " + clientData);
 
             return fetch(ENDPOINT_FETCH, {
                 method: 'post',
                 headers: {
                     "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
                 },
-                body: 'client=' + clientName
+                body: 'client=' + JSON.stringify(clientData)
             });
         })
         .then(function(response)

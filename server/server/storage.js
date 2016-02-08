@@ -69,7 +69,19 @@ exports.dailySummary = function(client_id, cb)
     {
         logger.info("cached aggregation for period " + start + " to " + end + " with " + docs.length + " docs");
 
-        return cb(err, docs);
+        var text = [];
+
+        docs.forEach(function(d)
+        {
+            var type = d["_id"];
+            var value = parseFloat(d["avg"]).toFixed(2);
+
+            text.push(type + ": " + value);
+        });
+
+        var msg = "Last 24h overview for " + client_id + ":\n" + text.join(", ");
+
+        return cb(err, msg);
     });
 };
 
@@ -301,14 +313,19 @@ exports.getLastCount = function(client_id, cb)
     });
 };
 
-exports.logEntry = function(loglevel, message)
+exports.logEntry = function(loglevel, message, scope)
 {
     var coll = db.collection('systemlog');
+
+    var isGlobalScope = (scope === true);
+    var isClientScope = (typeof scope == "string");
 
     var logEntry = {
         loglevel: loglevel,
         message: message,
-        created: (new Date)
+        created: (new Date),
+        globalscope: isGlobalScope,
+        clientname: (isClientScope ? scope : null)
     };
 
     coll.insertOne(logEntry, function(err, result)
@@ -472,7 +489,7 @@ exports.fullAggregation = function(cb)
             }
 
             var log = "deleted " + res.result.n + " too old aggregated datapoints";
-            exports.logEntry("info", log);
+            exports.logEntry("info", log, true);
             logger.info(log);
             logger.info("--------------------------------------------------");
 
@@ -518,13 +535,15 @@ exports.fullAggregation = function(cb)
             {
                 aggregatedDatapoints.push({
                     type: d["_id"].type,
-                    client_id: d["_id"].client_id,
+                    client_id: client_id,
                     avg: d["avg"],
                     created: (new Date),
                     from: start.toDate(),
                     to: end.toDate()
                 });
             });
+
+            storage.logEntry("info", "Aggregation success: " + msg, true);
 
             logger.info("aggregation results: " + aggregatedDatapoints.length + " datapoints");
             logger.info("--------------------------------------------------");
@@ -575,7 +594,7 @@ exports.fullAggregation = function(cb)
 
             var log = "flagged " + res.result.nModified + " datapoints for deletion in next round";
             logger.info(log);
-            exports.logEntry("info", log);
+            exports.logEntry("info", log, true);
             logger.info("--------------------------------------------------");
 
             roundDone();
@@ -589,7 +608,7 @@ exports.fullAggregation = function(cb)
         var timeSpend = ((new Date).getTime() - startTime.getTime()) / 1000;
         var log = "aggregation round done in " + timeSpend + " seconds";
         logger.info(log);
-        exports.logEntry("success", log);
+        exports.logEntry("success", log, true);
         logger.info("next round");
         logger.info("##################################################");
         exports.fullAggregation(cb);

@@ -3,8 +3,10 @@ var storage = require("./storage");
 var async = require("async");
 var moment = require("moment");
 
-exports.info = function(onfinished)
+exports.info = function(client_id, onfinished)
 {
+    logger.info("maintenance call info for client " + client_id);
+
     var db = storage.getDatabase();
 
     //last aggregated datapoint
@@ -16,7 +18,7 @@ exports.info = function(onfinished)
     ({
         lastAggregatedDatapoint: function(cb)
         {
-            aggregationpoints.find({}, { sort: [['to', -1]], limit : 1 }).toArray(function(err, docs)
+            aggregationpoints.find({ client_id: client_id }, { sort: [['to', -1]], limit : 1 }).toArray(function(err, docs)
             {
                 return cb(err, docs);
             });
@@ -24,7 +26,7 @@ exports.info = function(onfinished)
         // --------------------------------------------------------------------------
         firstDatapoint: function(cb)
         {
-            datapoints.find({}, { sort: [['created', 1]], limit : 1 }).toArray(function(err, docs)
+            datapoints.find({ client_id: client_id }, { sort: [['created', 1]], limit : 1 }).toArray(function(err, docs)
             {
                 return cb(err, docs);
             });
@@ -48,7 +50,15 @@ exports.info = function(onfinished)
         // --------------------------------------------------------------------------
         systemLog: function(cb)
         {
-            systemlog.find({}, { sort: [['created', -1]], limit : 20 }).toArray(function(err, docs)
+            //fetch all log entries with either global scope or client scope for the current client
+            systemlog.find({ $or: [ {
+                clientname: client_id
+            }, {
+                globalscope: true
+            }]}, {
+                sort: [['created', -1]],
+                limit : 20
+            }).toArray(function(err, docs)
             {
                 return cb(err, docs);
             });
@@ -88,7 +98,7 @@ exports.info = function(onfinished)
         retval.push({
             type: "Aggregated Datapoint Count",
             time: moment().format("DD.MM. HH:mm"),
-            text: aggCount + " aggregated datapoints total"
+            text: aggCount + " aggregated datapoints total in database"
         });
 
         //----------------------------------------------------
@@ -98,7 +108,7 @@ exports.info = function(onfinished)
         retval.push({
             type: "Datapoint Count",
             time: moment().format("DD.MM. HH:mm"),
-            text: dpCount + " datapoints total"
+            text: dpCount + " datapoints total in database"
         });
 
         //----------------------------------------------------
@@ -110,7 +120,9 @@ exports.info = function(onfinished)
            syslog.push({
                 created: moment(s.created).format("DD.MM. HH:mm"),
                 loglevel: s.loglevel,
-                message: s.message
+                message: s.message,
+                globalscope: s.globalscope,
+                clientname: s.clientname
            });
         });
 

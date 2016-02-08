@@ -113,9 +113,12 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         //we know that we have a working connection here
         if (navigator.serviceWorker.controller)
         {
-            var msg = {'clientName': clientName};
+            var msg = {
+                clientName: clientName,
+                password: constant.get("password")
+            };
             navigator.serviceWorker.controller.postMessage(msg);
-            console.log("posted message to service worker: ", msg);
+            console.log("posted message to service worker");
         }
         else
         {

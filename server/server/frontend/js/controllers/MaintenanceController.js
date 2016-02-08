@@ -110,6 +110,15 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
                         default:
                             s.icon = "si si-question";
                     }
+
+                    if (s.clientname)
+                    {
+                        s.loglevel = "client " + s.loglevel;
+                    }
+                    else if (s.globalscope)
+                    {
+                        s.loglevel = "global " + s.loglevel;
+                    }
                 });
 
                 $scope.syslogentries = syslogentries;
@@ -121,7 +130,6 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
                 {
                     $(".block-opt-refresh").removeClass("block-opt-refresh");
                 }, 300);
-
             }
             else
             {

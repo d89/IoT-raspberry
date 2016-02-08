@@ -12,6 +12,7 @@ var storage = require('./storage');
 var config = require('./config');
 var maintenance = require('./maintenance');
 var middleware = require('socketio-wildcard')();
+var async = require('async');
 
 //config
 const use_ssl = config.useSsl;
@@ -273,7 +274,7 @@ function getUiSocketByClientSocket(clientSocket)
             return;
         }
     });
-    
+
     return responseUiSocket;
 }
 
@@ -339,6 +340,26 @@ function getClientSocketByClientName(clientName)
     return responseClientSocket;
 }
 
+function apiAuth(res, password, clientName, justReturn)
+{
+    var clientSocket = getClientSocketByClientName(clientName);
+
+    if (!clientSocket)
+    {
+        if (justReturn) return false;
+        return res.status(404).send('Client "' + clientName + '" not found.');
+    }
+
+    var clientPassword = clientSocket.handshake.query.password;
+    if (password !== clientPassword)
+    {
+        if (justReturn) return false;
+        return res.status(401).send('Wrong password for "' + clientName + '".');
+    }
+
+    return true;
+}
+
 //-----------------------------------------------------------------
 
 app.use(bodyParser.json());
@@ -368,6 +389,12 @@ app.post('/pushtoken', function(req, res)
     var token = req.body.tkn;
     var clientName = req.body.client;
 
+    //auth
+    if (true !== apiAuth(res, req.body.password, clientName))
+    {
+        return logger.error("web auth failed");
+    }
+
     storage.savePushToken(clientName, token, false, function(err, resp)
     {
         if (err)
@@ -385,42 +412,88 @@ app.post('/pushtoken', function(req, res)
 
 app.post('/push', function(req, res)
 {
-    var clientName = req.body.client;
+    var clientData = req.body.client;
     var response = { message: "" };
-
-    storage.dailySummary(clientName, function(err, data)
+    var respond = function(res, msg)
     {
+        response.message = msg;
+        return res.end(JSON.stringify(response));
+    };
+
+    //---------------------------------------------
+
+    try {
+        clientData = JSON.parse(clientData);
+
+        if (Object.keys(clientData).length === 0)
+        {
+            return respond(res, "No client registered");
+        }
+    } catch (err) {
+        logger.error("push parsing for ", clientData, err);
+        return respond(res, "Invalid request");
+    }
+
+    //---------------------------------------------
+
+    logger.info("received push request for", clientData);
+
+    var callbacks = [];
+
+    //password validation and callback construction for every client
+    for (var clientName in clientData)
+    {
+        var clientPassword = clientData[clientName].password;
+
+        if (true === apiAuth(res, clientPassword, clientName, true))
+        {
+            callbacks.push(function(cb)
+            {
+                storage.dailySummary(clientName, cb);
+            });
+        }
+        else
+        {
+            callbacks.push(function(cb)
+            {
+                return cb(null, "Invalid Password for client " + clientName);
+            });
+        }
+    }
+
+    async.parallel(callbacks, function(err, data)
+    {
+        //only one error callback is being executed.
         if (err)
         {
-            response.message = "Received error aggregating push information";
-            return res.end(JSON.stringify(response));
+            return respond(res, "Received error aggregating push information: " + err);
         }
 
-        var text = [];
+        //all the succeeding callbacks are packed together in "data"
+        data = data.join("---\n");
 
-        data.forEach(function(d)
-        {
-            var type = d["_id"];
-            var value = parseFloat(d["avg"]).toFixed(2);
-
-            text.push(type + ": " + value);
-        });
-
-        response.message = "Last 24h overview for " + clientName + ":\n" + text.join(", ");
-        return res.end(JSON.stringify(response));
+        return respond(res, data);
     });
 });
 
 app.post('/remotecommands/:command/:param', function(req, res)
 {
     var command = req.params.command;
-    var clientSocket = getClientSocketByClientName(req.body.client);
     var param = req.params.param;
+    var clientName = req.body.client;
+    var password = req.body.password;
+    var clientSocket = getClientSocketByClientName(req.body.client);
 
     if (!command || !clientSocket)
     {
         logger.error("invalid remotecommand for " + command, req.body);
         return res.end("invalid");
+    }
+
+    //password
+    if (true !== apiAuth(res, password, clientName))
+    {
+        return logger.error("remotecommand: invalid password for " + clientName);
     }
 
     if (command === "rcswitch")
@@ -522,7 +595,7 @@ io.on('connection', function(socket)
 
             var newConnection = `... is client connection ${clientName}`;
 			logger.info(newConnection);
-            storage.logEntry("info", newConnection);
+            storage.logEntry("info", newConnection, clientName);
 			break;
 		default:
 			logger.error("... is invalid connection", socket.handshake);
@@ -556,7 +629,10 @@ io.on('connection', function(socket)
             'ui:maintenance-info': function (clientSocket, msg, resp) {
                 //logger.info("getting system maintenance info");
 
-                return maintenance.info(function (err, infotext, syslogEntries) {
+                var client_id = getClientName(clientSocket);
+
+                return maintenance.info(client_id, function (err, infotext, syslogEntries)
+                {
                     var errResponse = function (err) {
                         logger.error(err);
                         return resp(err);

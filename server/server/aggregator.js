@@ -14,12 +14,12 @@ MongoClient.connect('mongodb://localhost/IoT', function(err, database)
         if (err)
         {
             logger.error("Aggregation error: " + err);
-            storage.logEntry("error", "Aggregation error: " + err);
+            storage.logEntry("error", "Aggregation error: " + err, true);
         }
         else
         {
             logger.info("Aggregation success: " + msg);
-            storage.logEntry("info", "Aggregation success: " + msg);
+            storage.logEntry("info", "Aggregation success: " + msg, true);
         }
 
         logger.info("##################################################");
