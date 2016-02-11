@@ -110,20 +110,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
             return;
         }
 
-        //we know that we have a working connection here
-        if (navigator.serviceWorker.controller)
-        {
-            var msg = {
-                clientName: clientName,
-                password: constant.get("password")
-            };
-            navigator.serviceWorker.controller.postMessage(msg);
-            console.log("posted message to service worker");
-        }
-        else
-        {
-            console.error("no service worker registered yet!");
-        }
+        PushFactory.postMessage(clientName);
 
         console.log("GOT the capabilities of the client", capabilities);
 

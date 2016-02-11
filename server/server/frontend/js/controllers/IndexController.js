@@ -1,4 +1,4 @@
-IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, PushFactory)
+IoT.controller('IoTIndexCtrl', function($scope, $rootScope, $timeout, $compile, $routeParams, $location, constant, PushFactory)
 {
     //-----------------------------------------------------
 
@@ -6,8 +6,7 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $rootScope.sidebar =
     {
-        "Device Overview":
-        [{
+        "Device Overview": [{
             title: "Connected Devices",
             href: "#index",
             active: true
@@ -96,7 +95,21 @@ IoT.controller('IoTIndexCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         $scope.clients = [];
 
-        PushFactory.registerPush();
+        PushFactory.isRegistered(function(err, msg)
+        {
+            if (err && err.shouldRegister)
+            {
+                console.info("INIT SERVICE WORKER not registered yet: ", err.message);
+                PushFactory.registerPush(function(err, cb)
+                {
+                    console.info("INIT SERVICE WORKER register done", err, cb);
+                });
+            }
+            else
+            {
+                console.info("INIT SERVICE WORKER registered already");
+            }
+        });
 
         $scope.getClients(function(clients)
         {

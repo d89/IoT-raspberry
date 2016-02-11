@@ -535,15 +535,15 @@ exports.fullAggregation = function(cb)
             {
                 aggregatedDatapoints.push({
                     type: d["_id"].type,
-                    client_id: client_id,
                     avg: d["avg"],
+                    client_id: d["_id"].client_id,
                     created: (new Date),
                     from: start.toDate(),
                     to: end.toDate()
                 });
             });
 
-            storage.logEntry("info", "Aggregation success: " + msg, true);
+            exports.logEntry("info", "Aggregation success: " + aggregatedDatapoints.length + " datapoints", true);
 
             logger.info("aggregation results: " + aggregatedDatapoints.length + " datapoints");
             logger.info("--------------------------------------------------");

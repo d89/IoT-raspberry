@@ -1,71 +1,191 @@
-IoT.factory('PushFactory', function(constant)
+IoT.factory('PushFactory', function (constant)
 {
     var PushFactory = {};
 
-    PushFactory.registerPush = function(successfulyFinished)
-    {
-        console.log("INIT SERVICE WORKER");
+    //------------------------------------------------------------------
 
+    PushFactory.time = function ()
+    {
+        return new Date().toString().split(" ")[4];
+    };
+
+    PushFactory.isRegistered = function (cb)
+    {
         if (!('serviceWorker' in navigator))
         {
-            console.warn("INIT SERVICE WORKER No service worker");
-            return;
+            return cb({
+                shouldRegister: false,
+                message: "not capable"
+            });
         }
 
-        const WORKER_FILE = '/assets/serviceworker/worker.js';
-        const WORKER_SCOPE = { scope: './'  };
-
-        navigator.serviceWorker.register(WORKER_FILE, WORKER_SCOPE).then(function(registration)
+        // Check if push messaging is supported
+        if (!('PushManager' in window))
         {
-            if (registration.installing)
-                console.log('INIT SERVICE WORKER  Service worker installing');
+            return cb({
+                shouldRegister: false,
+                message: "no push support"
+            });
+        }
 
-            if (registration.waiting)
-                console.log('INIT SERVICE WORKER  Service worker installed');
+        if (!('showNotification' in ServiceWorkerRegistration.prototype))
+        {
+            return cb({
+                shouldRegister: false,
+                message: "no notification support"
+            });
+        }
 
-            if (registration.active)
-                console.log('INIT SERVICE WORKER  Service worker active');
+        if (Notification.permission === 'denied')
+        {
+            return cb({
+                shouldRegister: true,
+                message: "no notification permission"
+            });
+        }
 
-            return navigator.serviceWorker.ready;
-        }).then(function(swready) {
-            // Check if push messaging is supported
-            if (!('PushManager' in window))
-                throw new Error('INIT SERVICE WORKER Push messaging is not supported.');
+        if (!navigator.serviceWorker.controller)
+        {
+            return cb({
+                shouldRegister: true,
+                message: "not installed"
+            });
+        }
 
-            if (!('showNotification' in ServiceWorkerRegistration.prototype))
-                throw new Error('INIT SERVICE WORKER Notifications are not supported.');
+        navigator.serviceWorker.ready.then(function (swready)
+        {
+            var activated = swready.active.state === "activated";
 
-            if (Notification.permission === 'denied')
-                throw new Error('INIT SERVICE WORKER Notifications are denied.');
+            if (!activated)
+            {
+                throw new Error("not activated");
+            }
 
-            console.log("INIT SERVICE WORKER ready");
+            return navigator.permissions.query({name: 'push', userVisibleOnly: true}).then(function (perm)
+            {
+                var granted = perm.state === "granted";
 
-            navigator.permissions.query({name: 'push', userVisibleOnly: true}).then(function (perm) {
-                console.log("INIT SERVICE WORKER permission state", perm);
-
-                return swready.pushManager.getSubscription();
-            }).then(function (subscription) {
-                if (subscription) {
-                    if (successfulyFinished) successfregFinished();
-                    console.log("INIT SERVICE WORKER subscription done", subscription);
-                    throw new Error("INIT SERVICE WORKER already subscribed to push");
+                if (!granted)
+                {
+                    throw new Error("not granted");
                 }
 
-                return swready.pushManager.subscribe
-                ({
-                    userVisibleOnly: true
+                return swready.pushManager.getSubscription();
+            }).then(function (subscription)
+            {
+                if (!subscription)
+                {
+                    throw new Error("not subscribed");
+                }
+
+                return cb(null, true);
+            }).catch(function (err)
+            {
+                return cb({
+                    message: err,
+                    shouldRegister: true
                 });
-            }).then(function (sub) {
-                console.log("INIT SERVICE WORKER subscription done!");
-                if (successfulyFinished) successfulyFinished();
-            }).catch(function (error) {
-                console.log('INIT SERVICE WORKER ACTIVATION', error);
             });
-        }).catch(function(error)
+        }).catch(function (err)
         {
-            console.log('INIT SERVICE WORKER REGISTRATION', error);
+            return cb({
+                message: err,
+                shouldRegister: true
+            });
         });
     };
+
+    //------------------------------------------------------------------
+
+    PushFactory.postMessage = function (clientName)
+    {
+        PushFactory.isRegistered(function (err, res)
+        {
+            if (err && err.shouldRegister)
+            {
+                console.info(PushFactory.time(), "INIT SERVICE WORKER problem", err);
+
+                PushFactory.registerPush(function (err, res)
+                {
+                    if (res === true)
+                    {
+                        PushFactory.postMessage(clientName);
+                    }
+                });
+            }
+            else //service worker is capable and ready
+            {
+                var msg = {
+                    clientName: clientName,
+                    password: constant.get("password")
+                };
+
+                navigator.serviceWorker.controller.postMessage(msg);
+                console.log(PushFactory.time(), "INIT SERVICE WORKER posted message to service worker!");
+            }
+        });
+    };
+
+    //------------------------------------------------------------------
+
+    PushFactory.registerPush = function (cb)
+    {
+        console.log(PushFactory.time(), "INIT SERVICE WORKER");
+
+        const WORKER_FILE = '/assets/serviceworker/worker.js';
+        const WORKER_SCOPE = {scope: './'};
+
+        navigator.serviceWorker.register(WORKER_FILE, WORKER_SCOPE).then(function (registration)
+        {
+            if (registration.installing)
+            {
+                console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker installing");
+            }
+
+            if (registration.waiting)
+            {
+                console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker installed");
+            }
+
+            if (registration.active)
+            {
+                console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker active");
+            }
+
+            return navigator.serviceWorker.ready;
+        }).then(function (swready)
+        {
+            swready.pushManager.getSubscription().then(function (subscription)
+            {
+                if (subscription)
+                {
+                    console.log(PushFactory.time(), "INIT SERVICE WORKER subscription done", subscription);
+                    cb(null, true);
+                }
+                else
+                {
+                    return swready.pushManager.subscribe
+                    ({
+                        userVisibleOnly: true
+                    });
+                }
+            }).then(function (sub)
+            {
+                console.log(PushFactory.time(), "INIT SERVICE WORKER subscription done!");
+                cb(null, true);
+            }).catch(function (error)
+            {
+                console.error(PushFactory.time(), "INIT SERVICE WORKER ACTIVATION", error);
+                cb(error);
+            });
+        }).catch(function (error)
+        {
+            console.error(PushFactory.time(), "INIT SERVICE WORKER REGISTRATION", error);
+            cb(error);
+        });
+    };
+
+    //------------------------------------------------------------------
 
     return PushFactory;
 });
