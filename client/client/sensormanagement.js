@@ -2,6 +2,8 @@ var logger = require('./logger');
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var fs = require('fs');
+var conditionparser = require('./conditionparser');
+var actormanagement = require('./actormanagement');
 
 var temperature = require('./sensors/temperature');
 var cputemp = require('./sensors/cputemp');
@@ -17,13 +19,8 @@ var movement = require('./sensors/movement');
 var tapswitch = require('./sensors/tapswitch');
 var poti = require('./sensors/poti');
 
-var display = require('./actors/display');
-var switchRc = require('./actors/switchrc');
-var ledGreen = require('./actors/led-green');
-var ledRed = require('./actors/led-red');
-
-ledGreen.act();
-ledRed.act();
+actormanagement.registeredActors.ledGreen.act();
+actormanagement.registeredActors.ledRed.act();
 
 var sensormanagement =
 {
@@ -31,18 +28,20 @@ var sensormanagement =
 
     sensorUpdateCallback: null,
 
+    registeredSensors : {},
+
     init: function(cb)
     {
         var isFirstConnection = (sensormanagement.sensorUpdateCallback === null);
 
         sensormanagement.sensorUpdateCallback = function(type, data)
         {
-            logger.info("got data", type, data);
-
             cb({
                 type: type,
                 data: data
             });
+
+            conditionparser.process(type, data, sensormanagement.registeredSensors, actormanagement.registeredActors);
 
             if (type == "mem")
             {
@@ -54,63 +53,63 @@ var sensormanagement =
         {
             logger.warn("First connect, registering the sensors");
 
-            var hum = new humidity({
+            sensormanagement.registeredSensors["humidity"] = new humidity({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var tmp = new temperature({
+            sensormanagement.registeredSensors["temperature"] = new temperature({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var cpu = new cputemp({
+            sensormanagement.registeredSensors["cputemp"] = new cputemp({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var lv = new lightintensity({
+            sensormanagement.registeredSensors["lightintensity"] = new lightintensity({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var p = new poti({
+            sensormanagement.registeredSensors["poti"] = new poti({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var move = new movement({
+            sensormanagement.registeredSensors["movement1"] = new movement({
                 port: 33,
                 suffix: "1",
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var move = new movement({
+            sensormanagement.registeredSensors["movement2"] = new movement({
                 port: 38,
                 suffix: "2",
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var ts = new tapswitch({
+            sensormanagement.registeredSensors["tapswitch"] = new tapswitch({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var ss = new sound({
+            sensormanagement.registeredSensors["sound"] = new sound({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var sv = new soundvol({
+            sensormanagement.registeredSensors["soundvol"] = new soundvol({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var l = new load({
+            sensormanagement.registeredSensors["load"] = new load({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var ls = new light({
+            sensormanagement.registeredSensors["light"] = new light({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var m = new mem({
+            sensormanagement.registeredSensors["mem"] = new mem({
                 onData: sensormanagement.sensorUpdateCallback
             });
 
-            var d = new distance({
+            sensormanagement.registeredSensors["distance"] = new distance({
                 onData: sensormanagement.sensorUpdateCallback
             });
         }
@@ -128,7 +127,7 @@ var sensormanagement =
         {
             exec("ps aux | grep node | wc -l", function(err, out2, stderr)
             {
-                display.act([
+                actormanagement.registeredActors.display.act([
                     "python-proc: " + parseInt(out1, 10),
                     "node-proc: " + parseInt(out2, 10),
                     "mem-usage " + memUsage.toFixed(2) + "%",

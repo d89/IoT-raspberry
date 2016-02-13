@@ -2,6 +2,13 @@ var logger = require('../logger');
 var process = null;
 var spawn = require('child_process').spawn;
 
+exports.exposed = function()
+{
+    return {
+        act: exports.act
+    };
+};
+
 exports.act = function(onoff)
 {
     logger.info("changing servo to state ", onoff);

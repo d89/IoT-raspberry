@@ -17,18 +17,35 @@ class baseSensor
         this.logger.info(`watching ${this.name}`);
     }
 
-    expose()
+    exposed()
     {
         var that = this;
 
         return {
-            is: function()
+            is: function(val)
             {
-                return that.sensordata ? that.sensordata.is : null;
+                if (!that.sensordata) return false;
+                return that.sensordata.is == val;
             },
-            was: function()
+            lte: function(val)
             {
-                return that.sensordata ? that.sensordata.was : null;
+                if (!that.sensordata) return false;
+                return that.sensordata.is <= val;
+            },
+            lt: function(val)
+            {
+                if (!that.sensordata) return false;
+                return that.sensordata.is < val;
+            },
+            gte: function(val)
+            {
+                if (!that.sensordata) return false;
+                return that.sensordata.is >= val;
+            },
+            gt: function(val)
+            {
+                if (!that.sensordata) return false;
+                return that.sensordata.is > val;
             }
         }
     }
