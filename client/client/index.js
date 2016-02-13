@@ -6,13 +6,14 @@ var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var fs = require('fs');
 var logger = require('./logger');
-var cam = require('./sensors/cam');
 var sensormanagement = require('./sensormanagement');
+var crypto = require('crypto');
+
+var cam = require('./actors/cam');
 var switchRc = require('./actors/switchrc');
 var ledGreen = require('./actors/led-green');
 var ledRed = require('./actors/led-red');
 var servo = require('./actors/servo');
-var crypto = require('crypto');
 
 const server_url = config.serverUrl;
 const client_name = config.clientName;

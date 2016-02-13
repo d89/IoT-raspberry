@@ -1,48 +1,56 @@
+"use strict";
+
 var fs = require("fs");
-var logger = require('../logger');
+var baseSensor = require("./baseSensor");
 const INTERVAL = 5000;
 
-var readLoad = function(cb)
+// ######################################################
+
+class load extends baseSensor
 {
-    return fs.readFile("/proc/loadavg", function(err, content)
+    constructor(options)
     {
-        if (err)
-            return cb(err);
+        super("load", options);
+        this.read();
+    }
 
-        var content = content.toString().split(" ").splice(0, 3);
-
-        //logger.info(content);
-
-        var load = parseFloat(content[0], 10);
-
-        return cb(null, load);
-    });
-};
-
-var sendLoadLoop = function(ondata)
-{
-    readLoad(function(err, temp)
+    read()
     {
-        if (!err)
-            ondata(temp);
+        var that = this;
 
-        setTimeout(function()
+        this.readLoad(function(err, temp)
         {
-            sendLoadLoop(ondata);
-        }, INTERVAL);
-    });
+            if (!err)
+            {
+                that.senddata(temp, that);
+            }
+            else
+            {
+                that.logger.error(err);
+            }
+
+            setTimeout(function()
+            {
+                that.read();
+            }, INTERVAL);
+        });
+    }
+
+    // ----------------------------------------------
+
+    readLoad(cb)
+    {
+        return fs.readFile("/proc/loadavg", function(err, data)
+        {
+            if (err)
+                return cb(err);
+
+            data = data.toString().split(" ").splice(0, 3);
+            data = parseFloat(data[0], 10);
+
+            return cb(null, data);
+        });
+    }
 }
 
-exports.watch = function(ondata, onclose)
-{
-    logger.info("watching cpu load");
-
-    sendLoadLoop(ondata);
-};
-
-/*
-exports.watch(function(err, data)
-{
-    console.log(err, data);
-});
-*/
+module.exports = load;

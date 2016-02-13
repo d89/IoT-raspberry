@@ -103,163 +103,15 @@ function persistClientData(msg, cb)
 		return cb("malformatted message", msg);
 	}
 		
-	var data = false;
-	
-	if (msg.type === "temperature")
-	{
-        data = msg.data;
+	var data = msg.data;
 
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted temp ${data}`);
-        });
-	}
-	
-	if (msg.type === "humidity")
-	{
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted humidity ${data}`);
-        });
-	}
-
-    if (msg.type === "cputemp")
+    storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
     {
-        data = msg.data;
+        if (err)
+            return cb(err);
 
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted cputemp ${data}`);
-        });
-    }
-
-	if (msg.type === "movement1")
-	{
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted movement1 state ${data}`);
-        });
-	}
-
-    if (msg.type === "mem")
-    {
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted mem ${data}`);
-        });
-    }
-
-    if (msg.type === "load")
-    {
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted load ${data}`);
-        });
-    }
-
-	if (msg.type === "movement2")
-	{
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted movement2 state ${data}`);
-        });
-	}
-
-    if (msg.type === "distance")
-    {
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted distance ${data}`);
-        });
-    }
-
-	if (msg.type === "light")
-	{
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted light state ${data}`);
-        });
-	}
-
-    if (msg.type === "lightintensity")
-    {
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted light intensity ${data}`);
-        });
-    }
-
-	if (msg.type === "sound")
-	{
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted sound state ${data}`);
-        });
-	}
-
-    if (msg.type === "soundvol")
-    {
-        data = msg.data;
-
-        storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
-        {
-            if (err)
-                return cb(err);
-
-            return cb(null, `extracted sound vol ${data}`);
-        });
-    }
+        return cb(null, `extracted ${msg.type}: ${data}`);
+    });
 }
 
 function getUiSocketByClientSocket(clientSocket)
@@ -811,7 +663,7 @@ io.on('connection', function(socket)
                 {
                     if (err)
                     {
-                        logger.error("could not store data point: ", err);
+                        logger.error("could not store data point: ", err, msg);
                         return;
                     }
 

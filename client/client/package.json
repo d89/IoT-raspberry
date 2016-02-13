@@ -9,6 +9,7 @@
   "author": "David Müller",
   "license": "MIT",
   "dependencies": {
+    "moment": "^2.11.1",
     "rpi-gpio": "^0.7.0",
     "socket.io-client": "^1.3.7",
     "winston": "^2.1.1"

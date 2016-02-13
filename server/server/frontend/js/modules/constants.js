@@ -13,13 +13,14 @@ constants.provider('constant', function()
             "mem": "Memory Usage (%)",
             "load": "CPU Load",
             "humidity": "Humidity (%)",
-            "distance": "Distance (m)",
+            "distance": "Distance (cm)",
             "lightintensity": "Light Intensity",
             "light": "Light State",
             "soundvol": "Sound Volume",
             "sound": "Sound State",
             "movement1": "Movement (sensor 1)",
-            "movement2": "Movement (sensor 2)"
+            "movement2": "Movement (sensor 2)",
+            "poti": "Potentiometer"
         }
     };
 

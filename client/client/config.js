@@ -4,5 +4,6 @@ module.exports = {
     logFile: "/tmp/logfile.log",
     isoOffset: 0, //in hours
     password: "*** snip ***",
-    chartTypes: ["temperature", "cputemp", "mem", "load", "humidity", "distance", "lightintensity", "light", "soundvol", "sound", "movement1", "movement2"]
+    baseBath: "/var/www/IoT-raspberry", //no trailing slash
+    chartTypes: ["temperature", "cputemp", "mem", "load", "humidity", "distance", "lightintensity", "light", "soundvol", "sound", "movement1", "movement2", "poti"]
 };

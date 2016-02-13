@@ -3,20 +3,21 @@ var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var fs = require('fs');
 
-var display = require('./sensors/display');
-var dht11 = require('./sensors/dht11');
-var pir1 = require('./sensors/pir');
-var pir2 = require('./sensors/pir');
-var lm393 = require('./sensors/lm393');
-var sound = require('./sensors/sound');
-var light = require('./sensors/light');
+var temperature = require('./sensors/temperature');
 var cputemp = require('./sensors/cputemp');
-var switchBtn = require('./sensors/switch');
-var hcsr04 = require('./sensors/hcsr04');
-var pcf8591 = require('./sensors/pcf8591');
-var load = require('./sensors/load');
 var mem = require('./sensors/mem');
+var load = require('./sensors/load');
+var humidity = require('./sensors/humidity');
+var distance = require('./sensors/distance');
+var lightintensity = require('./sensors/lightintensity');
+var light = require('./sensors/light');
+var soundvol = require('./sensors/soundvol');
+var sound = require('./sensors/sound');
+var movement = require('./sensors/movement');
+var tapswitch = require('./sensors/tapswitch');
+var poti = require('./sensors/poti');
 
+var display = require('./actors/display');
 var switchRc = require('./actors/switchrc');
 var ledGreen = require('./actors/led-green');
 var ledRed = require('./actors/led-red');
@@ -24,7 +25,7 @@ var ledRed = require('./actors/led-red');
 ledGreen.act();
 ledRed.act();
 
-var sensormanagement = 
+var sensormanagement =
 {
     actionsEnabled: false, //toggle sound actions by clap
 
@@ -34,35 +35,89 @@ var sensormanagement =
     {
         var isFirstConnection = (sensormanagement.sensorUpdateCallback === null);
 
-        sensormanagement.sensorUpdateCallback = cb;
+        sensormanagement.sensorUpdateCallback = function(type, data)
+        {
+            logger.info("got data", type, data);
+
+            cb({
+                type: type,
+                data: data
+            });
+
+            if (type == "mem")
+            {
+                sensormanagement.displayUpdate(data);
+            }
+        };
 
         if (isFirstConnection)
         {
             logger.warn("First connect, registering the sensors");
-            sensormanagement.registerDHT11();
-            sensormanagement.registerCpuTemp();
-            sensormanagement.registerLight();
-            sensormanagement.registerLM393();
-            sensormanagement.registerPir1();
-            sensormanagement.registerPir2();
-            sensormanagement.registerSound();
-            sensormanagement.registerSwitch();
-            sensormanagement.registerHcsr04();
-            sensormanagement.registerPcf8591();
-            sensormanagement.registerSystemLoad();
-            sensormanagement.registerMemUsage();
+
+            var hum = new humidity({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var tmp = new temperature({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var cpu = new cputemp({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var lv = new lightintensity({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var p = new poti({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var move = new movement({
+                port: 33,
+                suffix: "1",
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var move = new movement({
+                port: 38,
+                suffix: "2",
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var ts = new tapswitch({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var ss = new sound({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var sv = new soundvol({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var l = new load({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var ls = new light({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var m = new mem({
+                onData: sensormanagement.sensorUpdateCallback
+            });
+
+            var d = new distance({
+                onData: sensormanagement.sensorUpdateCallback
+            });
         }
         else
         {
             logger.warn("reconnect, not registering the sensors");
         }
-    },
-
-    //##########################################################################
-
-    sendSensorData: function(data)
-    {
-        sensormanagement.sensorUpdateCallback(data);
     },
 
     //##########################################################################
@@ -73,295 +128,13 @@ var sensormanagement =
         {
             exec("ps aux | grep node | wc -l", function(err, out2, stderr)
             {
-                display.display([
-                    "python proc: " + parseInt(out1, 10),
-                    "node proc: " + parseInt(out2, 10),
-                    "mem usage " + memUsage.toFixed(2) + "%",
+                display.act([
+                    "python-proc: " + parseInt(out1, 10),
+                    "node-proc: " + parseInt(out2, 10),
+                    "mem-usage " + memUsage.toFixed(2) + "%",
                     "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
                 ]);
             });
-        });
-    },
-
-    //##########################################################################
-
-    registerSystemLoad: function()
-    {
-        load.watch(function ondata(data)
-        {
-            var sysload = {};
-            sysload.type = 'load';
-            sysload.data = data;
-            sensormanagement.sendSensorData(sysload);
-            //logger.info("sent", sysload);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-
-
-    //##########################################################################
-
-    registerMemUsage: function()
-    {
-        mem.watch(function ondata(data)
-        {
-            var memusage = {};
-            memusage.type = 'mem';
-            memusage.data = data;
-            sensormanagement.sendSensorData(memusage);
-            //logger.info("sent", memusage);
-
-            sensormanagement.displayUpdate(memusage.data);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-
-    //##########################################################################
-
-    registerPcf8591: function()
-    {
-        pcf8591.watch(function ondata(data)
-        {
-            var acdc = {};
-            acdc.type = 'lightintensity';
-            acdc.data = data.light;
-            //acdc.poti = data.poti;
-            sensormanagement.sendSensorData(acdc);
-
-            //logger.info("sent", acdc);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-
-    //##########################################################################
-
-    registerHcsr04: function()
-    {
-        hcsr04.watch(function ondata(data)
-        {
-            var distance = {};
-            distance.type = 'distance';
-            distance.data = data.distance;
-            sensormanagement.sendSensorData(distance);
-
-            //logger.info("sent", hasChanged);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-            sensormanagement.registerHcsr04();
-        });
-    },
-
-    //##########################################################################
-
-    registerSwitch: function()
-    {
-        switchBtn.watch(function ondata(data)
-        {
-            var hasChanged = {};
-            hasChanged.type = 'switch';
-            hasChanged.data = data.stateChange;
-            sensormanagement.sendSensorData(hasChanged);
-
-            //logger.info("sent", hasChanged);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-
-    //##########################################################################
-
-    registerDHT11: function()
-    {
-        dht11.watch(function ondata(data)
-        {
-            var temp = {};
-            temp.type = 'temperature';
-            temp.data = data.temperature;
-            sensormanagement.sendSensorData(temp);
-            //logger.info("sent", temp);
-
-            var humidity = {};
-            humidity.type = 'humidity';
-            humidity.data = data.humidity;
-            sensormanagement.sendSensorData(humidity);
-            //logger.info("sent", humidity);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-
-    //##########################################################################
-
-    registerCpuTemp: function()
-    {
-        cputemp.watch(function ondata(data)
-        {
-            var cpu = {};
-            cpu.type = 'cputemp';
-            cpu.data = data;
-            sensormanagement.sendSensorData(cpu);
-            //logger.info("sent", cpu);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-
-    //##########################################################################
-
-    registerSound: function()
-    {
-        sound.watch(function ondata(data)
-        {
-            var sound = {};
-            sound.type = 'soundvol';
-            sound.data = data.state;
-
-            sensormanagement.sendSensorData(sound);
-            //logger.info("sent", sound);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-
-    //##########################################################################
-
-    registerPir1: function()
-    {
-        pir1.watch(function ondata(data)
-        {
-            var movement = {
-                type: "movement1",
-                data: data.state
-            };
-
-            //TODO movement detected
-            /*
-            if (data.state === 1 && sensormanagement.actionsEnabled)
-            {
-                spawn('/usr/bin/mpg321', ["/home/pi/Music/siren.mp3"]);
-                switchRc.act(1, 1, 1);
-
-                setTimeout(function()
-                {
-                    switchRc.act(1, 1, 0);
-                }, 5000);
-            }
-            */
-
-            sensormanagement.sendSensorData(movement);
-            //logger.info("sent", movement);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        },
-        {
-            port: 38
-        });
-    },
-    
-    //##########################################################################
-
-    registerPir2: function()
-    {
-        pir2.watch(function ondata(data)
-        {
-            var movement = {
-                type: "movement2",
-                data: data.state
-            };
-
-            sensormanagement.sendSensorData(movement);
-            //logger.info("sent", movement);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        },
-        {
-            port: 33
-        });
-    },
-
-    //##########################################################################
-    
-    registerLight: function()
-    {
-        var lastLightState = false;
-
-        light.watch(function ondata(data)
-        {
-            var light = {
-                type: "light",
-                data: data.state
-            };
-
-            if (sensormanagement.actionsEnabled && !lastLightState && data.state)
-            {
-                spawn('/usr/bin/mpg321', ["/home/pi/Music/light.mp3"]);
-            }
-
-            lastLightState = data.state;
-            sensormanagement.sendSensorData(light);
-
-            //logger.info("sent", light);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
-        });
-    },
-    
-    //##########################################################################
-
-    registerLM393: function()
-    {
-        lm393.watch(function ondata(data)
-        {
-            var sound = {
-                type: "sound",
-                data: data.state === true ? 1 : 0
-            };
-
-            if (data.state)
-            {
-                if (sensormanagement.actionsEnabled)
-                {
-                    spawn('/usr/bin/mpg321', ["/home/pi/Music/deactivated.mp3"]);
-                }
-                else
-                {
-                    spawn('/usr/bin/mpg321', ["/home/pi/Music/activated.mp3"]);
-                }
-
-                sensormanagement.actionsEnabled = !sensormanagement.actionsEnabled;
-            }
-
-            sensormanagement.sendSensorData(sound);
-            //logger.info("sent", sound);
-        },
-        function onclose(msg)
-        {
-            logger.error("stream closed", msg);
         });
     }
 };

@@ -1,14 +1,15 @@
 "use strict";
 
+var fs = require("fs");
 var baseSensor = require("./baseSensor");
 
 // ######################################################
 
-class light extends baseSensor
+class movement extends baseSensor
 {
     constructor(options)
     {
-        super("light", options);
+        super("movement" + options.suffix, options);
         this.read();
     }
 
@@ -16,7 +17,7 @@ class light extends baseSensor
     {
         var that = this;
 
-        that.spawn('light', [], function ondata(data)
+        that.spawn('pir', [ this.options.port ], function ondata(data)
         {
             try
             {
@@ -29,8 +30,6 @@ class light extends baseSensor
             }
         });
     }
-
-    // ----------------------------------------------
 }
 
-module.exports = light;
+module.exports = movement;

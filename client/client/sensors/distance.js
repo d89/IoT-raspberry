@@ -4,11 +4,11 @@ var baseSensor = require("./baseSensor");
 
 // ######################################################
 
-class light extends baseSensor
+class distance extends baseSensor
 {
     constructor(options)
     {
-        super("light", options);
+        super("distance", options);
         this.read();
     }
 
@@ -16,11 +16,11 @@ class light extends baseSensor
     {
         var that = this;
 
-        that.spawn('light', [], function ondata(data)
+        that.spawn('hcsr04', [], function ondata(data)
         {
             try
             {
-                data = JSON.parse(data.toString()).state;
+                data = JSON.parse(data.toString()).distance;
                 that.senddata(data, that);
             }
             catch (err)
@@ -29,8 +29,6 @@ class light extends baseSensor
             }
         });
     }
-
-    // ----------------------------------------------
 }
 
-module.exports = light;
+module.exports = distance;

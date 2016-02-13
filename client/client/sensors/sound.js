@@ -1,34 +1,34 @@
-var logger = require('../logger');
+"use strict";
 
-exports.watch = function(ondata, onclose)
+var baseSensor = require("./baseSensor");
+
+// ######################################################
+
+class sound extends baseSensor
 {
-    logger.info("watching sound sensor");
-    var spawn = require('child_process').spawn;
-    var prc = spawn('/var/www/IoT-raspberry/sensors/sound',  []);
-    prc.stdout.setEncoding('utf8');
-
-    prc.stderr.on('data', function (data)
+    constructor(options)
     {
-        logger.error("sound received err: ", data.toString());
-    });
+        super("sound", options);
+        this.read();
+    }
 
-    prc.stdout.on('data', function (data)
+    read()
     {
-        try
+        var that = this;
+
+        that.spawn('lm393', [], function ondata(data)
         {
-            //logger.info("received: ", data);
-            data = JSON.parse("" + data);
+            try
+            {
+                data = JSON.parse(data.toString()).state === true ? 1 : 0;
+                that.senddata(data, that);
+            }
+            catch (err)
+            {
+                that.logger.error(err, data);
+            }
+        });
+    }
+}
 
-            ondata(data);
-        }
-        catch (err)
-        {
-            return;
-        }
-    });
-
-    prc.on('close', function (code)
-    {
-        onclose('sound sensor reader exited with ' + code);
-    });
-};
+module.exports = sound;

@@ -1,37 +1,55 @@
+"use strict";
+
 var fs = require("fs");
-var logger = require('../logger');
+var baseSensor = require("./baseSensor");
 const INTERVAL = 5000;
 
-var readTemp = function(cb)
+// ######################################################
+
+class cputemp extends baseSensor
 {
-    return fs.readFile("/sys/class/thermal/thermal_zone0/temp", function(err, data)
+    constructor(options)
     {
-        if (err)
-            return cb(err);
+        super("cputemp", options);
+        this.read();
+    }
 
-        data = parseFloat(data, 10) / 1000;
-
-        return cb(null, data);
-    });
-};
-
-var sendTempLoop = function(ondata)
-{
-    readTemp(function(err, temp)
+    read()
     {
-        if (!err)
-            ondata(temp);
+        var that = this;
 
-        setTimeout(function()
+        this.readTemp(function(err, temp)
         {
-            sendTempLoop(ondata);
-        }, INTERVAL);
-    });
+            if (!err)
+            {
+                that.senddata(temp, that);
+            }
+            else
+            {
+                that.logger.error(err);
+            }
+
+            setTimeout(function()
+            {
+                that.read();
+            }, INTERVAL);
+        });
+    }
+
+    // ----------------------------------------------
+
+    readTemp(cb)
+    {
+        return fs.readFile("/sys/class/thermal/thermal_zone0/temp", function(err, data)
+        {
+            if (err)
+                return cb(err);
+
+            data = parseFloat(data, 10) / 1000;
+
+            return cb(null, data);
+        });
+    }
 }
 
-exports.watch = function(ondata, onclose)
-{
-    logger.info("watching cpu temperature");
-
-    sendTempLoop(ondata);
-};
+module.exports = cputemp;

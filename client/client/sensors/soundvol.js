@@ -4,11 +4,11 @@ var baseSensor = require("./baseSensor");
 
 // ######################################################
 
-class light extends baseSensor
+class soundvol extends baseSensor
 {
     constructor(options)
     {
-        super("light", options);
+        super("soundvol", options);
         this.read();
     }
 
@@ -16,7 +16,7 @@ class light extends baseSensor
     {
         var that = this;
 
-        that.spawn('light', [], function ondata(data)
+        that.spawn('sound', [], function ondata(data)
         {
             try
             {
@@ -29,8 +29,6 @@ class light extends baseSensor
             }
         });
     }
-
-    // ----------------------------------------------
 }
 
-module.exports = light;
+module.exports = soundvol;

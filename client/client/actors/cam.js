@@ -6,7 +6,7 @@ var Cam = {
     streamInterval: null,
     streamProcess: null,
     streamRunning: false,
-    streamImage: "/var/www/IoT-raspberry/stream.jpg",
+    streamImage: "/tmp/stream.jpg",
     socket: null,
 
     startStreaming: function(s) {
