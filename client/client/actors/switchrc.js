@@ -1,5 +1,12 @@
 var logger = require('../logger');
 
+exports.exposed = function()
+{
+    return {
+        act: exports.act
+    };
+};
+
 exports.act = function(channel, device, state)
 {
     logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);

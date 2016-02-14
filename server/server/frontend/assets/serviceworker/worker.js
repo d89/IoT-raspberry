@@ -2,7 +2,7 @@
 
 importScripts('localforage.min.js');
 
-console.log(time(), 'SERVICE WORKER Started!', self);
+//console.log(time(), 'SERVICE WORKER Started!', self);
 
 var ENDPOINT_FETCH = "/push";
 var ENDPOINT_REGISTER = "/pushtoken";
@@ -19,12 +19,12 @@ self.addEventListener('install', function(event)
     //don't wait for other tabs to refresh to the newest sw version
     //http://stackoverflow.com/questions/28069249/how-to-stop-older-service-workers
     event.waitUntil(self.skipWaiting());
-    console.log(time(), 'SERVICE WORKER Installed!', event);
+    //console.log(time(), 'SERVICE WORKER Installed!', event);
 });
 
 self.addEventListener('activate', function(event)
 {
-    console.log(time(), 'SERVICE WORKER Activated!', event);
+    //console.log(time(), 'SERVICE WORKER Activated!', event);
     //take over immediately - new service worker activated right away
     //http://stackoverflow.com/questions/28069249/how-to-stop-older-service-workers
     event.waitUntil(self.clients.claim());
@@ -32,17 +32,17 @@ self.addEventListener('activate', function(event)
 
 self.addEventListener('message', function (evt)
 {
-    console.log(time(), 'SERVICE WORKER message received');
+    //console.log(time(), 'SERVICE WORKER message received');
 
     //saving client name
     if (!evt.data.clientName || !evt.data.password) {
-        return console.error(time(), "SERVICE WORKER message was incomplete");
+        return //console.error(time(), "SERVICE WORKER message was incomplete");
     }
 
     var clientName = evt.data.clientName;
     var password = evt.data.password;
 
-    console.log(time(), "SERVICE WORKER message was complete, register for " + clientName);
+    //console.log(time(), "SERVICE WORKER message was complete, register for " + clientName);
 
     localforage.getItem('clientData').then(function(clientData)
     {
@@ -55,7 +55,7 @@ self.addEventListener('message', function (evt)
         return localforage.setItem('clientData', clientData);
     }).then(function(resp)
     {
-        console.log(time(), "SERVICE WORKER SET clientData", resp);
+        //console.log(time(), "SERVICE WORKER SET clientData", resp);
 
         if (!resp)
             throw new Error("SERVICE WORKER could not save token");
@@ -86,11 +86,11 @@ self.addEventListener('message', function (evt)
         }
         else
         {
-            console.log(time(), "SERVICE WORKER saving token success", response);
+            //console.log(time(), "SERVICE WORKER saving token success", response);
         }
     }).catch(function(err)
     {
-        console.error(time(), 'SERVICE WORKER saving token error', err);
+        //console.error(time(), 'SERVICE WORKER saving token error', err);
     });
 });
 
@@ -103,12 +103,12 @@ self.addEventListener('push', function(event)
     (
         localforage.getItem('clientData').then(function(clientData)
         {
-            console.log(time(), "SERVICE WORKER GOT clientName", clientData);
+            //console.log(time(), "SERVICE WORKER GOT clientName", clientData);
 
             if (!clientData)
                 throw new Error("SERVICE WORKER unknown identifier from database");
 
-            console.log(time(), "SERVICE WORKER got client data " + clientData);
+            //console.log(time(), "SERVICE WORKER got client data " + clientData);
 
             return fetch(ENDPOINT_FETCH, {
                 method: 'post',
@@ -120,7 +120,7 @@ self.addEventListener('push', function(event)
         })
         .then(function(response)
         {
-            console.log(time(), "SERVICE WORKER fetched push notification");
+            //console.log(time(), "SERVICE WORKER fetched push notification");
 
             if (response.status !== 200) {
                 // Throw an error so the promise is rejected and catch() is executed
@@ -132,7 +132,7 @@ self.addEventListener('push', function(event)
         })
         .then(function(data)
         {
-            console.log(time(), 'SERVICE WORKER Request data: ', data);
+            //console.log(time(), 'SERVICE WORKER Request data: ', data);
 
             var notificationFilter = {
                 tag: PUSH_TAG
@@ -147,7 +147,7 @@ self.addEventListener('push', function(event)
             // Check if a notification is already displayed
             return self.registration.getNotifications(notificationFilter).then(function(notifications)
             {
-                console.log(time(), "old notifications", notifications);
+                //console.log(time(), "old notifications", notifications);
 
                 if (notifications && notifications.length > 0)
                 {
@@ -183,7 +183,7 @@ self.addEventListener('push', function(event)
         })
         .catch(function(err)
         {
-            console.error(time(), 'SERVICE WORKER A Problem occured with handling the push msg', err);
+            //console.error(time(), 'SERVICE WORKER A Problem occured with handling the push msg', err);
 
             var message = 'We were unable to get the information for this push message';
 
@@ -194,7 +194,7 @@ self.addEventListener('push', function(event)
 
 self.addEventListener('notificationclick', function(event)
 {
-    console.log(time(), 'SERVICE WORKER On notification click: ', event.notification.tag);
+    //console.log(time(), 'SERVICE WORKER On notification click: ', event.notification.tag);
     // Android doesn't close the notification when you click on it
     // See: http://crbug.com/463146
     event.notification.close();
@@ -208,7 +208,7 @@ self.addEventListener('notificationclick', function(event)
         .then(function(clientList) {
             for (var i = 0; i < clientList.length; i++) {
                 var client = clientList[i];
-                console.log(time(), "push client", client);
+                //console.log(time(), "push client", client);
                 if (client.url && 'focus' in client)
                     return client.focus();
             }
@@ -221,7 +221,7 @@ self.addEventListener('notificationclick', function(event)
 
 function showNotification(text, data)
 {
-    console.log(time(), 'SERVICE WORKER showNotification');
+    //console.log(time(), 'SERVICE WORKER showNotification');
 
     var title = 'IoT-Portal';
     self.registration.showNotification(title,
@@ -234,4 +234,4 @@ function showNotification(text, data)
     })
 }
 
-console.log(time(), 'SERVICE WORKER Bound all', self);
+//console.log(time(), 'SERVICE WORKER Bound all', self);

@@ -27,7 +27,7 @@
                                     <button ng-click="cancelLogin(client.client_name)" class="btn btn-sm btn-danger login-button"><i class="fa fa-arrow-right push-5-r"></i> Cancel</button>
                                 </form>
                             </div>
-                            <div class="block-content block-content-full text-center bg-image ribbon ribbon-modern" ng-class="{'ribbon-success': client.logged_in, 'ribbon-danger': !client.logged_in}" style="background-image: url('assets/img/photos/photo{{ randImage }}.jpg');">
+                            <div class="fx-img-rotate-r img-container block-content block-content-full text-center bg-image ribbon ribbon-modern" ng-class="{'ribbon-success': client.logged_in, 'ribbon-danger': !client.logged_in}" style="background-image: url('assets/img/photos/photo{{ randImage }}.jpg');">
                                 <div class="ribbon-box font-w600">
                                     <i class="fa fa-fw" ng-class="{'fa-check': client.logged_in, 'fa-lock': !client.logged_in}"></i>
                                 </div>

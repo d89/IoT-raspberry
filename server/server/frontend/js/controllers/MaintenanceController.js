@@ -21,6 +21,10 @@ IoT.controller('IoTMaintenanceCtrl', function ($scope, $rootScope, $timeout, $co
             href: "#action/" + $routeParams.client_id
         },
         {
+            title: "If This, Then That",
+            href: "#ifttt/" + $routeParams.client_id
+        },
+        {
             title: "Maintenance",
             href: "#maintenance/" + $routeParams.client_id,
             active: true

@@ -11,10 +11,18 @@ exports.exposed = function()
 
 exports.act = function(onoff)
 {
+    //convert input values. Accept true / false, 0 / 1 and "0" / "1"
+    if (typeof onoff != "boolean")
+    {
+        onoff = !!parseInt(onoff, 10);
+    }
+
     logger.info("changing servo to state ", onoff);
 
     if (onoff && !process)
     {
+        logger.info("enabling servo");
+
         process = spawn('/var/www/IoT-raspberry/actors/servo',  []);
         process.stdout.setEncoding('utf8');
 
@@ -31,6 +39,7 @@ exports.act = function(onoff)
 
     if (!onoff && process)
     {
+        logger.info("disabling servo");
         process.kill();
         process = null;
     }

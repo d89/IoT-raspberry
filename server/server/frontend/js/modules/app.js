@@ -25,6 +25,10 @@ IoT.config(['$routeProvider', function($routeProvider)
             templateUrl: 'templates/action/action.html',
             controller: 'IoTActionCtrl'
         })
+        .when('/ifttt/:client_id', {
+            templateUrl: 'templates/ifttt/ifttt.html',
+            controller: 'IoTIftttCtrl'
+        })
         .when('/dashboard/:client_id', {
             templateUrl: 'templates/dashboard/dashboard.html',
             controller: 'IoTDashboardCtrl'

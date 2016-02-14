@@ -597,6 +597,43 @@ io.on('connection', function(socket)
                 };
 
                 clientSocket.emit("maintenance", request);
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:ifttt': function (clientSocket, msg, resp) {
+
+                var request = {};
+
+                if (msg.mode === "conditionlist")
+                {
+                    request.mode = "conditionlist";
+                }
+                else if (msg.mode === "saveconditions")
+                {
+                    request.mode = "saveconditions";
+                    var conds = [];
+
+                    msg.conditions.forEach(function(c)
+                    {
+                        conds.push({
+                            isActive: c.isActive,
+                            conditiontext: c.conditiontext
+                        });
+                    });
+
+                    request.conditions = conds;
+
+                    logger.info("setting conditions", request.conditions);
+                }
+                else if (msg.mode == "availableoptions")
+                {
+                    request.mode = "availableoptions";
+                }
+
+                clientSocket.emit("ifttt", request, function(err, data)
+                {
+                    logger.info("got ifttt answer", err, data);
+                    resp(err, data);
+                });
             }
         };
 

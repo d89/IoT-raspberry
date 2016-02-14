@@ -103,7 +103,7 @@ IoT.factory('PushFactory', function (constant)
         {
             if (err && err.shouldRegister)
             {
-                console.info(PushFactory.time(), "INIT SERVICE WORKER problem", err);
+                //console.info(PushFactory.time(), "INIT SERVICE WORKER problem", err);
 
                 PushFactory.registerPush(function (err, res)
                 {
@@ -121,7 +121,7 @@ IoT.factory('PushFactory', function (constant)
                 };
 
                 navigator.serviceWorker.controller.postMessage(msg);
-                console.log(PushFactory.time(), "INIT SERVICE WORKER posted message to service worker!");
+                //console.log(PushFactory.time(), "INIT SERVICE WORKER posted message to service worker!");
             }
         });
     };
@@ -130,7 +130,7 @@ IoT.factory('PushFactory', function (constant)
 
     PushFactory.registerPush = function (cb)
     {
-        console.log(PushFactory.time(), "INIT SERVICE WORKER");
+        //console.log(PushFactory.time(), "INIT SERVICE WORKER");
 
         const WORKER_FILE = '/assets/serviceworker/worker.js';
         const WORKER_SCOPE = {scope: './'};
@@ -139,17 +139,17 @@ IoT.factory('PushFactory', function (constant)
         {
             if (registration.installing)
             {
-                console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker installing");
+                //console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker installing");
             }
 
             if (registration.waiting)
             {
-                console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker installed");
+                //console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker installed");
             }
 
             if (registration.active)
             {
-                console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker active");
+                //console.log(PushFactory.time(), "INIT SERVICE WORKER  Service worker active");
             }
 
             return navigator.serviceWorker.ready;
@@ -159,7 +159,7 @@ IoT.factory('PushFactory', function (constant)
             {
                 if (subscription)
                 {
-                    console.log(PushFactory.time(), "INIT SERVICE WORKER subscription done", subscription);
+                    //console.log(PushFactory.time(), "INIT SERVICE WORKER subscription done", subscription);
                     cb(null, true);
                 }
                 else
@@ -171,16 +171,16 @@ IoT.factory('PushFactory', function (constant)
                 }
             }).then(function (sub)
             {
-                console.log(PushFactory.time(), "INIT SERVICE WORKER subscription done!");
+                //console.log(PushFactory.time(), "INIT SERVICE WORKER subscription done!");
                 cb(null, true);
             }).catch(function (error)
             {
-                console.error(PushFactory.time(), "INIT SERVICE WORKER ACTIVATION", error);
+                //console.error(PushFactory.time(), "INIT SERVICE WORKER ACTIVATION", error);
                 cb(error);
             });
         }).catch(function (error)
         {
-            console.error(PushFactory.time(), "INIT SERVICE WORKER REGISTRATION", error);
+            //console.error(PushFactory.time(), "INIT SERVICE WORKER REGISTRATION", error);
             cb(error);
         });
     };

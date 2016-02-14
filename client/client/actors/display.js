@@ -1,5 +1,12 @@
 var logger = require('../logger');
 
+exports.exposed = function()
+{
+    return {
+        act: exports.act
+    };
+};
+
 exports.act = function(displaycontent)
 {
     //make array

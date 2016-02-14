@@ -1216,6 +1216,12 @@ var Styles = function() {
             });
         },
 
+        changeTab: function(link)
+        {
+            $(link).tab('show');
+            return false;
+        },
+
         init: function($func) {
 
             if (OneUI.initialized)

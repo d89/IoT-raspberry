@@ -11246,3 +11246,19 @@ a.navlink {
   display: block;
   margin-top: 5px;
 }
+
+.monospace {
+  font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+}
+
+#opts .label {
+  margin-right: 5px;
+  margin-bottom: 5px;
+  font-size: 14px;
+  display: block;
+  float: left;
+}
+
+input[readonly] {
+    opacity: 0.6 !important;
+}

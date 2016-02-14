@@ -7,7 +7,9 @@ var exec = require('child_process').exec;
 var fs = require('fs');
 var logger = require('./logger');
 var sensormanagement = require('./sensormanagement');
+var actormanagement = require('./actormanagement');
 var crypto = require('crypto');
+var conditionparser = require('./conditionparser');
 
 var cam = require('./actors/cam');
 var switchRc = require('./actors/switchrc');
@@ -37,7 +39,6 @@ socket.on('connect', function()
     });
 });
 
-//requests from the server to a client raspberry
 socket.on('actionrequest', function(msg)
 {
     /*
@@ -85,6 +86,65 @@ socket.on('actionrequest', function(msg)
         {
             ledGreen.act();
         }
+    }
+});
+
+socket.on('ifttt', function(msg, resp)
+{
+    //conditionlist  --------------------------------------------------------------------
+    if (msg.mode === "conditionlist")
+    {
+        logger.info("ifttt request for conditionslist");
+
+        conditionparser.loadConditions(function(err, conds)
+        {
+            try
+            {
+                var parsedConditions = JSON.parse(conds);
+            }
+            catch (err)
+            {
+                logger.error("could not load ifttt conditions", err, conds);
+                return resp("parsing error");
+            }
+
+            return resp(err, parsedConditions);
+        });
+    }
+
+    //availableoptions  -----------------------------------------------------------------
+    if (msg.mode === "availableoptions")
+    {
+        logger.info("ifttt request for availableoptions");
+
+        var actors = actormanagement.registeredActors;
+        var sensors = sensormanagement.registeredSensors;
+
+        conditionparser.loadAvailableOptions(actors, sensors, function(err, availableOptions)
+        {
+            return resp(err, availableOptions);
+        });
+    }
+
+    //saveconditions  -------------------------------------------------------------------
+    if (msg.mode === "saveconditions")
+    {
+        logger.info("ifttt request for saveconditions with conds", conditions);
+
+        try
+        {
+            var conditions = JSON.stringify(msg.conditions);
+        }
+        catch (err)
+        {
+            logger.error("could not parse ifttt conditions", err, msg.conditions);
+            return resp("parsing error");
+        }
+
+        conditionparser.saveConditions(conditions, function(err, conds)
+        {
+            return resp(err, conds);
+        });
     }
 });
 

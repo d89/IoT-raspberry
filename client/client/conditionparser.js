@@ -1,7 +1,132 @@
-exports.statements = [
-    " if     (true || $poti.gt(60) || $distance.gt(130) && (!($movement2.is(1) || $distance.lte(100))&&$movement2.is(0))) { $lol.act(); ;;;  $lol2.act(333); }",
-    "if (true) {  $ledRed.act(); }"
-];
+var fs = require("fs");
+var logger = require("./logger");
+var sensormanagement = require("./sensormanagement");
+var actormanagement = require("./actormanagement");
+const DEBUG = true;
+
+// --------------------------------------------------
+
+exports.statements = [];
+
+exports.loadAvailableOptions = function(regActors, regSensors, cb)
+{
+    //console.log("exposed sensors", regSensors.exposed())
+
+    var actors = [];
+
+    for (var actor in regActors)
+    {
+        var methods = [];
+
+        if ("exposed" in regActors[actor])
+        {
+            Object.keys(regActors[actor].exposed()).forEach(function(exposedMethod)
+            {
+                methods.push({
+                    name: exposedMethod
+                });
+            })
+        }
+
+        actors.push({
+            name: actor,
+            methods: methods
+        });
+    }
+
+    var sensors = [];
+
+    for (var sensor in regSensors)
+    {
+        var methods = [];
+
+        if ("exposed" in regSensors[sensor])
+        {
+            Object.keys(regSensors[sensor].exposed()).forEach(function(exposedMethod)
+            {
+                methods.push({
+                    name: exposedMethod
+                });
+            })
+        }
+
+        sensors.push({
+            name: sensor,
+            methods: methods
+        });
+    }
+
+    var options = {
+        actors: actors,
+        sensors: sensors
+    };
+
+    //console.log("returning available options", options);
+
+    cb(null, options);
+};
+
+exports.loadConditions = function(cb)
+{
+    fs.readFile("../conditions.json", function(err, file)
+    {
+        if (err)
+        {
+            logger.error("condition list", err);
+            file = "[]";
+        }
+
+        return cb(null, file);
+    });
+};
+
+//set the conditions from the file as current scope
+exports.applyConditions = function(cb)
+{
+    exports.loadConditions(function(err, statements)
+    {
+        if (err)
+        {
+            statements = "[]";
+        }
+
+        try
+        {
+            statements = JSON.parse(statements);
+        }
+        catch (err)
+        {
+            statements = [];
+        }
+
+        exports.statements = [];
+
+        statements.forEach(function(s)
+        {
+            if (s.isActive)
+            {
+                exports.statements.push(s.conditiontext);
+            }
+        });
+
+        cb();
+    });
+};
+
+exports.saveConditions = function(conditions, cb)
+{
+    fs.writeFile("../conditions.json", conditions, function(err)
+    {
+        if (err)
+        {
+            err = err.toString();
+            logger.error("condition save", err);
+            return cb(err);
+        }
+
+        return cb(null, "saved conditions");
+    });
+};
 
 exports.escapeRegExp = function(str)
 {
@@ -14,42 +139,45 @@ exports.validTokensThenClause = [";"];
 
 exports.process = function(type, data, sensors, actors)
 {
-    exports.statements.forEach(function(statement)
+    exports.applyConditions(function()
     {
-        try
+        exports.statements.forEach(function(statement)
         {
-            console.log("-----------------------------------")
-
-            var clauses = exports.validateStructure(statement);
-
-            var ifClause = clauses.if;
-            var thenClause = clauses.then;
-
-            console.log("ifclause", ifClause);
-            console.log("thenclause", thenClause);
-            console.log("###");
-
-            var condition = exports.processIfClause(ifClause, sensors);
-
-            console.log("evaluated", condition.evaluated);
-            console.log("executed", condition.executed);
-
-            if (condition.executed === true)
+            try
             {
-                var callResults = exports.processThenClause(thenClause, actors);
-                console.log("successfully executed clause with return values", callResults);
-            }
-            else
-            {
-                console.log("do not exectute 'then' clause");
-            }
-        }
-        catch (err)
-        {
-            console.error(`Condition Evaluation error for ${statement}`, err);
-        }
+                DEBUG && console.log("-----------------------------------")
 
-        console.log("-----------------------------------")
+                var clauses = exports.validateStructure(statement);
+
+                var ifClause = clauses.if;
+                var thenClause = clauses.then;
+
+                DEBUG && console.log("ifclause", ifClause);
+                DEBUG && console.log("thenclause", thenClause);
+                DEBUG && console.log("###");
+
+                var condition = exports.processIfClause(ifClause, sensors);
+
+                DEBUG && console.log("evaluated", condition.evaluated);
+                DEBUG && console.log("executed", condition.executed);
+
+                if (condition.executed === true)
+                {
+                    var callResults = exports.processThenClause(thenClause, actors);
+                    DEBUG && console.log("successfully executed clause with return values", callResults);
+                }
+                else
+                {
+                    DEBUG && console.log("do not exectute 'then' clause");
+                }
+            }
+            catch (err)
+            {
+                DEBUG && console.error(`Condition Evaluation error for ${statement}`, err);
+            }
+
+            DEBUG && console.log("-----------------------------------")
+        });
     });
 };
 
@@ -231,6 +359,9 @@ exports.processThenClause = function(thenClause, actors)
         {
             throw new Error("Invalid Method Name " + methodName);
         }
+
+        //remove parameter quotes
+        parameters = parameters.replace(/[\"\']/g, "");
 
         try
         {
