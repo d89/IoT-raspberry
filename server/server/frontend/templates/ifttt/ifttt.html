@@ -14,11 +14,11 @@
                                 <p>No condition yet</p>
                             </div>
                             <div class="form-group" ng-repeat="condition in conditions">
-                                <div class="input-group">
+                                <div class="input-group readonly">
                                     <span class="input-group-addon">
                                         <i class="fa fa-terminal"></i>
                                     </span>
-                                    <input name="cond" ng-readonly="!condition.isActive" class="form-control monospace" style="height: 60px; font-size: 19px" type="text" placeholder="Statement" value="{{ condition.conditiontext }}" />
+                                    <input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" name="cond" ng-readonly="!condition.isActive" class="form-control monospace" style="height: 60px; font-size: 19px" type="text" placeholder="Statement" value="{{ condition.conditiontext }}" />
                                     <span class="input-group-btn">
                                         <button title="deactivate condition" class="btn btn-default" type="button" style="height: 60px" ng-click="toggleCondition(condition)"><i class="fa fa-eye"></i></button>
                                         <button title="delete condition" class="btn btn-danger" type="button" style="height: 60px" ng-click="removeCondition(condition)"><i class="fa fa-trash"></i></button>

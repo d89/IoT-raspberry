@@ -33,6 +33,8 @@
     "jquery-countTo": "^1.2.0",
     "jquery-appear": "^0.2.4",
     "bootstrap": "^3.3.6",
-    "jsSHA": "^2.0.2"
+    "jsSHA": "^2.0.2",
+    "jquery-textcomplete": "^0.8.1",
+    "jquery.overlay": "https://github.com/yuku-t/jquery-overlay.git"
   }
 }

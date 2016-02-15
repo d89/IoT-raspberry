@@ -38,16 +38,41 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     //-----------------------------------------------------
 
+    $scope.autoComplete = {
+        actors: [],
+        sensors: []
+    };
+
     $scope.addCondition = function()
     {
         $scope.conditions.push({
-            conditiontext: "",
+            conditiontext: "if () { }",
             isActive: true
         });
 
-        setTimeout(function()
+        $scope.initAutoComplete();
+    };
+
+    $scope.initAutoComplete = function()
+    {
+        setTimeout(function() //TODO
         {
-            $("input[name=cond]:last").focus();
+            var selector = "input[name='cond']";
+            var elems = $(selector);
+
+            elems.each(function(i, e)
+            {
+                var needsInitializing = $(e).parents(".textoverlay-wrapper").length === 0;
+
+                if (needsInitializing)
+                {
+                    var isLast = $(e).index(selector) === elems.length - 1;
+                    var isReadonly = $(e).attr("readonly") !== "readonly";
+                    var autoFocus = (isLast && isReadonly);
+
+                    Styles.initAutoComplete(e, $scope.autoComplete.actors, $scope.autoComplete.sensors, autoFocus);
+                }
+            });
         }, 200);
     };
 
@@ -97,8 +122,25 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             {
                 $scope.availableOptions = opts;
 
+                $scope.availableOptions["actors"].forEach(function(a)
+                {
+                    a.methods.forEach(function(m)
+                    {
+                        $scope.autoComplete["actors"].push(a.name + "." + m.name);
+                    });
+                });
+
+                $scope.availableOptions["sensors"].forEach(function(s)
+                {
+                    s.methods.forEach(function(m)
+                    {
+                        $scope.autoComplete["sensors"].push(s.name + "." + m.name);
+                    });
+                });
+
                 setTimeout(function()
                 {
+                    $scope.initAutoComplete();
                     $("#opts").removeClass("block-opt-refresh");
                 }, 500);
             }
@@ -184,6 +226,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             $scope.availableOptions();
             $scope.conditionList();
             $scope.currentSensorValue = {};
+
             SocketFactory.registerLifecycleCallback("dataupdate", function(sensorUpdate)
             {
                 $scope.currentSensorValue[sensorUpdate.type] = sensorUpdate.data;

@@ -11260,5 +11260,27 @@ a.navlink {
 }
 
 input[readonly] {
-    opacity: 0.6 !important;
+    opacity: 0.3 !important;
+}
+
+.textoverlay {
+  padding-top: 16px !important;
+  background: white !important;
+}
+
+.dropdown-menu a {
+  cursor: pointer;
+}
+
+.no-data-text {
+  display: none;
+}
+
+[data-chart-type].no-data .no-data-text {
+  display: block;
+  padding: 20px;
+}
+
+[data-chart-type].no-data .block-content {
+  display: none;
 }

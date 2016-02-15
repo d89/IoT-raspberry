@@ -219,6 +219,12 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
 
     $scope.plot = function(type, labels, data)
     {
+        if (data.length === 0)
+        {
+            $("[data-chart-type='" + type + "'] .block-opt-refresh").removeClass("block-opt-refresh");
+            return $("[data-chart-type='" + type + "']").addClass("no-data");
+        }
+
         //reset chart canvas
         var holder = $("[data-chart-type='" + type + "'] .chart-holder");
         holder.html("<canvas class='chart'></canvas>");

@@ -117,7 +117,8 @@ class baseSensor
     spawn(path, params, ondata, onerror, onclose)
     {
         path = config.baseBath + "/sensors/" + path;
-        return processmanager.spawn(path, params, ondata, onerror, onclose);
+        var restartAfter = this.options.restartSensorAfter !== undefined ? this.options.restartSensorAfter : config.restartSensorAfter;
+        return processmanager.spawn(path, params, restartAfter, ondata, onerror, onclose);
     }
 
 }

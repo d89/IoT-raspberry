@@ -86,7 +86,8 @@ var sensormanagement =
             });
 
             sensormanagement.registeredSensors["tapswitch"] = new tapswitch({
-                onData: sensormanagement.sensorUpdateCallback
+                onData: sensormanagement.sensorUpdateCallback,
+                restartSensorAfter: false
             });
 
             sensormanagement.registeredSensors["sound"] = new sound({

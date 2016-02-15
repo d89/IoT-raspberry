@@ -1222,6 +1222,164 @@ var Styles = function() {
             return false;
         },
 
+        initAutoComplete: function(selector, actors, sensors, autotrigger)
+        {
+            // -----------------------------------------
+
+            var triggerTextComplete = function(selector)
+            {
+                $(selector).textcomplete([
+                    //---- sensors ------------------------
+                    {
+                        match: /\$([\w\.]*)$/,
+                        search: function (term, callback)
+                        {
+                            callback($.map(sensors, function (sensor)
+                            {
+                                if (term.indexOf(".") === -1)
+                                {
+                                    sensor = sensor.split(".")[0];
+                                }
+
+                                return sensor.indexOf(term) === 0 ? sensor : null;
+                            }));
+                        },
+                        context: function (text)
+                        {
+                            var wrapper = $(this)[0];
+                            var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
+                            if (isReadonly) return false;
+
+                            return text.indexOf("if") !== -1 && text.indexOf("(") !== -1 && text.indexOf("{") === -1;
+                        },
+                        template: function (value)
+                        {
+                            if (value.indexOf(".") === -1)
+                            {
+                                return '$' + value + '...';
+                            }
+
+                            return '$' + value + '()';
+                        },
+                        replace: function (value)
+                        {
+                            //trigger method autocompletion
+                            if (value.indexOf(".") === -1)
+                            {
+                                var wrapper = $(this)[0];
+                                var el = $(wrapper.el);
+
+                                (function(el)
+                                {
+                                    setTimeout(function()
+                                    {
+                                        el.keyup();
+                                    }, 200);
+                                }(el));
+
+                                return "\$" + value + '.';
+                            }
+
+                            return ["\$" + value + '(', ')'];
+                        },
+                        index: 1
+                    },
+                    //---- actors ------------------------
+                    {
+                        match: /\$([\w\.]*)$/,
+                        search: function (term, callback)
+                        {
+                            callback($.map(actors, function (actor)
+                            {
+                                if (term.indexOf(".") === -1)
+                                {
+                                    actor = actor.split(".")[0];
+                                }
+
+                                return actor.indexOf(term) === 0 ? actor : null;
+                            }));
+
+                        },
+                        context: function (text)
+                        {
+                            var wrapper = $(this)[0];
+                            var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
+                            if (isReadonly) return false;
+
+                            return text.indexOf("if") !== -1 && text.indexOf("{") !== -1;
+                        },
+                        template: function (value)
+                        {
+                            if (value.indexOf(".") === -1)
+                            {
+                                return '$' + value + '...';
+                            }
+
+                            return '$' + value + '()';
+                        },
+                        replace: function (value)
+                        {
+                            //trigger method autocompletion
+                            if (value.indexOf(".") === -1)
+                            {
+                                var wrapper = $(this)[0];
+                                var el = $(wrapper.el);
+
+                                (function(el)
+                                {
+                                    setTimeout(function()
+                                    {
+                                        el.keyup();
+                                    }, 200);
+                                }(el));
+
+                                return "\$" + value + '.';
+                            }
+
+                            return ["\$" + value + '(', ')'];
+                        },
+                        index: 1
+                    }
+                    //--------------------------------------
+                ],
+                {
+                    appendTo: 'body'
+                })
+                .overlay
+                (
+                    [{
+                        match: /(\$[^\)]+\))/g,
+                        css: {
+                            'background-color': '#efefef'
+                        }
+                    }]
+                );
+            };
+
+            // -----------------------------------------
+
+            var triggerSelection = function(selector)
+            {
+                var $overlayElem = $(selector);
+                var field = $overlayElem.get(0);
+                $overlayElem.focus();
+
+                if (typeof field.selectionStart === 'number')
+                {
+                    field.selectionStart = field.selectionEnd = $overlayElem.val().indexOf("(") + 1;
+                }
+
+                $overlayElem.keyup();
+            };
+
+            // -----------------------------------------
+
+            triggerTextComplete(selector);
+
+            if (autotrigger)
+                triggerSelection(selector);
+        },
+
         init: function($func) {
 
             if (OneUI.initialized)

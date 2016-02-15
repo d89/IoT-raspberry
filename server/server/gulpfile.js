@@ -57,7 +57,9 @@ gulp.task('js-libs', function ()
         "./frontend/bower_components/moment/min/moment.min.js",
         "./frontend/bower_components/moment/locale/de.js",
         "./frontend/bower_components/angular/angular.min.js",
-        "./frontend/bower_components/angular-route/angular-route.min.js"
+        "./frontend/bower_components/angular-route/angular-route.min.js",
+        "./frontend/bower_components/jquery.overlay/jquery.overlay.min.js",
+        "./frontend/bower_components/jquery-textcomplete/dist/jquery.textcomplete.min.js"
     ])
     .pipe(concat("libs.js"))
     .pipe(gulp.dest(DIST_DIR + '/js'));

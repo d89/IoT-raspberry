@@ -63,6 +63,8 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
     {
         SocketFactory.send("ui:full", { type: type }, function(err, dps)
         {
+            console.log("dps for ", type, dps);
+
             var labels = [];
             var data = [];
 
@@ -85,6 +87,11 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
 
     $scope.plot = function(type, labels, data)
     {
+        if (data.length === 0)
+        {
+            return $("[data-chart-type='" + type + "']").addClass("no-data");
+        }
+
         var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
         var isSmall = windowWidth < 700;
         //alert(windowWidth);
