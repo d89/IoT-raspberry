@@ -19,7 +19,8 @@ exports.act = function(title)
 
     if (!fs.existsSync(title))
     {
-        return logger.error("file does not exist");
+        logger.error("file does not exist");
+        return "file does not exist";
     }
 
     spawn('/usr/bin/mpg321', [title]);

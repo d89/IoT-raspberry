@@ -607,6 +607,10 @@ io.on('connection', function(socket)
                 {
                     request.mode = "conditionlist";
                 }
+                else if (msg.mode === "testconditions")
+                {
+                    request.mode = "testconditions";
+                }
                 else if (msg.mode === "saveconditions")
                 {
                     request.mode = "saveconditions";
@@ -692,6 +696,20 @@ io.on('connection', function(socket)
     {
         var client =
         {
+            'client:iftttupdate': function(msg, resp)
+            {
+                msg.client_id = getClientName(socket);
+
+                var uiSocket = getUiSocketByClientSocket(socket);
+
+                if (!uiSocket)
+                {
+                    //logger.info(`no waiting ui client for client data`);
+                    return;
+                }
+
+                uiSocket.emit("iftttupdate", msg);
+            },
             'client:data': function(msg, resp)
             {
                 msg.client_id = getClientName(socket);

@@ -1208,6 +1208,11 @@ var Styles = function() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         },
 
+        supportsTouch: function()
+        {
+            return 'ontouchstart' in window || navigator.msMaxTouchPoints;
+        },
+
         registerVisibilityChangeHandler: function(onVisibilityChanged)
         {
             document.addEventListener('visibilitychange', function()
@@ -1224,128 +1229,132 @@ var Styles = function() {
 
         initAutoComplete: function(selector, actors, sensors, autotrigger)
         {
+            //textoverlay is not autoscaling - so we don't want it to look ugly
+            $(window).resize(function () {
+                $(".textoverlay").hide()
+            });
+
             // -----------------------------------------
 
             var triggerTextComplete = function(selector)
             {
                 $(selector).textcomplete([
-                    //---- sensors ------------------------
+                //---- sensors ------------------------
+                {
+                    match: /\$([\w\.]*)$/,
+                    search: function (term, callback)
                     {
-                        match: /\$([\w\.]*)$/,
-                        search: function (term, callback)
+                        callback($.map(sensors, function (sensor)
                         {
-                            callback($.map(sensors, function (sensor)
+                            if (term.indexOf(".") === -1)
                             {
-                                if (term.indexOf(".") === -1)
-                                {
-                                    sensor = sensor.split(".")[0];
-                                }
-
-                                return sensor.indexOf(term) === 0 ? sensor : null;
-                            }));
-                        },
-                        context: function (text)
-                        {
-                            var wrapper = $(this)[0];
-                            var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
-                            if (isReadonly) return false;
-
-                            return text.indexOf("if") !== -1 && text.indexOf("(") !== -1 && text.indexOf("{") === -1;
-                        },
-                        template: function (value)
-                        {
-                            if (value.indexOf(".") === -1)
-                            {
-                                return '$' + value + '...';
+                                sensor = sensor.split(".")[0];
                             }
 
-                            return '$' + value + '()';
-                        },
-                        replace: function (value)
-                        {
-                            //trigger method autocompletion
-                            if (value.indexOf(".") === -1)
-                            {
-                                var wrapper = $(this)[0];
-                                var el = $(wrapper.el);
-
-                                (function(el)
-                                {
-                                    setTimeout(function()
-                                    {
-                                        el.keyup();
-                                    }, 200);
-                                }(el));
-
-                                return "\$" + value + '.';
-                            }
-
-                            return ["\$" + value + '(', ')'];
-                        },
-                        index: 1
+                            return sensor.indexOf(term) === 0 ? sensor : null;
+                        }));
                     },
-                    //---- actors ------------------------
+                    context: function (text)
                     {
-                        match: /\$([\w\.]*)$/,
-                        search: function (term, callback)
+                        var wrapper = $(this)[0];
+                        var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
+                        if (isReadonly || Styles.supportsTouch()) return false;
+
+                        return text.indexOf("if") !== -1 && text.indexOf("(") !== -1 && text.indexOf("{") === -1;
+                    },
+                    template: function (value)
+                    {
+                        if (value.indexOf(".") === -1)
                         {
-                            callback($.map(actors, function (actor)
-                            {
-                                if (term.indexOf(".") === -1)
-                                {
-                                    actor = actor.split(".")[0];
-                                }
+                            return '$' + value + '...';
+                        }
 
-                                return actor.indexOf(term) === 0 ? actor : null;
-                            }));
-
-                        },
-                        context: function (text)
+                        return '$' + value + '()';
+                    },
+                    replace: function (value)
+                    {
+                        //trigger method autocompletion
+                        if (value.indexOf(".") === -1)
                         {
                             var wrapper = $(this)[0];
-                            var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
-                            if (isReadonly) return false;
+                            var el = $(wrapper.el);
 
-                            return text.indexOf("if") !== -1 && text.indexOf("{") !== -1;
-                        },
-                        template: function (value)
-                        {
-                            if (value.indexOf(".") === -1)
+                            (function(el)
                             {
-                                return '$' + value + '...';
-                            }
-
-                            return '$' + value + '()';
-                        },
-                        replace: function (value)
-                        {
-                            //trigger method autocompletion
-                            if (value.indexOf(".") === -1)
-                            {
-                                var wrapper = $(this)[0];
-                                var el = $(wrapper.el);
-
-                                (function(el)
+                                setTimeout(function()
                                 {
-                                    setTimeout(function()
-                                    {
-                                        el.keyup();
-                                    }, 200);
-                                }(el));
+                                    el.keyup();
+                                }, 200);
+                            }(el));
 
-                                return "\$" + value + '.';
+                            return "\$" + value + '.';
+                        }
+
+                        return ["\$" + value + '(', ')'];
+                    },
+                    index: 1
+                },
+                //---- actors ------------------------
+                {
+                    match: /\$([\w\.]*)$/,
+                    search: function (term, callback)
+                    {
+                        callback($.map(actors, function (actor)
+                        {
+                            if (term.indexOf(".") === -1)
+                            {
+                                actor = actor.split(".")[0];
                             }
 
-                            return ["\$" + value + '(', ')'];
-                        },
-                        index: 1
-                    }
-                    //--------------------------------------
+                            return actor.indexOf(term) === 0 ? actor : null;
+                        }));
+
+                    },
+                    context: function (text)
+                    {
+                        var wrapper = $(this)[0];
+                        var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
+                        if (isReadonly || Styles.supportsTouch()) return false;
+
+                        return text.indexOf("if") !== -1 && text.indexOf("{") !== -1;
+                    },
+                    template: function (value)
+                    {
+                        if (value.indexOf(".") === -1)
+                        {
+                            return '$' + value + '...';
+                        }
+
+                        return '$' + value + '()';
+                    },
+                    replace: function (value)
+                    {
+                        //trigger method autocompletion
+                        if (value.indexOf(".") === -1)
+                        {
+                            var wrapper = $(this)[0];
+                            var el = $(wrapper.el);
+
+                            (function(el)
+                            {
+                                setTimeout(function()
+                                {
+                                    el.keyup();
+                                }, 200);
+                            }(el));
+
+                            return "\$" + value + '.';
+                        }
+
+                        return ["\$" + value + '(', ')'];
+                    },
+                    index: 1
+                }
+                //--------------------------------------
                 ],
                 {
                     appendTo: 'body'
-                })
-                .overlay
+                }).overlay
                 (
                     [{
                         match: /(\$[^\)]+\))/g,

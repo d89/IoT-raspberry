@@ -19,124 +19,121 @@ var movement = require('./sensors/movement');
 var tapswitch = require('./sensors/tapswitch');
 var poti = require('./sensors/poti');
 
+// ------------------------------------------------------
+
 actormanagement.registeredActors.ledGreen.act();
 actormanagement.registeredActors.ledRed.act();
 
-var sensormanagement =
+// ------------------------------------------------------
+
+exports.sensorUpdateCallback = null;
+
+exports.registeredSensors = {};
+
+exports.init = function(cb)
 {
-    actionsEnabled: false, //toggle sound actions by clap
+    var isFirstConnection = (exports.sensorUpdateCallback === null);
 
-    sensorUpdateCallback: null,
-
-    registeredSensors : {},
-
-    init: function(cb)
+    exports.sensorUpdateCallback = function(type, data)
     {
-        var isFirstConnection = (sensormanagement.sensorUpdateCallback === null);
-
-        sensormanagement.sensorUpdateCallback = function(type, data)
-        {
-            cb({
-                type: type,
-                data: data
-            });
-
-            conditionparser.process(type, data, sensormanagement.registeredSensors, actormanagement.registeredActors);
-
-            if (type == "mem")
-            {
-                sensormanagement.displayUpdate(data);
-            }
-        };
-
-        if (isFirstConnection)
-        {
-            logger.warn("First connect, registering the sensors");
-
-            sensormanagement.registeredSensors["humidity"] = new humidity({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["temperature"] = new temperature({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["cputemp"] = new cputemp({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["lightintensity"] = new lightintensity({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["poti"] = new poti({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["movement1"] = new movement({
-                port: 33,
-                suffix: "1",
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["movement2"] = new movement({
-                port: 38,
-                suffix: "2",
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["tapswitch"] = new tapswitch({
-                onData: sensormanagement.sensorUpdateCallback,
-                restartSensorAfter: false
-            });
-
-            sensormanagement.registeredSensors["sound"] = new sound({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["soundvol"] = new soundvol({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["load"] = new load({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["light"] = new light({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["mem"] = new mem({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-
-            sensormanagement.registeredSensors["distance"] = new distance({
-                onData: sensormanagement.sensorUpdateCallback
-            });
-        }
-        else
-        {
-            logger.warn("reconnect, not registering the sensors");
-        }
-    },
-
-    //##########################################################################
-
-    displayUpdate: function(memUsage)
-    {
-        exec("ps aux | grep python | wc -l", function(err, out1, stderr)
-        {
-            exec("ps aux | grep node | wc -l", function(err, out2, stderr)
-            {
-                actormanagement.registeredActors.display.act([
-                    "python-proc: " + parseInt(out1, 10),
-                    "node-proc: " + parseInt(out2, 10),
-                    "mem-usage " + memUsage.toFixed(2) + "%",
-                    "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
-                ]);
-            });
+        cb({
+            type: type,
+            data: data
         });
+
+        conditionparser.process(type, data);
+
+        if (type == "mem")
+        {
+            exports.displayUpdate(data);
+        }
+    };
+
+    if (isFirstConnection)
+    {
+        logger.warn("First connect, registering the sensors");
+
+        exports.registeredSensors["humidity"] = new humidity({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["temperature"] = new temperature({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["cputemp"] = new cputemp({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["lightintensity"] = new lightintensity({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["poti"] = new poti({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["movement1"] = new movement({
+            port: 33,
+            suffix: "1",
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["movement2"] = new movement({
+            port: 38,
+            suffix: "2",
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["tapswitch"] = new tapswitch({
+            onData: exports.sensorUpdateCallback,
+            restartSensorAfter: false
+        });
+
+        exports.registeredSensors["sound"] = new sound({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["soundvol"] = new soundvol({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["load"] = new load({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["light"] = new light({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["mem"] = new mem({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["distance"] = new distance({
+            onData: exports.sensorUpdateCallback
+        });
+    }
+    else
+    {
+        logger.warn("reconnect, not registering the sensors");
     }
 };
 
-module.exports = sensormanagement;
+//##########################################################################
+
+exports.displayUpdate = function(memUsage)
+{
+    exec("ps aux | grep python | wc -l", function(err, out1, stderr)
+    {
+        exec("ps aux | grep node | wc -l", function(err, out2, stderr)
+        {
+            actormanagement.registeredActors.display.act([
+                "python-proc: " + parseInt(out1, 10),
+                "node-proc: " + parseInt(out2, 10),
+                "mem-usage " + memUsage.toFixed(2) + "%",
+                "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
+            ]);
+        });
+    });
+};

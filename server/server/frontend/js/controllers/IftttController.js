@@ -57,7 +57,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
     {
         setTimeout(function() //TODO
         {
-            var selector = "input[name='cond']";
+            var selector = "[name='cond']";
             var elems = $(selector);
 
             elems.each(function(i, e)
@@ -175,13 +175,37 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
         });
     };
 
+    $scope.testConditions = function()
+    {
+        $("#conds").addClass("block-opt-refresh");
+
+        var conditions = {
+            mode: "testconditions"
+        };
+
+        SocketFactory.send('ui:ifttt', conditions, function(err)
+        {
+            console.log("got testcondition response");
+
+            setTimeout(function()
+            {
+                $("#conds").removeClass("block-opt-refresh");
+            }, 500);
+
+            if (err)
+            {
+                SocketFactory.callLifecycleCallback("functional_error", "Could not test conditions: " + err);
+            }
+        });
+    };
+
     $scope.sendConditions = function()
     {
         $("#conds").addClass("block-opt-refresh");
 
         var sendConds = [];
 
-        $("input[name=cond]").each(function(i, c)
+        $("[name=cond]").each(function(i, c)
         {
             if (!$(c).val().length) return;
 
@@ -205,6 +229,9 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             setTimeout(function()
             {
                 $("#conds").removeClass("block-opt-refresh");
+
+                //reregister current states
+                $scope.conditionList();
             }, 500);
 
             if (err)
@@ -230,6 +257,60 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             SocketFactory.registerLifecycleCallback("dataupdate", function(sensorUpdate)
             {
                 $scope.currentSensorValue[sensorUpdate.type] = sensorUpdate.data;
+            });
+
+            SocketFactory.registerLifecycleCallback("iftttupdate", function(statementResultUpdate)
+            {
+                console.log("got statement update", statementResultUpdate);
+
+                for (var statement in statementResultUpdate)
+                {
+                    var lastSuccessTime = statementResultUpdate[statement].lastSuccessTime;
+
+                    if (lastSuccessTime)
+                    {
+                        statementResultUpdate[statement].lastSuccessTime = "Last success: " + moment(lastSuccessTime).format("HH:mm:ss (DD.MM.)");
+                    }
+                    else
+                    {
+                        statementResultUpdate[statement].lastSuccessTime = false;
+                    }
+
+                    var lastErrorTime = statementResultUpdate[statement].lastErrorTime;
+
+                    if (lastErrorTime)
+                    {
+                        statementResultUpdate[statement].lastErrorTime = "Last Error: " + moment(lastErrorTime).format("HH:mm:ss (DD.MM.)");
+                    }
+                    else
+                    {
+                        statementResultUpdate[statement].lastErrorTime = false;
+                    }
+
+                    //class
+                    var state = statementResultUpdate[statement].lastState;
+
+                    if (state === null)
+                    {
+                        statementResultUpdate[statement].lastState = "info";
+                    }
+                    else if (state === false)
+                    {
+                        statementResultUpdate[statement].lastState = "danger";
+                    }
+                    else
+                    {
+                        statementResultUpdate[statement].lastState = "success";
+                    }
+
+                    if (!statementResultUpdate[statement].lastMessage)
+                    {
+                        statementResultUpdate[statement].lastMessage = "No message received yet";
+                    }
+                }
+
+                $scope.conditionState = statementResultUpdate;
+                $scope.$apply();
             });
         });
     };

@@ -11205,7 +11205,6 @@ div.tagsinput span.tag a:hover {
   }
 }
 
-
 @media screen and (max-width: 500px) {
   .chart-details {
     display: none;
@@ -11259,7 +11258,7 @@ a.navlink {
   float: left;
 }
 
-input[readonly] {
+[readonly] {
     opacity: 0.3 !important;
 }
 
@@ -11283,4 +11282,27 @@ input[readonly] {
 
 [data-chart-type].no-data .block-content {
   display: none;
+}
+
+[name=cond] {
+  height: 60px !important;
+  font-size: 19px;
+  padding-top: 16px;
+}
+
+@media screen and (max-width: 1600px) {
+  [name=cond] {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  [name=cond] {
+    font-size: 9px;
+    padding-top: 0;
+  }
+
+  .textoverlay {
+    top: -14px !important;
+  }
 }

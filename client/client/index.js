@@ -8,38 +8,35 @@ var fs = require('fs');
 var logger = require('./logger');
 var sensormanagement = require('./sensormanagement');
 var actormanagement = require('./actormanagement');
-var crypto = require('crypto');
 var conditionparser = require('./conditionparser');
+var socketmanager = require('./socket');
 
 var cam = require('./actors/cam');
 var switchRc = require('./actors/switchrc');
 var ledGreen = require('./actors/led-green');
 var ledRed = require('./actors/led-red');
 var servo = require('./actors/servo');
+var socket = socketmanager.getConnectionHandle();
 
-const server_url = config.serverUrl;
-const client_name = config.clientName;
-var socket = getConnectionHandle();
+logger.info(`client ${socketmanager.clientName} connecting to ${socketmanager.serverUrl}`);
 
-logger.info(`client ${client_name} connecting to ${server_url}`);
-
-socket.on('connect', function()
+socketmanager.socket.on('connect', function()
 {
-    if (!socket.connected)
+    if (!socketmanager.socket.connected)
     {
         return;
     }
 
-    logger.info(`connected to ${server_url}`);
+    logger.info(`connected to ${socketmanager.serverUrl}`);
 
     sensormanagement.init(function(data)
     {
         //logger.info("new sensor data: ", data);
-        socket.emit("client:data", data);
+        socketmanager.socket.emit("client:data", data);
     });
 });
 
-socket.on('actionrequest', function(msg)
+socketmanager.socket.on('actionrequest', function(msg)
 {
     /*
     known messages:
@@ -89,7 +86,7 @@ socket.on('actionrequest', function(msg)
     }
 });
 
-socket.on('ifttt', function(msg, resp)
+socketmanager.socket.on('ifttt', function(msg, resp)
 {
     //conditionlist  --------------------------------------------------------------------
     if (msg.mode === "conditionlist")
@@ -101,6 +98,9 @@ socket.on('ifttt', function(msg, resp)
             try
             {
                 var parsedConditions = JSON.parse(conds);
+
+                //send initial state
+                conditionparser.sendStatusUpdateToServer();
             }
             catch (err)
             {
@@ -117,10 +117,7 @@ socket.on('ifttt', function(msg, resp)
     {
         logger.info("ifttt request for availableoptions");
 
-        var actors = actormanagement.registeredActors;
-        var sensors = sensormanagement.registeredSensors;
-
-        conditionparser.loadAvailableOptions(actors, sensors, function(err, availableOptions)
+        conditionparser.loadAvailableOptions(function(err, availableOptions)
         {
             return resp(err, availableOptions);
         });
@@ -146,10 +143,21 @@ socket.on('ifttt', function(msg, resp)
             return resp(err, conds);
         });
     }
+
+    //parseconditions  -------------------------------------------------------------------
+    if (msg.mode === "testconditions")
+    {
+        logger.info("ifttt request for testconditions");
+
+        conditionparser.testConditions(function(err)
+        {
+            return resp(err);
+        });
+    }
 });
 
 //request from server client (passed by ui)
-socket.on('start-start-stream', function(msg)
+socketmanager.socket.on('start-start-stream', function(msg)
 {
     var start = !!msg.start;
 
@@ -169,7 +177,7 @@ socket.on('start-start-stream', function(msg)
     }
 });
 
-socket.on('maintenance', function(msg, cb)
+socketmanager.socket.on('maintenance', function(msg, cb)
 {
     logger.info("received maintenance request", msg);
 
@@ -223,27 +231,15 @@ socket.on('maintenance', function(msg, cb)
     }
 });
 
-socket.on('disconnect', function()
+socketmanager.socket.on('disconnect', function()
 {
-	logger.info(`disconnected from ${server_url}`);
+	logger.info(`disconnected from ${socketmanager.serverUrl}`);
     cam.stopStreaming();
 
     //if we receive a real "disconnect" event, the reconnection is not automatically being established again
     setTimeout(function()
     {
         logger.info(`establishing reconnection`);
-        socket = getConnectionHandle();
+        socketmanager.socket = socketmanager.getConnectionHandle();
     }, 2000);
 });
-
-function getConnectionHandle()
-{
-    var connectionParams = [];
-    connectionParams.push("mode=client");
-    connectionParams.push("password=" + crypto.createHash('sha512').update(config.password).digest('hex'));
-    connectionParams.push("connected_at=" + (new Date));
-    connectionParams.push("client_name=" + client_name);
-    connectionParams.push("capabilities=" + JSON.stringify(config.chartTypes));
-
-    return io.connect(server_url, {query: connectionParams.join("&") });
-}

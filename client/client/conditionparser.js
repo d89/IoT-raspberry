@@ -2,25 +2,88 @@ var fs = require("fs");
 var logger = require("./logger");
 var sensormanagement = require("./sensormanagement");
 var actormanagement = require("./actormanagement");
-const DEBUG = true;
+var socketmanager = require("./socket");
+
+const DEBUG = false;
 
 // --------------------------------------------------
 
 exports.statements = [];
 
-exports.loadAvailableOptions = function(regActors, regSensors, cb)
+exports.saveCallResult = function(status, text, executedStatement)
 {
+    if (!(executedStatement in exports.statements))
+    {
+        return logger.error("unknown statement " + executedStatement);
+    }
+
+    exports.statements[executedStatement].lastMessage = text;
+    exports.statements[executedStatement].lastState = status;
+
+    if (status !== true)
+    {
+        exports.statements[executedStatement].lastErrorTime = (new Date).getTime();
+    }
+    else
+    {
+        exports.statements[executedStatement].lastSuccessTime = (new Date).getTime();
+    }
+
+    exports.sendStatusUpdateToServer();
+};
+
+exports.sendStatusUpdateToServer = function()
+{
+    socketmanager.socket.emit("client:iftttupdate", exports.statements);
+};
+
+exports.testConditions = function(cb)
+{
+    var sensors = sensormanagement.registeredSensors;
+    var actors = actormanagement.registeredActors;
+
+    exports.applyConditions(function()
+    {
+        console.log("Testing conditions");
+
+        for (var statement in exports.statements)
+        {
+            try
+            {
+                var clauses = exports.validateStructure(statement);
+                var ifClause = clauses.if;
+                var thenClause = clauses.then;
+                var condition = exports.processIfClause(ifClause, sensors);
+                var callResults = exports.processThenClause(thenClause, actors, true);
+
+                exports.saveCallResult(true, callResults, statement);
+            }
+            catch (err)
+            {
+                exports.saveCallResult(false, "" + err, statement);
+            }
+        }
+
+        cb(null);
+    });
+};
+
+exports.loadAvailableOptions = function(cb)
+{
+    var sensors = sensormanagement.registeredSensors;
+    var actors = actormanagement.registeredActors;
+
     //console.log("exposed sensors", regSensors.exposed())
 
-    var actors = [];
+    var exposedActors = [];
 
-    for (var actor in regActors)
+    for (var actor in actors)
     {
         var methods = [];
 
-        if ("exposed" in regActors[actor])
+        if ("exposed" in actors[actor])
         {
-            Object.keys(regActors[actor].exposed()).forEach(function(exposedMethod)
+            Object.keys(actors[actor].exposed()).forEach(function(exposedMethod)
             {
                 methods.push({
                     name: exposedMethod
@@ -28,21 +91,21 @@ exports.loadAvailableOptions = function(regActors, regSensors, cb)
             })
         }
 
-        actors.push({
+        exposedActors.push({
             name: actor,
             methods: methods
         });
     }
 
-    var sensors = [];
+    var exposedSensors = [];
 
-    for (var sensor in regSensors)
+    for (var sensor in sensors)
     {
         var methods = [];
 
-        if ("exposed" in regSensors[sensor])
+        if ("exposed" in sensors[sensor])
         {
-            Object.keys(regSensors[sensor].exposed()).forEach(function(exposedMethod)
+            Object.keys(sensors[sensor].exposed()).forEach(function(exposedMethod)
             {
                 methods.push({
                     name: exposedMethod
@@ -50,15 +113,15 @@ exports.loadAvailableOptions = function(regActors, regSensors, cb)
             })
         }
 
-        sensors.push({
+        exposedSensors.push({
             name: sensor,
             methods: methods
         });
     }
 
     var options = {
-        actors: actors,
-        sensors: sensors
+        actors: exposedActors,
+        sensors: exposedSensors
     };
 
     //console.log("returning available options", options);
@@ -83,31 +146,48 @@ exports.loadConditions = function(cb)
 //set the conditions from the file as current scope
 exports.applyConditions = function(cb)
 {
-    exports.loadConditions(function(err, statements)
+    exports.loadConditions(function(err, statementsFromFile)
     {
         if (err)
         {
-            statements = "[]";
+            statementsFromFile = "[]";
         }
 
         try
         {
-            statements = JSON.parse(statements);
+            statementsFromFile = JSON.parse(statementsFromFile);
         }
         catch (err)
         {
-            statements = [];
+            statementsFromFile = [];
         }
 
-        exports.statements = [];
+        var newStatements = {};
 
-        statements.forEach(function(s)
+        statementsFromFile.forEach(function(s)
         {
-            if (s.isActive)
+            //in file but not in current array -> add
+            var conditionIsNew = !(s.conditiontext in exports.statements);
+
+            if (conditionIsNew && s.isActive)
             {
-                exports.statements.push(s.conditiontext);
+                newStatements[s.conditiontext] = {
+                    lastSuccessTime: false,
+                    lastErrorTime: false,
+                    lastMessage: false,
+                    lastState: null
+                };
+            }
+
+            if (!conditionIsNew && s.isActive)
+            {
+                var takeOver = exports.statements[s.conditiontext];
+                newStatements[s.conditiontext] = takeOver;
             }
         });
+
+        //overwrite all current statements. This way, the old ones are kicked
+        exports.statements = newStatements;
 
         cb();
     });
@@ -137,11 +217,14 @@ exports.validTokensIfClause = ["true", "false", "||", "&&", "(", ")", "!"];
 
 exports.validTokensThenClause = [";"];
 
-exports.process = function(type, data, sensors, actors)
+exports.process = function(type, data)
 {
+    var sensors = sensormanagement.registeredSensors;
+    var actors = actormanagement.registeredActors;
+
     exports.applyConditions(function()
     {
-        exports.statements.forEach(function(statement)
+        for (var statement in exports.statements)
         {
             try
             {
@@ -165,6 +248,8 @@ exports.process = function(type, data, sensors, actors)
                 {
                     var callResults = exports.processThenClause(thenClause, actors);
                     DEBUG && console.log("successfully executed clause with return values", callResults);
+
+                    exports.saveCallResult(true, callResults, statement);
                 }
                 else
                 {
@@ -173,11 +258,12 @@ exports.process = function(type, data, sensors, actors)
             }
             catch (err)
             {
+                exports.saveCallResult(false, "" + err, statement);
                 DEBUG && console.error(`Condition Evaluation error for ${statement}`, err);
             }
 
             DEBUG && console.log("-----------------------------------")
-        });
+        }
     });
 };
 
@@ -281,7 +367,7 @@ exports.processIfClause = function(ifClause, sensors)
     };
 };
 
-exports.processThenClause = function(thenClause, actors)
+exports.processThenClause = function(thenClause, actors, simulateCall)
 {
     console.log("###");
     console.log("processing thenClause", thenClause);
@@ -365,7 +451,24 @@ exports.processThenClause = function(thenClause, actors)
 
         try
         {
-            var result = exposedMethods[methodName](parameters);
+            var result = "";
+            var errorMessage = false;
+
+            if (!simulateCall)
+            {
+                errorMessage = exposedMethods[methodName](parameters);
+            }
+
+            var isSuccessfull = !errorMessage;
+
+            if (isSuccessfull)
+            {
+                result = simulateCall ? "Simulation succeeded." : "successfully executed";
+            }
+            else
+            {
+                throw new Error(errorMessage);
+            }
         }
         catch (callErr)
         {
@@ -378,5 +481,17 @@ exports.processThenClause = function(thenClause, actors)
         });
     });
 
-    return callResults;
+    return exports.callResultsToString(callResults);
+};
+
+exports.callResultsToString = function(callResults)
+{
+    var returnValues = [];
+
+    callResults.forEach(function(c)
+    {
+        returnValues.push(c.call + " -> " + c.result);
+    });
+
+    return returnValues.join(",");
 };

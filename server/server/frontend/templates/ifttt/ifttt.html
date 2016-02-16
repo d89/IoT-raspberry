@@ -18,11 +18,20 @@
                                     <span class="input-group-addon">
                                         <i class="fa fa-terminal"></i>
                                     </span>
-                                    <input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" name="cond" ng-readonly="!condition.isActive" class="form-control monospace" style="height: 60px; font-size: 19px" type="text" placeholder="Statement" value="{{ condition.conditiontext }}" />
+                                    <textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" name="cond" ng-readonly="!condition.isActive" class="form-control monospace" type="text" placeholder="Statement">{{ condition.conditiontext }}</textarea>
                                     <span class="input-group-btn">
                                         <button title="deactivate condition" class="btn btn-default" type="button" style="height: 60px" ng-click="toggleCondition(condition)"><i class="fa fa-eye"></i></button>
                                         <button title="delete condition" class="btn btn-danger" type="button" style="height: 60px" ng-click="removeCondition(condition)"><i class="fa fa-trash"></i></button>
                                     </span>
+                                </div>
+                                <div class="conditionstate" ng-show="conditionState[condition.conditiontext]">
+                                    <div class="alert alert-{{ conditionState[condition.conditiontext].lastState }}">
+                                        <p>
+                                            <span ng-show="conditionState[condition.conditiontext].lastSuccessTime" class="label label-success"><i class="fa fa-check"></i> {{ conditionState[condition.conditiontext].lastSuccessTime }}</span>
+                                            <span ng-show="conditionState[condition.conditiontext].lastErrorTime" class="label label-danger"><i class="fa fa-times-circle"></i> {{ conditionState[condition.conditiontext].lastErrorTime }}</span>
+                                            <b>Message:</b> {{ conditionState[condition.conditiontext].lastMessage }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </form>
@@ -30,6 +39,9 @@
                         <div class="btn-group btn-group-justified">
                             <div class="btn-group" role="group">
                                 <button class="btn btn-success push-5-r push-10" type="button" ng-click="addCondition()"><i class="fa fa-plus"></i> Add</button>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-warning push-5-r push-10" type="button" ng-click="testConditions()"><i class="fa fa-question"></i> Test</button>
                             </div>
                             <div class="btn-group" role="group">
                                 <button class="btn btn-primary push-5-r push-10" type="button" ng-click="sendConditions()"><i class="fa fa-upload"></i> Apply</button>
