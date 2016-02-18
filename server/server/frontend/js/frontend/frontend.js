@@ -1385,7 +1385,7 @@ var Styles = function() {
 
             triggerTextComplete(selector);
 
-            if (autotrigger)
+            if (autotrigger && !Styles.supportsTouch())
                 triggerSelection(selector);
         },
 

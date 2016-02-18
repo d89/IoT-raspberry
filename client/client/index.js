@@ -126,7 +126,7 @@ socketmanager.socket.on('ifttt', function(msg, resp)
     //saveconditions  -------------------------------------------------------------------
     if (msg.mode === "saveconditions")
     {
-        logger.info("ifttt request for saveconditions with conds", conditions);
+        logger.info("ifttt request for saveconditions with conds", msg.conditions);
 
         try
         {
@@ -149,9 +149,9 @@ socketmanager.socket.on('ifttt', function(msg, resp)
     {
         logger.info("ifttt request for testconditions");
 
-        conditionparser.testConditions(function(err)
+        conditionparser.testConditions(msg.testconditions, function(err, data)
         {
-            return resp(err);
+            return resp(err, data);
         });
     }
 });

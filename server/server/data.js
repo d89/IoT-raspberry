@@ -610,6 +610,7 @@ io.on('connection', function(socket)
                 else if (msg.mode === "testconditions")
                 {
                     request.mode = "testconditions";
+                    request.testconditions = msg.testconditions;
                 }
                 else if (msg.mode === "saveconditions")
                 {

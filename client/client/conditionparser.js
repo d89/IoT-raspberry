@@ -32,40 +32,64 @@ exports.saveCallResult = function(status, text, executedStatement)
     exports.sendStatusUpdateToServer();
 };
 
+exports.saveTestCallResult = function(status, text)
+{
+    var testResult = {
+        lastMessage: text,
+        lastState: status,
+        lastSuccessTime: false,
+        lastErrorTime: false
+    };
+
+    if (status !== true)
+    {
+        testResult.lastErrorTime = (new Date).getTime();
+    }
+    else
+    {
+        testResult.lastSuccessTime = (new Date).getTime();
+    }
+
+    return testResult;
+};
+
 exports.sendStatusUpdateToServer = function()
 {
     socketmanager.socket.emit("client:iftttupdate", exports.statements);
 };
 
-exports.testConditions = function(cb)
+exports.testConditions = function(testconditions, cb)
 {
     var sensors = sensormanagement.registeredSensors;
     var actors = actormanagement.registeredActors;
 
-    exports.applyConditions(function()
+    console.log("Testing conditions", testconditions);
+
+    var testResponse = {};
+
+    testconditions.forEach(function(statementObject)
     {
-        console.log("Testing conditions");
+        if (!statementObject.isActive) return;
 
-        for (var statement in exports.statements)
+        var statement = statementObject.conditiontext;
+
+        try
         {
-            try
-            {
-                var clauses = exports.validateStructure(statement);
-                var ifClause = clauses.if;
-                var thenClause = clauses.then;
-                var condition = exports.processIfClause(ifClause, sensors);
-                var callResults = exports.processThenClause(thenClause, actors, true);
+            var clauses = exports.validateStructure(statement);
+            var ifClause = clauses.if;
+            var thenClause = clauses.then;
+            var condition = exports.processIfClause(ifClause, sensors);
+            var callResults = exports.processThenClause(thenClause, actors, true);
 
-                exports.saveCallResult(true, callResults, statement);
-            }
-            catch (err)
-            {
-                exports.saveCallResult(false, "" + err, statement);
-            }
+            testResponse[statement] = exports.saveTestCallResult(true, callResults);
         }
-
-        cb(null);
+        catch (err)
+        {
+            testResponse[statement] = exports.saveTestCallResult(false, "" + err);
+        }
     });
+
+    cb(null, testResponse);
 };
 
 exports.loadAvailableOptions = function(cb)
@@ -316,7 +340,8 @@ exports.processIfClause = function(ifClause, sensors)
         var sensorType = contents[0];
         var method = contents[1].split(/[\(\)]/g);
         var methodName = method[0];
-        var parameters = method[1];
+        //remove quotes from parameters
+        var parameters = method[1].replace(/[\"\']/g, "");
 
         if (!sensorType || !(sensorType in sensors))
         {
@@ -333,6 +358,13 @@ exports.processIfClause = function(ifClause, sensors)
 
         return exposedMethods[methodName](parameters)
     });
+
+    var evaluationDidRun = evaluated !== "";
+
+    if (!evaluationDidRun)
+    {
+        throw new Error("Empty / Invalid condition.");
+    }
 
     var reducedCondition = evaluated;
 

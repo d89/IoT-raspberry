@@ -114,6 +114,12 @@ Siehe Linux Config für systemd
 
 ---
 
+###raspi-config
+
+* Expand Filesystem
+* Activate Camera
+* Set Timezone
+
 ###USB Soundkarte einrichten
 
 sudo nano /usr/share/alsa/alsa.conf

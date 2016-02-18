@@ -2,7 +2,7 @@ module.exports = {
     serverUrl: 'https://d1303.de:3000',
     clientName: "Davids IoT-Raspberry",
     logFile: "/tmp/logfile.log",
-    isoOffset: 0, //in hours
+    isoOffset: 1, //in hours, only for the logger timestamps
     password: "*** snip ***",
     baseBath: "/var/www/IoT-raspberry", //no trailing slash
     musicBasePath: "/home/pi/Music",  //no trailing slash

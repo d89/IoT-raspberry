@@ -13,12 +13,12 @@
                             <div ng-hide="conditions.length > 0">
                                 <p>No condition yet</p>
                             </div>
-                            <div class="form-group" ng-repeat="condition in conditions">
+                            <div class="form-group" ng-repeat="(key, condition) in conditions">
                                 <div class="input-group readonly">
                                     <span class="input-group-addon">
                                         <i class="fa fa-terminal"></i>
                                     </span>
-                                    <textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" name="cond" ng-readonly="!condition.isActive" class="form-control monospace" type="text" placeholder="Statement">{{ condition.conditiontext }}</textarea>
+                                    <textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" name="cond" ng-readonly="!condition.isActive" class="form-control monospace" type="text" placeholder="Statement" ng-model="conditions[key].conditiontext"></textarea>
                                     <span class="input-group-btn">
                                         <button title="deactivate condition" class="btn btn-default" type="button" style="height: 60px" ng-click="toggleCondition(condition)"><i class="fa fa-eye"></i></button>
                                         <button title="delete condition" class="btn btn-danger" type="button" style="height: 60px" ng-click="removeCondition(condition)"><i class="fa fa-trash"></i></button>

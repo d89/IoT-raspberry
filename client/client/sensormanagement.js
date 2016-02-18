@@ -18,6 +18,8 @@ var sound = require('./sensors/sound');
 var movement = require('./sensors/movement');
 var tapswitch = require('./sensors/tapswitch');
 var poti = require('./sensors/poti');
+var time = require('./sensors/time');
+var date = require('./sensors/date');
 
 // ------------------------------------------------------
 
@@ -70,6 +72,14 @@ exports.init = function(cb)
         });
 
         exports.registeredSensors["poti"] = new poti({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["time"] = new time({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["date"] = new date({
             onData: exports.sensorUpdateCallback
         });
 

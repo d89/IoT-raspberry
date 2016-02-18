@@ -29,10 +29,13 @@ class baseSensor
         }
 
         /*
-        console.log("for " + this.name);
-        console.log("- check is", this.sensordata.is);
-        console.log("- check was", this.sensordata.was);
-        console.log("##########");
+        if (this.name === "time")
+        {
+            console.log("for " + this.name);
+            console.log("- check is", this.sensordata.is);
+            console.log("- check was", this.sensordata.was);
+            console.log("##########");
+        }
         */
 
         if (triggered) //reset

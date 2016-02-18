@@ -180,12 +180,13 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
         $("#conds").addClass("block-opt-refresh");
 
         var conditions = {
-            mode: "testconditions"
+            mode: "testconditions",
+            testconditions: $scope.conditions
         };
 
-        SocketFactory.send('ui:ifttt', conditions, function(err)
+        SocketFactory.send('ui:ifttt', conditions, function(err, testresults)
         {
-            console.log("got testcondition response");
+            console.log("got testcondition response", err, testresults);
 
             setTimeout(function()
             {
@@ -195,7 +196,10 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             if (err)
             {
                 SocketFactory.callLifecycleCallback("functional_error", "Could not test conditions: " + err);
+                return;
             }
+
+            $scope.onIftttUpdate(testresults, true);
         });
     };
 
@@ -203,24 +207,15 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
     {
         $("#conds").addClass("block-opt-refresh");
 
-        var sendConds = [];
-
-        $("[name=cond]").each(function(i, c)
-        {
-            if (!$(c).val().length) return;
-
-            sendConds.push({
-                conditiontext: $(c).val(),
-                isActive: $(c).attr("readonly") != "readonly"
-            });
-        });
-
         var conditions = {
             mode: "saveconditions",
-            conditions: sendConds
+            conditions: $scope.conditions
         };
 
         console.log("sending conditions", conditions);
+
+        //unblock the test results
+        $scope.blockForTest = false;
 
         SocketFactory.send('ui:ifttt', conditions, function(err, resp)
         {
@@ -229,9 +224,6 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             setTimeout(function()
             {
                 $("#conds").removeClass("block-opt-refresh");
-
-                //reregister current states
-                $scope.conditionList();
             }, 500);
 
             if (err)
@@ -239,6 +231,70 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
                 SocketFactory.callLifecycleCallback("functional_error", "Could not save statements: " + err);
             }
         });
+    };
+
+    $scope.onIftttUpdate = function(statementResultUpdate, blockForTest)
+    {
+        console.log("got statement update", statementResultUpdate);
+
+        for (var statement in statementResultUpdate)
+        {
+            var lastSuccessTime = statementResultUpdate[statement].lastSuccessTime;
+
+            if (lastSuccessTime)
+            {
+                statementResultUpdate[statement].lastSuccessTime = "Last success: " + moment(lastSuccessTime).format("HH:mm:ss (DD.MM.)");
+            }
+            else
+            {
+                statementResultUpdate[statement].lastSuccessTime = false;
+            }
+
+            var lastErrorTime = statementResultUpdate[statement].lastErrorTime;
+
+            if (lastErrorTime)
+            {
+                statementResultUpdate[statement].lastErrorTime = "Last Error: " + moment(lastErrorTime).format("HH:mm:ss (DD.MM.)");
+            }
+            else
+            {
+                statementResultUpdate[statement].lastErrorTime = false;
+            }
+
+            //class
+            var state = statementResultUpdate[statement].lastState;
+
+            if (state === null)
+            {
+                statementResultUpdate[statement].lastState = "info";
+            }
+            else if (state === false)
+            {
+                statementResultUpdate[statement].lastState = "danger";
+            }
+            else
+            {
+                statementResultUpdate[statement].lastState = "success";
+            }
+
+            if (!statementResultUpdate[statement].lastMessage)
+            {
+                statementResultUpdate[statement].lastMessage = "No message received yet";
+            }
+        }
+
+        //block the current test result for 5 seconds, because otherwise it would be overridden straight away
+
+        if (blockForTest)
+        {
+            $scope.blockForTest = (new Date).getTime() + 5000;
+        }
+
+        if (blockForTest || !$scope.blockForTest || $scope.blockForTest < (new Date).getTime())
+        {
+            $scope.conditionState = statementResultUpdate;
+            $scope.$apply();
+        }
     };
 
     //-----------------------------------------------------
@@ -261,56 +317,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
             SocketFactory.registerLifecycleCallback("iftttupdate", function(statementResultUpdate)
             {
-                console.log("got statement update", statementResultUpdate);
-
-                for (var statement in statementResultUpdate)
-                {
-                    var lastSuccessTime = statementResultUpdate[statement].lastSuccessTime;
-
-                    if (lastSuccessTime)
-                    {
-                        statementResultUpdate[statement].lastSuccessTime = "Last success: " + moment(lastSuccessTime).format("HH:mm:ss (DD.MM.)");
-                    }
-                    else
-                    {
-                        statementResultUpdate[statement].lastSuccessTime = false;
-                    }
-
-                    var lastErrorTime = statementResultUpdate[statement].lastErrorTime;
-
-                    if (lastErrorTime)
-                    {
-                        statementResultUpdate[statement].lastErrorTime = "Last Error: " + moment(lastErrorTime).format("HH:mm:ss (DD.MM.)");
-                    }
-                    else
-                    {
-                        statementResultUpdate[statement].lastErrorTime = false;
-                    }
-
-                    //class
-                    var state = statementResultUpdate[statement].lastState;
-
-                    if (state === null)
-                    {
-                        statementResultUpdate[statement].lastState = "info";
-                    }
-                    else if (state === false)
-                    {
-                        statementResultUpdate[statement].lastState = "danger";
-                    }
-                    else
-                    {
-                        statementResultUpdate[statement].lastState = "success";
-                    }
-
-                    if (!statementResultUpdate[statement].lastMessage)
-                    {
-                        statementResultUpdate[statement].lastMessage = "No message received yet";
-                    }
-                }
-
-                $scope.conditionState = statementResultUpdate;
-                $scope.$apply();
+                $scope.onIftttUpdate(statementResultUpdate);
             });
         });
     };
