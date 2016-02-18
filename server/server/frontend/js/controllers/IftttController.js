@@ -235,8 +235,6 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.onIftttUpdate = function(statementResultUpdate, blockForTest)
     {
-        console.log("got statement update", statementResultUpdate);
-
         for (var statement in statementResultUpdate)
         {
             var lastSuccessTime = statementResultUpdate[statement].lastSuccessTime;

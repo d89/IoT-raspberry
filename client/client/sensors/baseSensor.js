@@ -51,59 +51,34 @@ class baseSensor
         var that = this;
 
         return {
-            is: function(val)
+            is_equal: function(val)
             {
                 var triggered = (that.sensordata.is == val);
                 return that.processCondition(triggered);
             },
-            was: function(val)
-            {
-                var triggered = (that.sensordata.was == val);
-                return that.processCondition(triggered);
-            },
-            lte: function(val)
-            {
-                var triggered = (that.sensordata.is <= val);
-                return that.processCondition(triggered);
-            },
-            lt: function(val)
+            is_lt: function(val)
             {
                 var triggered = (that.sensordata.is < val);
                 return that.processCondition(triggered);
             },
-            gte: function(val)
-            {
-                var triggered = (that.sensordata.is >= val);
-                return that.processCondition(triggered);
-            },
-            gt: function(val)
+            is_gt: function(val)
             {
                 var triggered = (that.sensordata.is > val);
                 return that.processCondition(triggered);
             },
-            became: function(val)
+            became_equal: function(val)
             {
                 var triggered = (that.sensordata.is == val && that.sensordata.was != val);
                 return that.processCondition(triggered);
             },
-            becamegt: function(val)
+            became_gt: function(val)
             {
                 var triggered = (that.sensordata.is > val && !(that.sensordata.was > val));
                 return that.processCondition(triggered);
             },
-            becamegte: function(val)
-            {
-                var triggered = (that.sensordata.is >= val && !(that.sensordata.was >= val));
-                return that.processCondition(triggered);
-            },
-            becamelt: function(val)
+            became_lt: function(val)
             {
                 var triggered = (that.sensordata.is < val && !(that.sensordata.was < val));
-                return that.processCondition(triggered);
-            },
-            becamelte: function(val)
-            {
-                var triggered = (that.sensordata.is <= val && !(that.sensordata.was <= val));
                 return that.processCondition(triggered);
             }
         }

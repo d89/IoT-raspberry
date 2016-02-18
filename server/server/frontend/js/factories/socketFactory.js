@@ -67,7 +67,7 @@ IoT.factory('SocketFactory', function(constant)
             parameters.push(arguments[i]);
         }
 
-        if (eventType != "dataupdate")
+        if (eventType != "dataupdate" && eventType != "iftttupdate")
         {
             console.log("called lifecycle callback for " + eventType, parameters);
         }

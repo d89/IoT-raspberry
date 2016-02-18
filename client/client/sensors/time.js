@@ -24,29 +24,64 @@ class time extends baseSensor
         var exposedParent = super.exposed();
         var that = this;
 
-        exposedParent.minutes = function(val)
+        var functions =
         {
-            if (!that.sensordata.is.length) return false;
-
-            var minutes = that.sensordata.is.substr(2, 2);
-
-            console.log("matching minutes " + minutes + " against " + val);
-
-            var triggered = (minutes == val);
-            return that.processCondition(triggered);
+            hours: {
+                from: 0,
+                length: 2
+            },
+            minutes: {
+                from: 2,
+                length: 2
+            },
+            seconds: {
+                from: 4,
+                length: 2
+            }
         };
 
-        exposedParent.seconds = function(val)
+        for (var unit in functions)
         {
-            if (!that.sensordata.is.length) return false;
+            (function(unit)
+            {
+                exposedParent[unit + "_is_equal"] = function(val)
+                {
+                    if (that.sensordata.is.length === null) return false;
+                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                    var triggered = (readValue == val);
+                    return that.processCondition(triggered);
+                };
 
-            var seconds = that.sensordata.is.substr(4, 2);
+                exposedParent[unit + "_is_gt"] = function(val)
+                {
+                    if (that.sensordata.is.length === null) return false;
+                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                    var triggered = (readValue > val);
+                    return that.processCondition(triggered);
+                };
 
-            console.log("matching seconds " + seconds + " against " + val);
+                exposedParent[unit + "_became_equal"] = function(val)
+                {
+                    if (that.sensordata.is === null || that.sensordata.was === null) return false;
+                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                    var oldValue = that.sensordata.was.substr(functions[unit].from, functions[unit].length);
+                    var triggered = (readValue == val && oldValue != val);
+                    return that.processCondition(triggered);
+                };
 
-            var triggered = (seconds == val);
-            return that.processCondition(triggered);
-        };
+                exposedParent[unit + "_became_gt"] = function(val)
+                {
+                    if (that.sensordata.is === null || that.sensordata.was === null) return false;
+                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                    var oldValue = that.sensordata.was.substr(functions[unit].from, functions[unit].length);
+                    var triggered = (readValue > val && !(oldValue > val));
+                    return that.processCondition(triggered);
+                };
+            }(unit));
+        }
+
+        delete exposedParent["is_lt"];
+        delete exposedParent["became_lt"];
 
         return exposedParent;
     }
