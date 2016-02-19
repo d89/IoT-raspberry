@@ -157,7 +157,7 @@ socketmanager.socket.on('ifttt', function(msg, resp)
 });
 
 //request from server client (passed by ui)
-socketmanager.socket.on('start-start-stream', function(msg)
+socketmanager.socket.on('start-stop-stream', function(msg)
 {
     var start = !!msg.start;
 
@@ -175,6 +175,16 @@ socketmanager.socket.on('start-start-stream', function(msg)
         logger.info("Received stream stop request");
         cam.stopStreaming();
     }
+});
+
+socketmanager.socket.on('start-video', function(msg, cb)
+{
+    logger.info("Received video recording request");
+
+    cam.record(function(err, data)
+    {
+        cb(err, data);
+    });
 });
 
 socketmanager.socket.on('maintenance', function(msg, cb)

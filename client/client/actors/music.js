@@ -15,7 +15,7 @@ exports.act = function(title)
     //activated.mp3  deactivated.mp3  gong.mp3  light.mp3  siren.mp3  song.mp3
     title = title || "siren.mp3";
     title = title.replace("..", "");
-    title = config.musicBasePath + "/" + title;
+    title = config.mediaBasePath + "/" + title;
 
     if (!fs.existsSync(title))
     {

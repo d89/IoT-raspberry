@@ -5,14 +5,18 @@ var fs = require('fs');
 var express = require('express')
 var bodyParser = require('body-parser')
 var app = express();
+var multer = require('multer');
+var config = require('./config');
+var upload = multer({ dest: config.mediaBasePath })
 var io = require('socket.io')();
 var moment = require('moment');
 var spawn = require('child_process').spawn;
 var storage = require('./storage');
-var config = require('./config');
 var maintenance = require('./maintenance');
 var middleware = require('socketio-wildcard')();
 var async = require('async');
+var glob = require('glob');
+var path = require('path');
 
 //config
 const use_ssl = config.useSsl;
@@ -235,6 +239,74 @@ app.use(function(req, res, next) {
 app.use(express.static('dist', {
     index: "templates/index.html"
 }));
+
+app.post('/putvideo', upload.single('vid'), function(req, res)
+{
+    //auth
+    if (true !== apiAuth(res, req.body.password, req.body.client))
+    {
+        req.file && fs.unlinkSync(req.file.path);
+        return logger.error("web auth failed");
+    }
+
+    logger.info("received file upload");
+
+    if (req.file && fs.existsSync(req.file.path))
+    {
+        return fs.rename(req.file.path, config.mediaBasePath + "/" + req.file.originalname, function(err)
+        {
+            var msg = "problem receiveing video";
+
+            if (err)
+            {
+                logger.error(msg, err);
+                return res.end(msg);
+            }
+            else
+            {
+                msg = "successfully processed video";
+                logger.info(msg);
+                return res.end(msg);
+            }
+        });
+    }
+
+    res.end("error receiveing video");
+});
+
+
+app.get('/video/:videofile', function(req, res)
+{
+    var videofile = req.params.videofile;
+    logger.info("Loading video " + videofile);
+    res.sendFile(config.mediaBasePath + "/" + videofile);
+});
+
+app.get('/videos/get', function(req, res)
+{
+    var videos = [];
+
+    return glob(config.mediaBasePath + "/video-*.h264", {}, function(err, files)
+    {
+        if (err)
+        {
+            res.end("[]");
+            return logger.error("error grepping: " + err);
+        }
+
+        var sortedFiles = files.sort(function(a, b)
+        {
+            return fs.statSync(a).mtime.getTime() - fs.statSync(b).mtime.getTime();
+        });
+
+        sortedFiles.forEach(function(v)
+        {
+            videos.push(path.basename(v));
+        });
+
+        res.end(JSON.stringify(videos));
+    });
+});
 
 app.post('/pushtoken', function(req, res)
 {
@@ -531,7 +603,13 @@ io.on('connection', function(socket)
                     start: msg.start
                 };
 
-                clientSocket.emit('start-start-stream', data);
+                clientSocket.emit('start-stop-stream', data);
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:start-video':  function (clientSocket, msg, cb) {
+                logger.info("ui request to start recording!", msg);
+                var data = {};
+                clientSocket.emit('start-video', data, cb);
             },
             //-------------------------------------------------------------------------------------
             'ui:full': function (clientSocket, msg, resp) {

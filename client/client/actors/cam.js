@@ -1,6 +1,10 @@
 var fs = require('fs');
 var spawn = require('child_process').spawn;
+var crypto = require('crypto');
+var moment = require('moment');
+var request = require('request');
 var logger = require('../logger');
+var config = require('../config');
 
 var Cam = {
     streamInterval: null,
@@ -8,6 +12,13 @@ var Cam = {
     streamRunning: false,
     streamImage: "/tmp/stream.jpg",
     socket: null,
+
+    exposed: function()
+    {
+        return {
+            record: Cam.record
+        };
+    },
 
     startStreaming: function(s) {
         logger.info('Starting stream.');
@@ -36,6 +47,51 @@ var Cam = {
         ];
         Cam.streamProcess = spawn('raspistill', args);
         Cam.streamProcess.on('exit', Cam.sendImage);
+    },
+
+    record: function(cb)
+    {
+        cb = cb || function() {};
+
+        logger.info("starting to record");
+        var date = moment().format("YYYYMMDD-HHmmss");
+        var videoPath = "/tmp/video-" + date + ".h264";
+        logger.info("... to file", videoPath);
+
+        var raspivid = spawn("raspivid", ["-t", 5000, "-o", videoPath, "-w", 640, "-h", 480]);
+        raspivid.on("close", function()
+        {
+            if (!fs.existsSync(videoPath))
+            {
+                var msg = "video " + videoPath + " did not exist";
+                logger.error(msg);
+                return cb(msg);
+            }
+
+            logger.info("wrote video to " + videoPath);
+
+            //upload video
+            var req = request.post(config.serverUrl + "/putvideo", function(err, resp, body)
+            {
+                fs.unlinkSync(videoPath);
+
+                var msg = "Error uploading video";
+
+                if (err) {
+                    logger.error(msg, err);
+                    cb(msg);
+                } else {
+                    msg = "Successfully uploaded video";
+                    logger.info(msg + ": " + body);
+                    cb(null, msg);
+                }
+            });
+
+            var form = req.form();
+            form.append('vid', fs.createReadStream(videoPath));
+            form.append('password', crypto.createHash('sha512').update(config.password).digest('hex'));
+            form.append('client', config.clientName);
+        });
     },
 
     sendImage: function()

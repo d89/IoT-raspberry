@@ -28,6 +28,10 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         {
             title: "Maintenance",
             href: "#maintenance/" + $routeParams.client_id
+        },
+        {
+            title: "Video",
+            href: "#video/" + $routeParams.client_id
         }],
         "Device Overview":
         [{
@@ -98,7 +102,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
     $scope.startStream = function()
     {
         $scope.streamActive = true;
-        $scope.streamTime = "Initialzing Camera";
+        $scope.streamTime = "Initializing Camera";
         $("#stream").attr("src", "assets/img/various/loading-cam.gif");
 
         SocketFactory.send('ui:start-stop-stream', {
@@ -118,6 +122,17 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         });
     };
 
+    $scope.video = function()
+    {
+        $scope.videoActive = true;
+
+        SocketFactory.send('ui:start-video', {}, function(err, msg)
+        {
+            $scope.videoActive = false;
+            console.log("done recording video", err, msg);
+        });
+    };
+
     $scope.camera = function(state)
     {
         console.log("activating camera: " + state);
@@ -131,7 +146,6 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             $scope.startStream();
         }
     };
-
 
     //-----------------------------------------------------
 

@@ -4,13 +4,15 @@
     <div class="block">
         <div class="block-header">
             <div class="block-options-simple">
-                <button ng-show="!streamActive" class="btn btn-xs btn-success" ng-click="camera(1)"><i class="fa fa-repeat"></i> Start Stream</button>
+                <button ng-show="!streamActive && !videoActive" class="btn btn-xs btn-success" ng-click="camera(1)"><i class="fa fa-repeat"></i> Start Stream</button>
                 <button ng-show="streamActive" class="btn btn-xs btn-danger" ng-click="camera(0)"><i class="fa fa-repeat"></i> Stop Stream</button>
+                <button ng-show="!streamActive && !videoActive" class="btn btn-xs btn-primary" ng-click="video()"><i class="fa fa-video-camera"></i> Start Video</button>
             </div>
             <h3 class="block-title">Camera Management</h3>
         </div>
         <div class="block-content text-white">
-            <p ng-show="!streamActive" class="text-black">Press "Start Stream" to activate the camera.</p>
+            <p ng-show="!streamActive && !videoActive" class="text-black">Press "Start Stream" to activate the camera.</p>
+            <p ng-show="!streamActive && videoActive" class="text-black">Currently recording video, please wait ...</p>
 
             <div class="row">
                 <div class="col-sm-9 col-lg-6" ng-show="streamActive">

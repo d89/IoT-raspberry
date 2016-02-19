@@ -1258,7 +1258,7 @@ var Styles = function() {
                     {
                         var wrapper = $(this)[0];
                         var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
-                        if (isReadonly || Styles.supportsTouch()) return false;
+                        if (isReadonly || Styles.isMobile()) return false;
 
                         return text.indexOf("if") !== -1 && text.indexOf("(") !== -1 && text.indexOf("{") === -1;
                     },
@@ -1314,7 +1314,7 @@ var Styles = function() {
                     {
                         var wrapper = $(this)[0];
                         var isReadonly = $(wrapper.el).attr("readonly") == "readonly";
-                        if (isReadonly || Styles.supportsTouch()) return false;
+                        if (isReadonly || Styles.isMobile()) return false;
 
                         return text.indexOf("if") !== -1 && text.indexOf("{") !== -1;
                     },
@@ -1385,7 +1385,7 @@ var Styles = function() {
 
             triggerTextComplete(selector);
 
-            if (autotrigger && !Styles.supportsTouch())
+            if (autotrigger && !Styles.isMobile())
                 triggerSelection(selector);
         },
 
