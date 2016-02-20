@@ -20,6 +20,7 @@ var tapswitch = require('./sensors/tapswitch');
 var poti = require('./sensors/poti');
 var time = require('./sensors/time');
 var date = require('./sensors/date');
+var reachability = require('./sensors/reachability');
 
 // ------------------------------------------------------
 
@@ -121,6 +122,10 @@ exports.init = function(cb)
         });
 
         exports.registeredSensors["distance"] = new distance({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["reachability"] = new reachability({
             onData: exports.sensorUpdateCallback
         });
     }

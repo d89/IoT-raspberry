@@ -11,11 +11,6 @@ var actormanagement = require('./actormanagement');
 var conditionparser = require('./conditionparser');
 var socketmanager = require('./socket');
 
-var cam = require('./actors/cam');
-var switchRc = require('./actors/switchrc');
-var ledGreen = require('./actors/led-green');
-var ledRed = require('./actors/led-red');
-var servo = require('./actors/servo');
 var socket = socketmanager.getConnectionHandle();
 
 logger.info(`client ${socketmanager.clientName} connecting to ${socketmanager.serverUrl}`);
@@ -58,7 +53,7 @@ socketmanager.socket.on('actionrequest', function(msg)
 
         logger.info(`actionrequest for rc switch ${switchNumber} to status ${onoff}`);
 
-        switchRc.act(1, switchNumber, onoff);
+        actormanagement.registeredActors["switchrc"].act(1, switchNumber, onoff);
     }
 
     if (msg.type === "servo")
@@ -67,7 +62,7 @@ socketmanager.socket.on('actionrequest', function(msg)
 
         logger.info(`actionrequest for servo to status ${onoff}`);
 
-        servo.act(onoff);
+        actormanagement.registeredActors["servo"].act(onoff);
     }
 
     //LED ------------------------------------------------------------------------------
@@ -77,12 +72,28 @@ socketmanager.socket.on('actionrequest', function(msg)
 
         if (msg.data.ledType === "red")
         {
-            ledRed.act();
+            actormanagement.registeredActors["ledRed"].act();
         }
         else if (msg.data.ledType === "green")
         {
-            ledGreen.act();
+            actormanagement.registeredActors["ledGreen"].act();
         }
+    }
+
+    //Voice ------------------------------------------------------------------------------
+    if (msg.type === "voice")
+    {
+        logger.info(`actionrequest for Voice with text ${msg.data}`);
+
+        actormanagement.registeredActors["voice"].act(msg.data);
+    }
+
+    //Music ------------------------------------------------------------------------------
+    if (msg.type === "music")
+    {
+        logger.info(`actionrequest for music with title ${msg.data}`);
+
+        actormanagement.registeredActors["music"].act(msg.data);
     }
 });
 
@@ -157,14 +168,26 @@ socketmanager.socket.on('ifttt', function(msg, resp)
 });
 
 //request from server client (passed by ui)
-socketmanager.socket.on('start-stop-stream', function(msg)
+socketmanager.socket.on('start-stop-stream', function(msg, resp)
 {
     var start = !!msg.start;
+    var cam = actormanagement.registeredActors["cam"];
 
     if (start)
     {
         logger.info("Received stream start request");
-        if (!cam.streamRunning) {
+
+        if (cam.cameraBusyRecording)
+        {
+            var msg = "Camera is already recording, can not start stream";
+            if (resp) resp(msg);
+            logger.error(msg);
+            return;
+        }
+
+        if (resp) resp(null, "starting");
+
+        if (!cam.cameraBusyStreaming) {
             cam.startStreaming(socket);
         } else {
             cam.sendImage();
@@ -174,14 +197,15 @@ socketmanager.socket.on('start-stop-stream', function(msg)
     {
         logger.info("Received stream stop request");
         cam.stopStreaming();
+        if (resp) resp(null, "stopping");
     }
 });
 
 socketmanager.socket.on('start-video', function(msg, cb)
 {
-    logger.info("Received video recording request");
+    logger.info("Received video recording request for " + msg.duration + "s");
 
-    cam.record(function(err, data)
+    cam.record(msg.duration, function(err, data)
     {
         cb(err, data);
     });

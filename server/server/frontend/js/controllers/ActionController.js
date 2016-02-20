@@ -107,7 +107,41 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
         SocketFactory.send('ui:start-stop-stream', {
             start: true
+        }, function(err, msg)
+        {
+            if (err)
+            {
+                SocketFactory.callLifecycleCallback("functional_error", "Could not start stream: " + err);
+                $scope.streamActive = false;
+                return;
+            }
         });
+    };
+
+    $scope.music = function()
+    {
+        var res = window.prompt("Please enter the file name of music to be played", "siren.mp3");
+        if (!res) return;
+
+        var options = {
+            type: "music",
+            data: res
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
+    $scope.voice = function()
+    {
+        var res = window.prompt("Please enter the file name of music to be played", "Hello, dude!");
+        if (!res) return;
+
+        var options = {
+            type: "voice",
+            data: res
+        };
+
+        SocketFactory.send("ui:action", options);
     };
 
     $scope.stopStream = function()
@@ -119,17 +153,29 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
         SocketFactory.send('ui:start-stop-stream', {
             start: false
+        }, function(err, msg)
+        {
+            console.log("stop stream answer", err, msg);
         });
     };
 
     $scope.video = function()
     {
-        $scope.videoActive = true;
+        $scope.videoActive = constant.get("camRecordingDuration");
 
-        SocketFactory.send('ui:start-video', {}, function(err, msg)
+        SocketFactory.send('ui:start-video', { duration: constant.get("camRecordingDuration") }, function(err, msg)
         {
             $scope.videoActive = false;
             console.log("done recording video", err, msg);
+
+            if (err)
+            {
+                SocketFactory.callLifecycleCallback("functional_error", "Could not record video: " + err);
+            }
+            else
+            {
+                $location.path('/video/' + $routeParams.client_id + "/autoplay");
+            }
         });
     };
 

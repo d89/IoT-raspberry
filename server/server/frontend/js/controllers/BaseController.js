@@ -169,7 +169,7 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
     //-----------------------------------------------------
 
-    $scope.getCount = function()
+    $scope.getCount = function(cb)
     {
         SocketFactory.getCount(function(err, count)
         {
@@ -177,11 +177,13 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
             {
                 console.log("DISCONNECT get count server disconnect!", err);
                 SocketFactory.callLifecycleCallback(err, false);
-                return;
+                return cb("disconnected");
             }
 
             $scope.count = count;
             $scope.$apply();
+
+            return cb(null, "connected");
         });
     };
 
@@ -252,8 +254,14 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
             }
             else
             {
-                $scope.getCount();
-                connectCallback();
+                $scope.getCount(function(err, msg)
+                {
+                    if (!err)
+                    {
+                        connectCallback();
+                    }
+                });
+
             }
         });
     };

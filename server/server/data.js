@@ -2,7 +2,8 @@
 //dependencies
 var logger = require("./logger");
 var fs = require('fs');
-var express = require('express')
+var crypto = require('crypto');
+var express = require('express');
 var bodyParser = require('body-parser')
 var app = express();
 var multer = require('multer');
@@ -13,6 +14,7 @@ var moment = require('moment');
 var spawn = require('child_process').spawn;
 var storage = require('./storage');
 var maintenance = require('./maintenance');
+var video = require('./video');
 var middleware = require('socketio-wildcard')();
 var async = require('async');
 var glob = require('glob');
@@ -249,44 +251,65 @@ app.post('/putvideo', upload.single('vid'), function(req, res)
         return logger.error("web auth failed");
     }
 
-    logger.info("received file upload");
-
-    if (req.file && fs.existsSync(req.file.path))
+    if (!req.file)
     {
-        return fs.rename(req.file.path, config.mediaBasePath + "/" + req.file.originalname, function(err)
-        {
-            var msg = "problem receiveing video";
-
-            if (err)
-            {
-                logger.error(msg, err);
-                return res.end(msg);
-            }
-            else
-            {
-                msg = "successfully processed video";
-                logger.info(msg);
-                return res.end(msg);
-            }
-        });
+        var msg = "no file uploaded";
+        logger.status(500).send(msg);
+        return res.end(msg);
     }
 
-    res.end("error receiveing video");
+    var clientNameHashed = crypto.createHash('md5').update(req.body.client).digest('hex');
+    var targetName = req.file.originalname + "-" + clientNameHashed;
+
+    video.convertVideo(req.file.path, targetName, function(err, msg)
+    {
+        if (err)
+        {
+            logger.error(err);
+            return res.status(500).send(err);
+        }
+
+        logger.info(msg);
+        return res.end(msg);
+    });
 });
 
 
 app.get('/video/:videofile', function(req, res)
 {
+    if (true !== apiAuth(res, req.query.password, req.query.client))
+    {
+        return logger.error("web auth failed");
+    }
+
     var videofile = req.params.videofile;
+    var clientNameHashed = crypto.createHash('md5').update(req.query.client).digest('hex');
+
+    //in videoName:  video-20160220-152355
+    //on filesystem: video-20160220-152355.h264-ac66844e53bc30cfbb02a422a8290980.mp4
+    var videoName = config.mediaBasePath + "/" + videofile + ".h264-" + clientNameHashed + ".mp4";
+
+    if (!fs.existsSync(videoName))
+    {
+        return res.end("no matching video");
+    }
+
     logger.info("Loading video " + videofile);
-    res.sendFile(config.mediaBasePath + "/" + videofile);
+    res.sendFile(videoName);
 });
 
-app.get('/videos/get', function(req, res)
+app.post('/videos/get', function(req, res)
 {
+    if (true !== apiAuth(res, req.body.password, req.body.client))
+    {
+        return logger.error("web auth failed");
+    }
+
     var videos = [];
 
-    return glob(config.mediaBasePath + "/video-*.h264", {}, function(err, files)
+    var clientNameHashed = crypto.createHash('md5').update(req.body.client).digest('hex');
+
+    return glob(config.mediaBasePath + "/video-*-" + clientNameHashed + ".mp4", {}, function(err, files)
     {
         if (err)
         {
@@ -301,10 +324,10 @@ app.get('/videos/get', function(req, res)
 
         sortedFiles.forEach(function(v)
         {
-            videos.push(path.basename(v));
+            videos.push(path.basename(v).split(".")[0]);
         });
 
-        res.end(JSON.stringify(videos));
+        res.end(JSON.stringify(videos.reverse()));
     });
 });
 
@@ -595,7 +618,7 @@ io.on('connection', function(socket)
                 })
             },
             //-------------------------------------------------------------------------------------
-            'ui:start-stop-stream': function (clientSocket, msg) {
+            'ui:start-stop-stream': function (clientSocket, msg, resp) {
                 logger.info("ui request to start/stop streaming", msg);
 
                 //start or stop stream?
@@ -603,12 +626,16 @@ io.on('connection', function(socket)
                     start: msg.start
                 };
 
-                clientSocket.emit('start-stop-stream', data);
+                clientSocket.emit('start-stop-stream', data, resp);
             },
             //-------------------------------------------------------------------------------------
             'ui:start-video':  function (clientSocket, msg, cb) {
-                logger.info("ui request to start recording!", msg);
-                var data = {};
+                logger.info("ui request to start recording for " + msg.duration + "s!", msg);
+
+                var data = {
+                    duration: msg.duration
+                };
+
                 clientSocket.emit('start-video', data, cb);
             },
             //-------------------------------------------------------------------------------------

@@ -44,9 +44,9 @@ IoT.controller('IoTVideoCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.video = function()
     {
-        $scope.videoActive = true;
+        $scope.videoActive = constant.get("camRecordingDuration");
 
-        SocketFactory.send('ui:start-video', {}, function(err, msg)
+        SocketFactory.send('ui:start-video', { duration: constant.get("camRecordingDuration") }, function(err, msg)
         {
             $scope.videoActive = false;
             console.log("done recording video", err, msg);
@@ -57,20 +57,60 @@ IoT.controller('IoTVideoCtrl', function ($scope, $rootScope, $timeout, $compile,
             }
             else
             {
-                $scope.getVideos();
+                $scope.getVideos(function()
+                {
+                    $scope.videos.length && $scope.play($scope.videos[0].fileName);
+                });
             }
         });
     };
 
+    $scope.play = function(videoName)
+    {
+        console.log("playing video ", videoName);
+        $scope.playingVideo = true;
+        $scope.videoUrl = "/video/" + videoName;
+        $scope.videoParams = "?client=" + SocketFactory.clientName + "&password=" + constant.get("password");
+    };
+
     $scope.getVideos = function(cb)
     {
-        $.get("/videos/get", function(videos)
-        {
-            videos = JSON.parse(videos);
+        $scope.loading = true;
 
-            console.log("videos", videos);
+        var options = {
+            password: constant.get("password"),
+            client: SocketFactory.clientName
+        };
+
+        console.info("sent get video request", options);
+
+        $.post("/videos/get", options, function(videoResponse)
+        {
+            videoResponse = JSON.parse(videoResponse);
+
+            console.log("videos", videoResponse);
+
+            var videos = [];
+
+            videoResponse.forEach(function(v)
+            {
+                var videoParts = v.split("-");
+                var videoDate = moment(videoParts[1] + " " + videoParts[2]).format("DD.MM.YYYY HH:mm:ss");
+
+                videos.push({
+                    fileName: v,
+                    fileDate: videoDate
+                })
+            });
 
             $scope.videos = videos;
+            $scope.loading = false;
+            if (cb) cb();
+        }).fail(function(err)
+        {
+            console.error(err);
+            SocketFactory.callLifecycleCallback("functional_error", "Could not load videos");
+            return;
         });
     };
 
@@ -83,7 +123,15 @@ IoT.controller('IoTVideoCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         $scope.connect(false, function()
         {
-            $scope.getVideos();
+            $scope.getVideos(function()
+            {
+                var autoplay = $routeParams.autoplay;
+
+                if (autoplay && $scope.videos.length)
+                {
+                    $scope.play($scope.videos[0].fileName);
+                }
+            });
         });
     };
 

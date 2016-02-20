@@ -9,7 +9,8 @@ var config = require('../config');
 var Cam = {
     streamInterval: null,
     streamProcess: null,
-    streamRunning: false,
+    cameraBusyStreaming: false,
+    cameraBusyRecording: false,
     streamImage: "/tmp/stream.jpg",
     socket: null,
 
@@ -23,13 +24,13 @@ var Cam = {
     startStreaming: function(s) {
         logger.info('Starting stream.');
         Cam.socket = s;
-        Cam.streamRunning = true;
+        Cam.cameraBusyStreaming = true;
         Cam.streamInterval = setInterval(Cam.takeImage, 2000);
     },
 
     stopStreaming: function() {
         logger.info('Stopping stream.');
-        Cam.streamRunning = false;
+        Cam.cameraBusyStreaming = false;
         if (Cam.streamProcess) {
             Cam.streamProcess.kill();
         }
@@ -49,18 +50,35 @@ var Cam = {
         Cam.streamProcess.on('exit', Cam.sendImage);
     },
 
-    record: function(cb)
+    record: function(duration, cb)
     {
         cb = cb || function() {};
 
-        logger.info("starting to record");
+        if (Cam.cameraBusyRecording || Cam.cameraBusyStreaming)
+        {
+            logger.error("camera is busy, can not start video");
+            return cb("camera is busy");
+        }
+
+        Cam.cameraBusyRecording = true;
+
+        if (!duration || isNaN(duration))
+        {
+            duration = 5;
+        }
+
+        duration *= 1000;
+
+        logger.info("starting to record for " + duration + "ms");
         var date = moment().format("YYYYMMDD-HHmmss");
         var videoPath = "/tmp/video-" + date + ".h264";
         logger.info("... to file", videoPath);
 
-        var raspivid = spawn("raspivid", ["-t", 5000, "-o", videoPath, "-w", 640, "-h", 480]);
+        var raspivid = spawn("raspivid", ["-t", duration, "-o", videoPath, "-w", 640, "-h", 480]);
         raspivid.on("close", function()
         {
+            Cam.cameraBusyRecording = false;
+
             if (!fs.existsSync(videoPath))
             {
                 var msg = "video " + videoPath + " did not exist";
@@ -77,7 +95,8 @@ var Cam = {
 
                 var msg = "Error uploading video";
 
-                if (err) {
+                if (err || resp.statusCode != 200) {
+                    err = err || body;
                     logger.error(msg, err);
                     cb(msg);
                 } else {
@@ -96,7 +115,7 @@ var Cam = {
 
     sendImage: function()
     {
-        if (!Cam.streamRunning)
+        if (!Cam.cameraBusyStreaming)
         {
             logger.info('sending no image, stream is stopped');
             return;

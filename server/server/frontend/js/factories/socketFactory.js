@@ -128,8 +128,7 @@ IoT.factory('SocketFactory', function(constant)
 
         SocketFactory.receive("connect", function()
         {
-            if (cb)
-                cb(null, true);
+            console.log("connected to socket");
         });
 
         var socketEvents = [ 'connect', 'disconnect', 'connecting', 'connect_failed', 'close', 'reconnect', 'reconnecting', 'reconnect_failed' ];
@@ -187,6 +186,10 @@ IoT.factory('SocketFactory', function(constant)
                 SocketFactory.capabilities = resp.capabilities;
                 SocketFactory.clientName = resp.client_name;
                 SocketFactory.connectedAt = moment(new Date(resp.connected_at)).format("DD.MM. HH:mm:ss").toString();
+
+                //connected callback, some requests might depend on the clientName which is being set here
+                if (cb)
+                    cb(null, true);
             }
 
             return SocketFactory.callLifecycleCallback("socketinfo", null, SocketFactory.clientName, SocketFactory.connectedAt, SocketFactory.capabilities);
