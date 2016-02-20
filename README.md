@@ -165,6 +165,11 @@ http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry
 
 ###Camera
 
+MP4Box (required for camera conversion)
+```
+sudo apt-get install gpac
+```
+
 * https://www.raspberrypi.org/documentation/usage/camera/raspicam/raspivid.md
 * https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
 * http://jankarres.de/2013/05/raspberry-pi-raspistill-und-raspivid-parameter/

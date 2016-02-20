@@ -8,4 +8,6 @@ module.exports = {
     chartTypes: ["temperature", "cputemp", "mem", "load", "humidity", "distance", "lightintensity", "light", "soundvol", "sound", "movement1", "movement2", "poti", "reachability"],
     restartSensorAfter: 10, //s - if no message for X seconds is received, restart the sensor
     smartphoneIp: "192.168.0.53",
+    ttsApiKey: "*** snip ***", //voicerss.org
+    password: "*** snip ***"
 };
