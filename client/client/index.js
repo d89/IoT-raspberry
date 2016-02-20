@@ -171,13 +171,12 @@ socketmanager.socket.on('ifttt', function(msg, resp)
 socketmanager.socket.on('start-stop-stream', function(msg, resp)
 {
     var start = !!msg.start;
-    var cam = actormanagement.registeredActors["cam"];
 
     if (start)
     {
         logger.info("Received stream start request");
 
-        if (cam.cameraBusyRecording)
+        if (actormanagement.registeredActors["cam"].cameraBusyRecording)
         {
             var msg = "Camera is already recording, can not start stream";
             if (resp) resp(msg);
@@ -187,16 +186,16 @@ socketmanager.socket.on('start-stop-stream', function(msg, resp)
 
         if (resp) resp(null, "starting");
 
-        if (!cam.cameraBusyStreaming) {
-            cam.startStreaming(socket);
+        if (!actormanagement.registeredActors["cam"].cameraBusyStreaming) {
+            actormanagement.registeredActors["cam"].startStreaming(socket);
         } else {
-            cam.sendImage();
+            actormanagement.registeredActors["cam"].sendImage();
         }
     }
     else
     {
         logger.info("Received stream stop request");
-        cam.stopStreaming();
+        actormanagement.registeredActors["cam"].stopStreaming();
         if (resp) resp(null, "stopping");
     }
 });
@@ -205,7 +204,7 @@ socketmanager.socket.on('start-video', function(msg, cb)
 {
     logger.info("Received video recording request for " + msg.duration + "s");
 
-    cam.record(msg.duration, function(err, data)
+    actormanagement.registeredActors["cam"].record(msg.duration, function(err, data)
     {
         cb(err, data);
     });
@@ -268,7 +267,7 @@ socketmanager.socket.on('maintenance', function(msg, cb)
 socketmanager.socket.on('disconnect', function()
 {
 	logger.info(`disconnected from ${socketmanager.serverUrl}`);
-    cam.stopStreaming();
+    actormanagement.registeredActors["cam"].stopStreaming();
 
     //if we receive a real "disconnect" event, the reconnection is not automatically being established again
     setTimeout(function()
