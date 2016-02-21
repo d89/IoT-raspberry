@@ -6,7 +6,15 @@ var fs = require('fs');
 exports.exposed = function()
 {
     return {
-        act: exports.act
+        act: {
+            method: exports.act,
+            params: [{
+                name: "title",
+                isOptional: true,
+                dataType: "string",
+                notes: "filename of .mp3 file to be played"
+            }]
+        }
     };
 };
 

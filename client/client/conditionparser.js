@@ -107,12 +107,16 @@ exports.loadAvailableOptions = function(cb)
 
         if ("exposed" in actors[actor])
         {
-            Object.keys(actors[actor].exposed()).forEach(function(exposedMethod)
+            var exposed = actors[actor].exposed();
+
+            for (var exposedMethod in exposed)
             {
                 methods.push({
-                    name: exposedMethod
+                    method: exposed[exposedMethod].method,
+                    name: exposedMethod,
+                    params: exposed[exposedMethod].params
                 });
-            })
+            }
         }
 
         exposedActors.push({
@@ -129,12 +133,16 @@ exports.loadAvailableOptions = function(cb)
 
         if ("exposed" in sensors[sensor])
         {
-            Object.keys(sensors[sensor].exposed()).forEach(function(exposedMethod)
+            var exposed = sensors[sensor].exposed();
+
+            for (var exposedMethod in exposed)
             {
                 methods.push({
-                    name: exposedMethod
+                    method: exposed[exposedMethod].method,
+                    name: exposedMethod,
+                    params: exposed[exposedMethod].params
                 });
-            })
+            }
         }
 
         exposedSensors.push({
@@ -356,7 +364,7 @@ exports.processIfClause = function(ifClause, sensors)
             throw new Error("Invalid Method Name " + methodName);
         }
 
-        return exposedMethods[methodName](parameters)
+        return exposedMethods[methodName].method(parameters)
     });
 
     var evaluationDidRun = evaluated !== "";
@@ -488,7 +496,7 @@ exports.processThenClause = function(thenClause, actors, simulateCall)
 
             if (!simulateCall)
             {
-                errorMessage = exposedMethods[methodName](parameters);
+                errorMessage = exposedMethods[methodName].method(parameters);
             }
 
             var isSuccessfull = !errorMessage;

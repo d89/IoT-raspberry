@@ -4,7 +4,7 @@ var exec = require('child_process').exec;
 var fs = require('fs');
 var conditionparser = require('./conditionparser');
 var actormanagement = require('./actormanagement');
-
+var config = require('./config');
 var temperature = require('./sensors/temperature');
 var cputemp = require('./sensors/cputemp');
 var mem = require('./sensors/mem');
@@ -24,8 +24,8 @@ var reachability = require('./sensors/reachability');
 
 // ------------------------------------------------------
 
-actormanagement.registeredActors.ledGreen.act();
-actormanagement.registeredActors.ledRed.act();
+actormanagement.registeredActors.led.green();
+actormanagement.registeredActors.led.red();
 
 // ------------------------------------------------------
 
@@ -85,13 +85,13 @@ exports.init = function(cb)
         });
 
         exports.registeredSensors["movement1"] = new movement({
-            port: 33,
+            pin: 33,
             suffix: "1",
             onData: exports.sensorUpdateCallback
         });
 
         exports.registeredSensors["movement2"] = new movement({
-            port: 38,
+            pin: 38,
             suffix: "2",
             onData: exports.sensorUpdateCallback
         });
@@ -126,7 +126,8 @@ exports.init = function(cb)
         });
 
         exports.registeredSensors["reachability"] = new reachability({
-            onData: exports.sensorUpdateCallback
+            onData: exports.sensorUpdateCallback,
+            ip: config.smartphoneIp
         });
     }
     else

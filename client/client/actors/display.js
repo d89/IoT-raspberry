@@ -1,9 +1,19 @@
 var logger = require('../logger');
+var config = require('../config');
+var spawn = require('child_process').spawn;
 
 exports.exposed = function()
 {
     return {
-        act: exports.act
+        act: {
+            method: exports.act,
+            params: [{
+                name: "displaycontent",
+                isOptional: false,
+                dataType: "string or array",
+                notes: "The text that should be shown on the display"
+            }]
+        }
     };
 };
 
@@ -15,7 +25,6 @@ exports.act = function(displaycontent)
         displaycontent = [displaycontent];
     }
 
-    var spawn = require('child_process').spawn;
-    var prc = spawn('/var/www/IoT-raspberry/sensors/display', displaycontent);
+    var prc = spawn(config.baseBath + '/sensors/display', displaycontent);
     prc.stdout.setEncoding('utf8');
 };

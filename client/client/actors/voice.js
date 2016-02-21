@@ -10,7 +10,15 @@ const MAX_KEEP_FILES = 5;
 exports.exposed = function()
 {
     return {
-        act: exports.act
+        act: {
+            method: exports.act,
+            params: [{
+                name: "text",
+                isOptional: false,
+                dataType: "string",
+                notes: "text that should be spoken."
+            }]
+        }
     };
 };
 

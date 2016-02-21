@@ -10,7 +10,7 @@
     "gcm"
   ],
   "start_url": "/#index",
-  "orientation": "portrait",
+  //"orientation": "portrait",
   "icons": [
     {
       "src": "/assets/img/favicons/touchicon.png",

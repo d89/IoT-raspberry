@@ -1,17 +1,73 @@
 var logger = require('../logger');
+var config = require('../config');
 
 exports.exposed = function()
 {
     return {
-        act: exports.act
+        switch1on: {
+            method: exports.switch1on,
+            params: []
+        },
+        switch2on: {
+            method: exports.switch2on,
+            params: []
+        },
+        switch3on: {
+            method: exports.switch3on,
+            params: []
+        },
+
+        switch1off: {
+            method: exports.switch1off,
+            params: []
+        },
+        switch2off: {
+            method: exports.switch2off,
+            params: []
+        },
+        switch3off: {
+            method: exports.switch3off,
+            params: []
+        }
     };
 };
+
+exports.switch1on = function()
+{
+    exports.act(1, 1, 1);
+};
+
+exports.switch1off = function()
+{
+    exports.act(1, 1, 0);
+};
+
+exports.switch2on = function()
+{
+    exports.act(1, 2, 1);
+};
+
+exports.switch2off = function()
+{
+    exports.act(1, 2, 0);
+};
+
+exports.switch3on = function()
+{
+    exports.act(1, 3, 1);
+};
+
+exports.switch3off = function()
+{
+    exports.act(1, 3, 0);
+};
+
 
 exports.act = function(channel, device, state)
 {
     logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
     var spawn = require('child_process').spawn;
-    var prc = spawn('/var/www/IoT-raspberry/actors/switchrc', [channel, device, state]);
+    var prc = spawn(config.baseBath + '/actors/switchrc', [channel, device, state]);
     prc.stdout.setEncoding('utf8');
 
     prc.stderr.on('data', function (data)

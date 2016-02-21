@@ -44,39 +44,76 @@ class time extends baseSensor
         {
             (function(unit)
             {
-                exposedParent[unit + "_is_equal"] = function(val)
+                exposedParent[unit + "_is_equal"] =
                 {
-                    if (that.sensordata.is.length === null) return false;
-                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
-                    var triggered = (readValue == val);
-                    return that.processCondition(triggered);
+                    method: function(val)
+                    {
+                        if (that.sensordata.is.length === null) return false;
+                        var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                        var triggered = (readValue == val);
+                        return that.processCondition(triggered);
+                    },
+                    params: [{
+                        name: "val",
+                        isOptional: false,
+                        dataType: "integer",
+                        notes: "The current value of the sensor"
+                    }]
                 };
 
-                exposedParent[unit + "_is_gt"] = function(val)
+                exposedParent[unit + "_is_gt"] =
                 {
-                    if (that.sensordata.is.length === null) return false;
-                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
-                    var triggered = (readValue > val);
-                    return that.processCondition(triggered);
+                    method: function(val)
+                    {
+                        if (that.sensordata.is.length === null) return false;
+                        var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                        var triggered = (readValue > val);
+                        return that.processCondition(triggered);
+                    },
+                    params: [{
+                        name: "val",
+                        isOptional: false,
+                        dataType: "integer",
+                        notes: "The current value of the sensor"
+                    }]
                 };
 
-                exposedParent[unit + "_became_equal"] = function(val)
+                exposedParent[unit + "_became_equal"] =
                 {
-                    if (that.sensordata.is === null || that.sensordata.was === null) return false;
-                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
-                    var oldValue = that.sensordata.was.substr(functions[unit].from, functions[unit].length);
-                    var triggered = (readValue == val && oldValue != val);
-                    return that.processCondition(triggered);
+                    method: function(val)
+                    {
+                        if (that.sensordata.is === null || that.sensordata.was === null) return false;
+                        var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                        var oldValue = that.sensordata.was.substr(functions[unit].from, functions[unit].length);
+                        var triggered = (readValue == val && oldValue != val);
+                        return that.processCondition(triggered);
+                    },
+                    params: [{
+                        name: "val",
+                        isOptional: false,
+                        dataType: "integer",
+                        notes: "The current value of the sensor"
+                    }]
                 };
 
-                exposedParent[unit + "_became_gt"] = function(val)
+                exposedParent[unit + "_became_gt"] =
                 {
-                    if (that.sensordata.is === null || that.sensordata.was === null) return false;
-                    var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
-                    var oldValue = that.sensordata.was.substr(functions[unit].from, functions[unit].length);
-                    var triggered = (readValue > val && !(oldValue > val));
-                    return that.processCondition(triggered);
+                    method: function(val)
+                    {
+                        if (that.sensordata.is === null || that.sensordata.was === null) return false;
+                        var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
+                        var oldValue = that.sensordata.was.substr(functions[unit].from, functions[unit].length);
+                        var triggered = (readValue > val && !(oldValue > val));
+                        return that.processCondition(triggered);
+                    },
+                    params: [{
+                        name: "val",
+                        isOptional: false,
+                        dataType: "integer",
+                        notes: "The current value of the sensor"
+                    }]
                 };
+
             }(unit));
         }
 

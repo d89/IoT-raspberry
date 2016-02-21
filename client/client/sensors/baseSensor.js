@@ -51,35 +51,94 @@ class baseSensor
         var that = this;
 
         return {
-            is_equal: function(val)
+            is_equal:
             {
-                var triggered = (that.sensordata.is == val);
-                return that.processCondition(triggered);
+                method: function(val)
+                {
+                    var triggered = (that.sensordata.is == val);
+                    return that.processCondition(triggered);
+                },
+                params: [{
+                    name: "val",
+                    isOptional: false,
+                    dataType: "integer",
+                    notes: "The current value of the sensor"
+                }]
             },
-            is_lt: function(val)
+            // -------------------------------------------------
+            is_lt:
             {
-                var triggered = (that.sensordata.is < val);
-                return that.processCondition(triggered);
+                method: function(val)
+                {
+                    var triggered = (that.sensordata.is < val);
+                    return that.processCondition(triggered);
+                },
+                params: [{
+                    name: "val",
+                    isOptional: false,
+                    dataType: "integer",
+                    notes: "The current value of the sensor"
+                }]
             },
-            is_gt: function(val)
+            // -------------------------------------------------
+            is_gt:
             {
-                var triggered = (that.sensordata.is > val);
-                return that.processCondition(triggered);
+                method: function(val)
+                {
+                    var triggered = (that.sensordata.is > val);
+                    return that.processCondition(triggered);
+                },
+                params: [{
+                    name: "val",
+                    isOptional: false,
+                    dataType: "integer",
+                    notes: "The current value of the sensor"
+                }]
             },
-            became_equal: function(val)
+            // -------------------------------------------------
+            became_equal:
             {
-                var triggered = (that.sensordata.is == val && that.sensordata.was != val);
-                return that.processCondition(triggered);
+                method: function(val)
+                {
+                    var triggered = (that.sensordata.is == val && that.sensordata.was != val);
+                    return that.processCondition(triggered);
+                },
+                params: [{
+                    name: "val",
+                    isOptional: false,
+                    dataType: "integer",
+                    notes: "The current value of the sensor"
+                }]
             },
-            became_gt: function(val)
+            // -------------------------------------------------
+            became_gt:
             {
-                var triggered = (that.sensordata.is > val && !(that.sensordata.was > val));
-                return that.processCondition(triggered);
+                method: function(val)
+                {
+                    var triggered = (that.sensordata.is > val && !(that.sensordata.was > val));
+                    return that.processCondition(triggered);
+                },
+                params: [{
+                    name: "val",
+                    isOptional: false,
+                    dataType: "integer",
+                    notes: "The current value of the sensor"
+                }]
             },
-            became_lt: function(val)
+            // -------------------------------------------------
+            became_lt:
             {
-                var triggered = (that.sensordata.is < val && !(that.sensordata.was < val));
-                return that.processCondition(triggered);
+                method: function(val)
+                {
+                    var triggered = (that.sensordata.is < val && !(that.sensordata.was < val));
+                    return that.processCondition(triggered);
+                },
+                params: [{
+                    name: "val",
+                    isOptional: false,
+                    dataType: "integer",
+                    notes: "The current value of the sensor"
+                }]
             }
         }
     }

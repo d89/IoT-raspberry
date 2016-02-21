@@ -17,7 +17,7 @@ class movement extends baseSensor
     {
         var that = this;
 
-        that.spawn('pir', [ this.options.port ], function ondata(data)
+        that.spawn('pir', [ this.options.pin ], function ondata(data)
         {
             try
             {

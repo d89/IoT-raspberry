@@ -17,7 +17,15 @@ var Cam = {
     exposed: function()
     {
         return {
-            record: Cam.record
+            record: {
+                method: Cam.record,
+                params: [{
+                    name: "duration",
+                    isOptional: true,
+                    dataType: "integer",
+                    notes: "Number of seconds the camera shall record video."
+                }]
+            }
         };
     },
 

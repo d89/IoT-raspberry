@@ -45,7 +45,7 @@ class reachability extends baseSensor
         var numberOfPackagesToSend = 3;
         var waitingTimePerPackage = 1;
 
-        var ping = spawn("ping", ["-c", numberOfPackagesToSend, "-W", waitingTimePerPackage, config.smartphoneIp]);
+        var ping = spawn("ping", ["-c", numberOfPackagesToSend, "-W", waitingTimePerPackage, this.options.ip]);
 
         ping.on("close", function(returnCode)
         {

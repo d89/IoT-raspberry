@@ -72,11 +72,11 @@ socketmanager.socket.on('actionrequest', function(msg)
 
         if (msg.data.ledType === "red")
         {
-            actormanagement.registeredActors["ledRed"].act();
+            actormanagement.registeredActors["led"].red();
         }
         else if (msg.data.ledType === "green")
         {
-            actormanagement.registeredActors["ledGreen"].act();
+            actormanagement.registeredActors["led"].green();
         }
     }
 

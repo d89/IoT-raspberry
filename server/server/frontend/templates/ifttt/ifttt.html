@@ -74,7 +74,11 @@
                             <div ng-show="currentSensorValue[sensor.name] !== undefined"><small class="text-muted">Current value: <b>{{ currentSensorValue[sensor.name] }}</b></small></div>
                             <div>
                                 <p class="nice-copy">
-                                    <span ng-repeat="method in sensor.methods" class="label label-primary">.{{ method.name }}()</span>
+                                    <span ng-repeat="method in sensor.methods" class="label label-primary">.{{ method.name }}(
+                                        <span ng-repeat="param in method.params">
+                                            <span title="Name: {{ param.name }}, Optional: {{ param.isOptional }}, Data Type: {{ param.dataType }}, Notes: {{ param.notes }}">Parameter Info</span>
+                                        </span>
+                                    )</span>
                                 </p>
                                 <div style="clear: both"></div>
                             </div>
@@ -91,7 +95,13 @@
                             <div class="font-w600">${{ actor.name }}</div>
                             <div>
                                 <p class="nice-copy">
-                                    <span ng-repeat="method in actor.methods" class="label label-success"><i class="fa fa-arrow-right"></i> .{{ method.name }}()</span>
+                                    <span ng-repeat="method in actor.methods" class="label label-success">
+                                        <i class="fa fa-arrow-right"></i> .{{ method.name }}(
+                                            <span ng-repeat="param in method.params">
+                                                <span title="Name: {{ param.name }}, Optional: {{ param.isOptional }}, Data Type: {{ param.dataType }}, Notes: {{ param.notes }}">Parameter Info</span>
+                                            </span>
+                                        )
+                                    </span>
                                 </p>
                                 <div style="clear: both"></div>
                             </div>
