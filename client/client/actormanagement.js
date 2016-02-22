@@ -7,6 +7,7 @@ var music = require('./actors/music');
 var servo = require('./actors/servo');
 var voice = require('./actors/voice');
 var cam = require('./actors/cam');
+var set_temperature_homematic = require('./actors/set_temperature_homematic');
 
 exports.registeredActors = {
     display: display,
@@ -15,5 +16,6 @@ exports.registeredActors = {
     music: music,
     servo: servo,
     voice: voice,
-    cam: cam
+    cam: cam,
+    set_temperature_homematic: set_temperature_homematic
 };

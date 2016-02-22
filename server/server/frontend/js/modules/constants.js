@@ -21,7 +21,10 @@ constants.provider('constant', function()
             "sound": "Sound State",
             "movement1": "Movement (sensor 1)",
             "movement2": "Movement (sensor 2)",
-            "poti": "Potentiometer"
+            "poti": "Potentiometer",
+            "reachability": "Smartphone Reachability",
+            "measured_temperature_homematic": "Measured Temp (Homematic)",
+            "desired_temperature_homematic": "Desired Temp (Homematic)"
         }
     };
 

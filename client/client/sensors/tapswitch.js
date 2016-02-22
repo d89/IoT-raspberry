@@ -10,6 +10,7 @@ class tapswitch extends baseSensor
     {
         super("tapswitch", options);
         this.read();
+        this.currentState = false;
     }
 
     read()
@@ -20,8 +21,8 @@ class tapswitch extends baseSensor
         {
             try
             {
-                data = JSON.parse(data.toString()).stateChange;
-                that.senddata(data, that);
+                that.currentState = !that.currentState;
+                that.senddata(that.currentState ? 1 : 0, that);
             }
             catch (err)
             {
@@ -30,5 +31,15 @@ class tapswitch extends baseSensor
         });
     }
 }
+
+/*
+new tapswitch({
+    restartSensorAfter: false,
+    onData: function(data)
+    {
+        console.log(data);
+    }
+});
+*/
 
 module.exports = tapswitch;

@@ -820,14 +820,11 @@ io.on('connection', function(socket)
             {
                 msg.client_id = getClientName(socket);
 
-                persistClientData(msg, function(err, resp)
-                {
-                    if (err)
-                    {
-                        logger.error("could not store data point: ", err, msg);
-                        return;
-                    }
+                var caps = JSON.parse(socket.handshake.query.capabilities)
+                var type = msg.type;
 
+                var sendToUi = function(socket, msg)
+                {
                     //logger.info("PERSISTING: ", err, resp);
 
                     var uiSocket = getUiSocketByClientSocket(socket);
@@ -843,6 +840,25 @@ io.on('connection', function(socket)
                     //logger.info("data update for ui", msg);
 
                     uiSocket.emit("dataupdate", msg);
+                };
+
+                //only persist data that is also shown in charts. So don't store the current time
+                //for example, that is only there for the ifttt "current value" info
+                if (caps.indexOf(type) === -1)
+                {
+                    //console.log("did not store " + type);
+                    return sendToUi(socket, msg);
+                }
+
+                persistClientData(msg, function(err, resp)
+                {
+                    if (err)
+                    {
+                        logger.error("could not store data point: ", err, msg);
+                        return;
+                    }
+
+                    return sendToUi(socket, msg);
                 });
             },
             //-------------------------------------------------------------------------------------

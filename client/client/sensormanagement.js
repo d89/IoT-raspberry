@@ -21,6 +21,8 @@ var poti = require('./sensors/poti');
 var time = require('./sensors/time');
 var date = require('./sensors/date');
 var reachability = require('./sensors/reachability');
+var desired_temperature_homematic = require('./sensors/desired_temperature_homematic');
+var measured_temperature_homematic = require('./sensors/measured_temperature_homematic');
 
 // ------------------------------------------------------
 
@@ -76,8 +78,15 @@ exports.init = function(cb)
             onData: exports.sensorUpdateCallback
         });
 
+        var sentTimeDatapoints = 0;
         exports.registeredSensors["time"] = new time({
-            onData: exports.sensorUpdateCallback
+            onData: function(type, data)
+            {
+                if (sentTimeDatapoints % 5 === 0)
+                    exports.sensorUpdateCallback(type, data);
+
+                sentTimeDatapoints++;
+            }
         });
 
         exports.registeredSensors["date"] = new date({
@@ -128,6 +137,16 @@ exports.init = function(cb)
         exports.registeredSensors["reachability"] = new reachability({
             onData: exports.sensorUpdateCallback,
             ip: config.smartphoneIp
+        });
+
+        exports.registeredSensors["desired_temperature_homematic"] = new desired_temperature_homematic({
+            onData: exports.sensorUpdateCallback,
+            thermostatName: "HM_37F678"
+        });
+
+        exports.registeredSensors["measured_temperature_homematic"] = new measured_temperature_homematic({
+            onData: exports.sensorUpdateCallback,
+            thermostatName: "HM_37F678"
         });
     }
     else
