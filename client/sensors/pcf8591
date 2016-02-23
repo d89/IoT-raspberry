@@ -12,7 +12,6 @@ import datetime
 
 json_template = { 'poti': 0, 'light': 0, 'time': str(datetime.datetime.now().time()) }
 
-
 def setup():
 	ADC.setup(0x48)
 

@@ -42,11 +42,6 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     //-----------------------------------------------------
 
-    $scope.autoComplete = {
-        actors: [],
-        sensors: []
-    };
-
     $scope.addCondition = function()
     {
         $scope.conditions.push({
@@ -74,7 +69,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
                     var isReadonly = $(e).attr("readonly") !== "readonly";
                     var autoFocus = (isLast && isReadonly);
 
-                    Styles.initAutoComplete(e, $scope.autoComplete.actors, $scope.autoComplete.sensors, autoFocus);
+                    Styles.initAutoComplete(e, $scope.availableOptions, autoFocus);
                 }
             });
         }, 200);
@@ -108,7 +103,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.availableOptions = function()
     {
-        console.log("available options!");
+        //console.log("available options!");
 
         var ifttt = {
             mode: "availableoptions"
@@ -116,7 +111,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         SocketFactory.send("ui:ifttt", ifttt, function(err, opts)
         {
-            console.log("got available options response", err, opts);
+            //console.log("got available options response", err, opts);
 
             if (err)
             {
@@ -124,23 +119,9 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             }
             else
             {
+                //console.log("options", opts);
+
                 $scope.availableOptions = opts;
-
-                $scope.availableOptions["actors"].forEach(function(a)
-                {
-                    a.methods.forEach(function(m)
-                    {
-                        $scope.autoComplete["actors"].push(a.name + "." + m.name);
-                    });
-                });
-
-                $scope.availableOptions["sensors"].forEach(function(s)
-                {
-                    s.methods.forEach(function(m)
-                    {
-                        $scope.autoComplete["sensors"].push(s.name + "." + m.name);
-                    });
-                });
 
                 setTimeout(function()
                 {
@@ -153,7 +134,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.conditionList = function()
     {
-        console.log("conditionlist!");
+        //console.log("conditionlist!");
 
         var ifttt = {
             mode: "conditionlist"
@@ -161,7 +142,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         SocketFactory.send("ui:ifttt", ifttt, function(err, resp)
         {
-            console.log("got conditionlist response", err, resp);
+            //console.log("got conditionlist response", err, resp);
 
             if (err)
             {
@@ -311,6 +292,17 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             $scope.availableOptions();
             $scope.conditionList();
             $scope.currentSensorValue = {};
+
+            //TODO
+            setTimeout(function()
+            {
+                //register popups
+                jQuery('[data-toggle="tooltip"], .js-tooltip').tooltip({
+                    container: 'body',
+                    animation: false
+                });
+            }, 200);
+
 
             SocketFactory.registerLifecycleCallback("dataupdate", function(sensorUpdate)
             {

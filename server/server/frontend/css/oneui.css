@@ -11306,3 +11306,48 @@ a.navlink {
     top: -14px !important;
   }
 }
+
+.methods {
+  margin-top: 10px;
+}
+
+.methodname {
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+  text-align: left;
+  white-space: normal;
+}
+
+.methodname .parameter {
+  color: #EEE;
+  cursor: help;
+  font-style: italic;
+}
+
+.parameterhelp {
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+  background-color: #F5E9D7;
+  color: black;
+  margin-bottom: 0;
+  display: none;
+}
+
+.paramdesc {
+  margin-top: 10px;
+  padding-left: 30px;
+}
+
+.param_optional_required {
+  font-style: italic;
+}
+
+.param_datatype {
+  color: #444;
+}
+
+.param_name {
+  font-weight: bold;
+}
+
+.param_notes {
+  color: #222;
+}

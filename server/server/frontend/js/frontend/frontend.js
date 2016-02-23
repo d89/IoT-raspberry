@@ -1227,7 +1227,7 @@ var Styles = function() {
             return false;
         },
 
-        initAutoComplete: function(selector, actors, sensors, autotrigger)
+        initAutoComplete: function(selector, options, autotrigger)
         {
             //textoverlay is not autoscaling - so we don't want it to look ugly
             $(window).resize(function () {
@@ -1236,8 +1236,162 @@ var Styles = function() {
 
             // -----------------------------------------
 
+            var actors = [];
+            var sensors = [];
+
+            //reformat actor data for autocomplete
+            options.actors.forEach(function(actor)
+            {
+                var name = actor.name;
+                var methods = actor.methods;
+
+                methods.forEach(function(method)
+                {
+                    var fullMethodName = name + "." + method.name;
+
+                    actors.push({
+                        name: fullMethodName,
+                        params: method.params
+                    });
+                });
+            });
+
+            //reformat sensor data for autocomplete
+            options.sensors.forEach(function(sensor)
+            {
+                var name = sensor.name;
+                var methods = sensor.methods;
+
+                methods.forEach(function(method)
+                {
+                    var fullMethodName = name + "." + method.name;
+
+                    sensors.push({
+                        name: fullMethodName,
+                        params: method.params
+                    });
+                });
+            });
+
             var triggerTextComplete = function(selector)
             {
+                //if no mobile device: trigger parameter help underneath the textarea
+                !Styles.isMobile() && $(selector).bind("keydown click focus blur", function(ev)
+                {
+                    var elem = $(this);
+                    var parameterElement = elem.parents(".form-group").find(".parameterhelp");
+                    if (elem.attr("readonly") === "readonly") return;
+
+                    if (ev.type === "blur")
+                    {
+                        return parameterElement.html("").hide();
+                    }
+
+                    // -------------------------------------------------------------
+
+                    var processEventAfterTimeout = function()
+                    {
+                        var cursorPosition = elem.prop("selectionStart");
+                        if (!cursorPosition) return;
+                        var text = elem.val();
+                        var before = text.substr(0, cursorPosition);
+                        //var after = text.substr(cursorPosition); -> not needed, no lookbehind nececssary
+
+                        //could be a sensor if we have an if, a ( but no {
+                        var isSensor = before.indexOf("if") !== -1 && before.indexOf("(") !== -1 && before.indexOf("{") === -1;
+
+                        //could be an actor if we have an if and a {
+                        var isActor = before.indexOf("if") !== -1 && before.indexOf("{") !== -1;
+
+                        // -------------------------------------------------------------
+
+                        var constructParams = function(elem)
+                        {
+                            //name of method on top
+                            var paramText = [];
+                            paramText.push("<div class='label' style='background: #444;'>$" + elem.name + "</div>");
+
+                            if (elem.params.length === 0)
+                            {
+                                paramText.push("<div class='paramdesc'>No parameters</div>");
+                            }
+                            else
+                            {
+                                //every parameter in its own line
+                                elem.params.forEach(function(p)
+                                {
+                                    var param = [];
+                                    param.push("<span class='param_optional_required'>" + (p.isOptional ? "optional" : "required") + "</span>");
+                                    param.push("<span class='param_datatype'>" + p.dataType + "</span>");
+                                    param.push("<span class='param_name'>$" + p.name + "</span>: ");
+                                    param.push("<span class='param_notes'>" + p.notes + "</span>");
+                                    paramText.push("<div class='paramdesc'>" + param.join(" ") + "</div>");
+                                });
+                            }
+
+                            return paramText.join("");
+                        };
+
+                        // -------------------------------------------------------------
+
+                        if (isSensor)
+                        {
+                            var matches = before.match(/\$(\w+\.\w+)\(/g);
+                            var numSensors = before.split("$").length - 1;
+                            if (matches && matches.length === numSensors)
+                            {
+                                //remove first -> $ <- and last -> ( <- character matched by regex
+                                var pickedSensorName = matches[numSensors - 1].slice(1, -1);
+
+                                for (var i = 0; i < sensors.length; i++)
+                                {
+                                    if (sensors[i].name === pickedSensorName)
+                                    {
+                                        var parameterText = constructParams(sensors[i]);
+                                        return parameterElement.html(parameterText).show();
+                                    }
+                                }
+                            }
+                        }
+
+                        // -------------------------------------------------------------
+
+                        if (isActor)
+                        {
+                            var actorBefore = before.split("{")[1];
+                            console.log("actor before", actorBefore);
+                            var matches = actorBefore.match(/\$(\w+\.\w+)\(/g);
+                            var numActors = actorBefore.split("$").length - 1;
+                            if (matches && matches.length === numActors)
+                            {
+                                //remove first -> $ <- and last -> ( <- character matched by regex
+                                var pickedActorName = matches[numActors - 1].slice(1, -1);
+
+                                for (var i = 0; i < actors.length; i++)
+                                {
+                                    if (actors[i].name === pickedActorName)
+                                    {
+                                        var parameterText = constructParams(actors[i]);
+                                        return parameterElement.html(parameterText).show();
+                                    }
+                                }
+                            }
+                        }
+
+                        //reset, if no return happened previously
+                        parameterElement.html("").hide();
+
+                        //console.warn("Current position: " + cursorPosition, before + " ! " + after);
+                    };
+
+                    // -------------------------------------------------------------
+
+                    setTimeout(function()
+                    {
+                        processEventAfterTimeout();
+                    }, 100);
+                });
+
                 $(selector).textcomplete([
                 //---- sensors ------------------------
                 {
@@ -1246,12 +1400,14 @@ var Styles = function() {
                     {
                         callback($.map(sensors, function (sensor)
                         {
+                            var fullMethodName = sensor.name;
+
                             if (term.indexOf(".") === -1)
                             {
-                                sensor = sensor.split(".")[0];
+                                fullMethodName = fullMethodName.split(".")[0];
                             }
 
-                            return sensor.indexOf(term) === 0 ? sensor : null;
+                            return fullMethodName.indexOf(term) === 0 ? fullMethodName : null;
                         }));
                     },
                     context: function (text)
@@ -1290,6 +1446,7 @@ var Styles = function() {
                             return "\$" + value + '.';
                         }
 
+                        console.log("should show sensor parameters for " + value);
                         return ["\$" + value + '(', ')'];
                     },
                     index: 1
@@ -1301,14 +1458,15 @@ var Styles = function() {
                     {
                         callback($.map(actors, function (actor)
                         {
+                            var fullMethodName = actor.name;
+
                             if (term.indexOf(".") === -1)
                             {
-                                actor = actor.split(".")[0];
+                                fullMethodName = fullMethodName.split(".")[0];
                             }
 
-                            return actor.indexOf(term) === 0 ? actor : null;
+                            return fullMethodName.indexOf(term) === 0 ? fullMethodName : null;
                         }));
-
                     },
                     context: function (text)
                     {
@@ -1346,6 +1504,7 @@ var Styles = function() {
                             return "\$" + value + '.';
                         }
 
+                        console.log("should show actor parameters for " + value);
                         return ["\$" + value + '(', ')'];
                     },
                     index: 1
@@ -1398,46 +1557,16 @@ var Styles = function() {
 
             OneUI.initialized = true;
 
-            switch ($func) {
-                case 'uiInit':
-                    uiInit();
-                    break;
-                case 'uiLayout':
-                    uiLayout();
-                    break;
-                case 'uiNav':
-                    uiNav();
-                    break;
-                case 'uiBlocks':
-                    uiBlocks();
-                    break;
-                case 'uiForms':
-                    uiForms();
-                    break;
-                case 'uiHandleTheme':
-                    uiHandleTheme();
-                    break;
-                case 'uiToggleClass':
-                    uiToggleClass();
-                    break;
-                case 'uiScrollTo':
-                    uiScrollTo();
-                    break;
-                case 'uiYearCopy':
-                    uiYearCopy();
-                    break;
-                default:
-                    // Init all vital functions
-                    uiInit();
-                    uiLayout();
-                    uiNav();
-                    uiBlocks();
-                    uiForms();
-                    uiHandleTheme();
-                    uiToggleClass();
-                    uiScrollTo();
-                    uiYearCopy();
-            }
+            // Init all vital functions
+            uiInit();
+            uiLayout();
+            uiNav();
+            uiBlocks();
+            uiForms();
+            uiHandleTheme();
+            uiToggleClass();
+            uiScrollTo();
+            uiYearCopy();
         },
         layout: function($mode) {
             uiLayoutApi($mode);

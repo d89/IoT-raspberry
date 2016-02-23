@@ -50,11 +50,11 @@ exports.act = function(temperature, thermostatName)
     {
         if (error)
         {
-            logger.error("fhem error " + error);
+            logger.error("fhem set desired temperature error " + error);
         }
         else if (response && response.statusCode && response.statusCode != 200)
         {
-            logger.error("fhem response code " + response.statusCode);
+            logger.error("fhem set desired temperature response code " + response.statusCode);
         }
         else //success
         {

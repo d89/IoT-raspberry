@@ -33,19 +33,25 @@ class desired_temperature_homematic extends baseSensor
         {
             if (error)
             {
-                logger.error("fhem error " + error);
+                logger.error("fhem get desired temperature error " + error);
             }
             else if (response && response.statusCode && response.statusCode != 200)
             {
-                logger.error("fhem response code " + response.statusCode);
+                logger.error("fhem get desired temperature response code " + response.statusCode);
             }
             else //success
             {
+                //"on" is the absolute max. Set to 30.5 (= max + 0.5) to indicate this
+                if (body.indexOf("on") !== -1)
+                {
+                    body = 30.5;
+                }
+
                 var temp = parseFloat(body, 10);
 
                 if (isNaN(temp))
                 {
-                    logger.error("fhem could not parse " + body);
+                    logger.error("fhem get desired temperature could not parse " + body);
                 }
                 else
                 {

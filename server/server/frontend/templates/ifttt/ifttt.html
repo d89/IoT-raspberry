@@ -24,6 +24,7 @@
                                         <button title="delete condition" class="btn btn-danger" type="button" style="height: 60px" ng-click="removeCondition(condition)"><i class="fa fa-trash"></i></button>
                                     </span>
                                 </div>
+                                <div class="parameterhelp alert"></div>
                                 <div class="conditionstate" ng-show="conditionState[condition.conditiontext]">
                                     <div class="alert alert-{{ conditionState[condition.conditiontext].lastState }}">
                                         <p>
@@ -72,14 +73,19 @@
                             <i class="fa fa-eye text-primary"></i>
                             <div class="font-w600">${{ sensor.name }}</div>
                             <div ng-show="currentSensorValue[sensor.name] !== undefined"><small class="text-muted">Current value: <b>{{ currentSensorValue[sensor.name] }}</b></small></div>
-                            <div>
-                                <p class="nice-copy">
-                                    <span ng-repeat="method in sensor.methods" class="label label-primary">.{{ method.name }}(
-                                        <span ng-repeat="param in method.params">
-                                            <span title="Name: {{ param.name }}, Optional: {{ param.isOptional }}, Data Type: {{ param.dataType }}, Notes: {{ param.notes }}">Parameter Info</span>
+                            <div class="methods">
+                                <span ng-repeat="method in sensor.methods" class="methodname label label-info">
+                                    <i class="fa fa-arrow-right"></i>
+
+                                    .{{ method.name }}
+                                    (
+                                        <span ng-repeat="param in method.params track by $index">
+                                            <span ng-show="$index > 0">, </span>
+                                            <span class="parameter" data-toggle="tooltip" title="{{ param.notes }}&#10;Optional: {{ param.isOptional }}">{{ param.dataType }} ${{ param.name }}</span>
                                         </span>
-                                    )</span>
-                                </p>
+                                    )
+
+                                </span>
                                 <div style="clear: both"></div>
                             </div>
                         </li>
@@ -93,16 +99,19 @@
                         <li ng-repeat="actor in availableOptions.actors">
                             <i class="fa fa-industry text-success"></i>
                             <div class="font-w600">${{ actor.name }}</div>
-                            <div>
-                                <p class="nice-copy">
-                                    <span ng-repeat="method in actor.methods" class="label label-success">
-                                        <i class="fa fa-arrow-right"></i> .{{ method.name }}(
-                                            <span ng-repeat="param in method.params">
-                                                <span title="Name: {{ param.name }}, Optional: {{ param.isOptional }}, Data Type: {{ param.dataType }}, Notes: {{ param.notes }}">Parameter Info</span>
-                                            </span>
-                                        )
-                                    </span>
-                                </p>
+                            <div class="methods">
+                                <span ng-repeat="method in actor.methods" class="label label-success methodname">
+                                    <i class="fa fa-arrow-right"></i>
+
+                                    .{{ method.name }}
+                                    (
+                                        <span ng-repeat="param in method.params track by $index">
+                                            <span ng-show="$index > 0">, </span>
+                                            <span class="parameter" data-toggle="tooltip" title="{{ param.notes }}&#10;Optional: {{ param.isOptional }}">{{ param.dataType }} ${{ param.name }}</span>
+                                        </span>
+                                    )
+
+                                </span>
                                 <div style="clear: both"></div>
                             </div>
                         </li>

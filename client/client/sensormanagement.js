@@ -41,6 +41,8 @@ exports.init = function(cb)
 
     exports.sensorUpdateCallback = function(type, data)
     {
+        //console.log("received " + data + " for " + type);
+        
         cb({
             type: type,
             data: data

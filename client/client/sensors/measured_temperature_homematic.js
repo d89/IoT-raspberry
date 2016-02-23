@@ -33,11 +33,11 @@ class measured_temperature_homematic extends baseSensor
         {
             if (error)
             {
-                logger.error("fhem error " + error);
+                logger.error("fhem get measured temperature error " + error);
             }
             else if (response && response.statusCode && response.statusCode != 200)
             {
-                logger.error("fhem response code " + response.statusCode);
+                logger.error("fhem get measured temperature response code " + response.statusCode);
             }
             else //success
             {
@@ -45,7 +45,7 @@ class measured_temperature_homematic extends baseSensor
 
                 if (isNaN(temp))
                 {
-                    logger.error("fhem could not parse " + body);
+                    logger.error("fhem get measured temperature could not parse " + body);
                 }
                 else
                 {
