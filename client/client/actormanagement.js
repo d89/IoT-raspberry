@@ -9,6 +9,7 @@ var voice = require('./actors/voice');
 var cam = require('./actors/cam');
 var set_temperature_homematic = require('./actors/set_temperature_homematic');
 var set_temperature_zwave = require('./actors/set_temperature_zwave');
+var ledstrip = require('./actors/ledstrip');
 
 exports.registeredActors = {
     display: display,
@@ -19,5 +20,6 @@ exports.registeredActors = {
     voice: voice,
     cam: cam,
     set_temperature_homematic: set_temperature_homematic,
-    set_temperature_zwave: set_temperature_zwave
+    set_temperature_zwave: set_temperature_zwave,
+    ledstrip: ledstrip
 };

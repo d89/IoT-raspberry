@@ -11351,3 +11351,13 @@ a.navlink {
 .param_notes {
   color: #222;
 }
+
+#iftttbuttongroup {
+  margin-bottom: 25px;
+}
+
+@media screen and (max-width: 991px) {
+  #opts .label {
+    font-size: 10px;
+  }
+}

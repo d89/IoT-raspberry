@@ -21,7 +21,9 @@ module.exports = {
         "poti",
         "reachability",
         "measured_temperature_homematic",
-        "desired_temperature_homematic"
+        "desired_temperature_homematic",
+        "measured_temperature_zwave",
+        "battery_zwave"
     ],
     restartSensorAfter: 10, //s - if no message for X seconds is received, restart the sensor
     smartphoneIp: "192.168.0.53",
