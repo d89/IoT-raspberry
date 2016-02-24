@@ -95,6 +95,35 @@ socketmanager.socket.on('actionrequest', function(msg)
 
         actormanagement.registeredActors["music"].act(msg.data);
     }
+
+    //Temperature -------------------------------------------------------------------------
+    if (msg.type === "settemperature")
+    {
+        var data = msg.data;
+        logger.info(`actionrequest for temperature with data`, data);
+
+        if (!("type" in data && "temp" in data && "thermostat" in data))
+        {
+            return logger.error("invalid set temperature request (1)", data);
+        }
+
+        var type = data.type;
+        var temp = data.temp;
+        var thermostat = data.thermostat;
+
+        if (type === "zwave")
+        {
+            actormanagement.registeredActors["set_temperature_zwave"].act(temp, thermostat);
+        }
+        else if (type === "homematic")
+        {
+            actormanagement.registeredActors["set_temperature_homematic"].act(temp, thermostat);
+        }
+        else
+        {
+            logger.error("invalid set temperature request (2)", msg.data);
+        }
+    }
 });
 
 socketmanager.socket.on('ifttt', function(msg, resp)

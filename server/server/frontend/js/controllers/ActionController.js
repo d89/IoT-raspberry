@@ -144,6 +144,40 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         SocketFactory.send("ui:action", options);
     };
 
+    $scope.zwaveTemp = function()
+    {
+        var res = window.prompt("Please enter the desired temperature", "26");
+        if (!res) return;
+
+        var options = {
+            type: "settemperature",
+            data: {
+                type: "zwave",
+                temp: res,
+                thermostat: "ZWave_THERMOSTAT_9"
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
+    $scope.homematicTemp = function()
+    {
+        var res = window.prompt("Please enter the desired temperature", "26");
+        if (!res) return;
+
+        var options = {
+            type: "settemperature",
+            data: {
+                type: "homematic",
+                temp: res,
+                thermostat: "HM_37F678"
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.stopStream = function()
     {
         console.log("stopping stream!");

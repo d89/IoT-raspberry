@@ -3,7 +3,7 @@
 var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
-var request = require("request");
+var fhem = require("../fhemmanagement");
 const INTERVAL = 5000;
 
 // ######################################################
@@ -21,40 +21,20 @@ class desired_temperature_homematic extends baseSensor
         var that = this;
 
         var thermostatName = that.options.thermostatName;
-        var requestObject = '{ ReadingsVal("' + thermostatName + '_Clima","desired-temp","") }';
-        var url = "http://127.0.0.1:" + config.fhem.port + "/fhem?cmd=" + requestObject + "&XHR=1";
+        var requestObject = '{ReadingsVal("' + thermostatName + '_Clima","desired-temp","")}';
+        var url = "fhem?cmd=" + requestObject + "&XHR=1";
 
-        request.get(url, {
-            auth: {
-                user: config.fhem.basic_auth_username,
-                pass: config.fhem.basic_auth_password
-            }
-        }, function (error, response, body)
+        fhem.get(url, function(err, body)
         {
-            if (error)
-            {
-                logger.error("fhem get desired temperature error " + error);
-            }
-            else if (response && response.statusCode && response.statusCode != 200)
-            {
-                logger.error("fhem get desired temperature response code " + response.statusCode);
-            }
-            else //success
-            {
-                //"on" is the absolute max. Set to 30.5 (= max + 0.5) to indicate this
-                if (body.indexOf("on") !== -1)
-                {
-                    body = 30.5;
-                }
-
+            if (err) {
+                logger.error(err);
+            } else {
+                if (body.indexOf("on") !== -1) body = 30.5;
                 var temp = parseFloat(body, 10);
 
-                if (isNaN(temp))
-                {
-                    logger.error("fhem get desired temperature could not parse " + body);
-                }
-                else
-                {
+                if (isNaN(temp)) {
+                    logger.error("fhem homematic get desired temperature could not parse " + body);
+                } else {
                     //console.log("temp", temp);
                     that.senddata(temp, that);
                 }

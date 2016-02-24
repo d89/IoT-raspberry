@@ -226,7 +226,10 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
             if (lastSuccessTime)
             {
-                statementResultUpdate[statement].lastSuccessTime = "Last success: " + moment(lastSuccessTime).format("HH:mm:ss (DD.MM.)");
+                if (!isNaN(lastSuccessTime))
+                {
+                    statementResultUpdate[statement].lastSuccessTime = "Last success: " + moment(lastSuccessTime).format("HH:mm:ss (DD.MM.)");
+                }
             }
             else
             {
@@ -237,7 +240,10 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
             if (lastErrorTime)
             {
-                statementResultUpdate[statement].lastErrorTime = "Last Error: " + moment(lastErrorTime).format("HH:mm:ss (DD.MM.)");
+                if (!isNaN(lastSuccessTime))
+                {
+                    statementResultUpdate[statement].lastErrorTime = "Last Error: " + moment(lastErrorTime).format("HH:mm:ss (DD.MM.)");
+                }
             }
             else
             {

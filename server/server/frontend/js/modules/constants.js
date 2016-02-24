@@ -24,7 +24,9 @@ constants.provider('constant', function()
             "poti": "Potentiometer",
             "reachability": "Smartphone Reachability",
             "measured_temperature_homematic": "Measured Temp (Homematic)",
-            "desired_temperature_homematic": "Desired Temp (Homematic)"
+            "desired_temperature_homematic": "Desired Temp (Homematic)",
+            "measured_temperature_zwave": "Measured Temp (Z-Wave)",
+            "battery_zwave": "Battery (Z-Wave)"
         }
     };
 

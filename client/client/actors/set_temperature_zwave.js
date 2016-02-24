@@ -18,7 +18,7 @@ exports.exposed = function()
                 name: "thermostatName",
                 isOptional: true,
                 dataType: "string",
-                notes: "ID of the fhem thermostat. Defaults to HM_37F678"
+                notes: "ID of the fhem thermostat. Defaults to ZWave_THERMOSTAT_9"
             }]
         }
     };
@@ -26,9 +26,7 @@ exports.exposed = function()
 
 exports.act = function(temp, thermostatName)
 {
-    thermostatName = thermostatName || "HM_37F678";
-
-    thermostatName += "_Clima";
+    thermostatName = thermostatName || "ZWave_THERMOSTAT_9";
 
     var requestObject = {
         "detail": thermostatName
@@ -38,8 +36,8 @@ exports.act = function(temp, thermostatName)
 
     requestObject["dev.set" + thermostatName] = thermostatName;
     requestObject["cmd.set" + thermostatName] = "set";
-    requestObject["arg.set" + thermostatName] = "desired-temp";
-    requestObject["val.set" + thermostatName] = "" + temp;
+    requestObject["arg.set" + thermostatName] = "setpointHeating";
+    requestObject["val.set" + thermostatName] = ("" + parseInt(temp, 10)); //only full numbers allowed
 
     fhem.post("fhem", requestObject, function(err, msg)
     {
