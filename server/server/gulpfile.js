@@ -24,6 +24,7 @@ gulp.task('css', function ()
     return gulp.src
     ([
         './frontend/bower_components/bootstrap/dist/css/bootstrap.min.css',
+        './frontend/bower_components/angular-bootstrap-colorpicker/css/colorpicker.css',
         './frontend/css/*.css'
     ])
     .pipe(concat("style.css"))
@@ -59,7 +60,10 @@ gulp.task('js-libs', function ()
         "./frontend/bower_components/angular/angular.min.js",
         "./frontend/bower_components/angular-route/angular-route.min.js",
         "./frontend/bower_components/jquery.overlay/jquery.overlay.min.js",
-        "./frontend/bower_components/jquery-textcomplete/dist/jquery.textcomplete.min.js"
+        "./frontend/bower_components/jquery-textcomplete/dist/jquery.textcomplete.min.js",
+
+        //with angular dependency
+        "./frontend/bower_components/angular-bootstrap-colorpicker/js/bootstrap-colorpicker-module.min.js"
     ])
     .pipe(concat("libs.js"))
     .pipe(gulp.dest(DIST_DIR + '/js'));

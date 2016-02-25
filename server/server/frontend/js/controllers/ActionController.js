@@ -193,6 +193,49 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         });
     };
 
+    $scope.singleColor = function(red, green, blue)
+    {
+        console.log("sending color", red, green, blue);
+        
+        var options = {
+            type: "ledstrip",
+            data: {
+                mode: "singleColor",
+                colors: {
+                    red: red,
+                    green: green,
+                    blue: blue
+                }
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
+    $scope.colorParty = function()
+    {
+        var options = {
+            type: "ledstrip",
+            data: {
+                mode: "colorParty"
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
+    $scope.allOff = function()
+    {
+        var options = {
+            type: "ledstrip",
+            data: {
+                mode: "allOff"
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.video = function()
     {
         $scope.videoActive = constant.get("camRecordingDuration");
@@ -233,6 +276,14 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
     {
         $rootScope.mainHeadline = "IoT Portal: Actions";
         $rootScope.subHeadline = "Trigger Actions On Your IoT device";
+        $scope.rgbPicker = "rgb(30,112,23)";
+
+        $scope.$on('colorpicker-selected', function(event, colorObject)
+        {
+            var rgb = colorObject.value.match(/(\d+)/g);
+            $scope.singleColor(rgb[0], rgb[1], rgb[2]);
+        });
+
         $scope.connect(false, function()
         {
             SocketFactory.receive("cam-stream", function(msg)

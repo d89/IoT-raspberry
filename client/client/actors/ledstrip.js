@@ -8,17 +8,16 @@ var process = null;
 exports.exposed = function()
 {
     return {
-        colorparty: {
-            method: exports.colorparty,
-            params: [{
-                name: "onoff",
-                isOptional: false,
-                dataType: "boolean",
-                notes: "turn on (true) or turn off (false)"
-            }]
+        colorParty: {
+            method: exports.colorParty,
+            params: []
         },
-        setColor: {
-            method: exports.setColor,
+        allOff: {
+            method: exports.allOff,
+            params: []
+        },
+        singleColor: {
+            method: exports.singleColor,
             params: [{
                 name: "red",
                 isOptional: true,
@@ -39,51 +38,56 @@ exports.exposed = function()
     };
 };
 
-exports.colorparty = function(onoff)
+exports.allOff = function()
 {
-    //convert input values. Accept true / false, 0 / 1 and "0" / "1"
-    if (typeof onoff != "boolean")
+    logger.info("disabling ledstrip");
+
+    if (process)
     {
-        onoff = !!parseInt(onoff, 10);
-    }
-
-    logger.info("changing led party to state ", onoff);
-
-    if (onoff && !process)
-    {
-        logger.info("enabling color party");
-
-        process = spawn(config.baseBath + '/actors/ledstrip',  []);
-        process.stdout.setEncoding('utf8');
-
-        process.stderr.on('data', function (data)
-        {
-            logger.error("received err: ", data.toString());
-        });
-
-        process.stdout.on('data', function (data)
-        {
-            logger.info("received data: ", data);
-        });
-    }
-
-    if (!onoff && process)
-    {
-        logger.info("disabling ledstrip");
         process.kill();
         process = null;
     }
+
+    exports.singleColor(0, 0, 0);
 };
 
-exports.setColor = function(red, green, blue)
+exports.colorParty = function()
 {
-    if (typeof red === "string")
+    logger.info("activating led color party");
+
+    if (process) return;
+
+    logger.info("enabling color party");
+
+    process = spawn(config.baseBath + '/actors/ledstrip',  []);
+    process.stdout.setEncoding('utf8');
+
+    process.stderr.on('data', function (data)
+    {
+        logger.error("received err: ", data.toString());
+    });
+
+    process.stdout.on('data', function (data)
+    {
+        logger.info("received data: ", data);
+    });
+};
+
+exports.singleColor = function(red, green, blue)
+{
+    if (process)
+    {
+        exports.allOff();
+    }
+
+    if (isNaN(red))
     {
         var colors = red.split(",");
         red = parseInt(colors[0], 10);
         green = parseInt(colors[1], 10);
         blue = parseInt(colors[2], 10);
     }
+    
     logger.info("setting led color to " + red + " / " + green + " / " + blue);
 
     red = parseInt(red);

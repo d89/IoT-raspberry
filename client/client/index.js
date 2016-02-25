@@ -124,6 +124,31 @@ socketmanager.socket.on('actionrequest', function(msg)
             logger.error("invalid set temperature request (2)", msg.data);
         }
     }
+
+    //LED Strip --------------------------------------------------------------------------
+    if (msg.type === "ledstrip")
+    {
+        logger.info("actionrequest for ledstrip with data", msg.data);
+
+        var mode = msg.data.mode;
+
+        if (mode === "singleColor")
+        {
+            actormanagement.registeredActors["ledstrip"].singleColor(msg.data.colors.red, msg.data.colors.green, msg.data.colors.blue);
+        }
+        else if (mode === "colorParty")
+        {
+            actormanagement.registeredActors["ledstrip"].colorParty(true);
+        }
+        else if (mode === "allOff")
+        {
+            actormanagement.registeredActors["ledstrip"].allOff();
+        }
+        else
+        {
+            logger.error("invalid led strip command type");
+        }
+    }
 });
 
 socketmanager.socket.on('ifttt', function(msg, resp)
