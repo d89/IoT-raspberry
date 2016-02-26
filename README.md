@@ -15,6 +15,8 @@ node index.js (or use forever)
 * Config needs to be adjusted (in config.js) - for GCM Push token and SSL certs.
 * Server starts on port 3000
 
+Ganz cool: Google Now Kommandos an Server senden: http://lifehacker.com/how-to-create-custom-voice-commands-with-tasker-and-aut-1282209195
+
 ## A little general guide for the CLIENT-part (on the raspberry)
 
 ### SSH aktivieren
@@ -120,6 +122,8 @@ Siehe Linux Config für systemd
 * Activate Camera
 * Set Timezone
 
+---
+
 ###USB Soundkarte einrichten
 
 sudo nano /usr/share/alsa/alsa.conf
@@ -145,6 +149,230 @@ mpg321 /home/pi/Music/siren.mp3
 
 Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei):
 http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
+
+---
+
+###LED Strip
+
+Bei ebay: 2m 5V LPD8806 52LED/m White FPCA IP67 Waterproof: http://www.ebay.de/itm/111767798377
+
+Werden über SPI angeschlossen. Pin 19 (SPI_MOSI), Pin 23 (SPI_CLOCK)
+
+In meiner Variante:
+
+```
+Rot = 5V DC
+Blau = Masse
+Schwarz = Daten (= Pin 19)
+Grün = Clock (= Pin 23)
+```
+
+5V Stromversorgung über http://www.ebay.de/itm/281879049132 5V 10A 50W Netzteil mit Connector https://www.google.de/search?q=female+dc+connector
+
+Wichtig: Ground muss mit dem RPI Ground über das Breadboard geteilt werden.
+
+Zur Aktivierung von SPI:
+
+```raspi-config``` und SPI in den advanced options aktivieren, Reboot
+Firmware-Update (wie hier beschrieben: http://neophob.com/2012/08/raspberry-pi-enable-the-spi-device/): 
+```
+sudo wget http://goo.gl/1BOfJ -O /usr/bin/rpi-update
+sudo chmod +x /usr/bin/rpi-update
+sudo rpi-update
+```
+
+Siehe auch: https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md
+
+Zum Test, ob SPI korrekt aktiviert wurde: https://raw.githubusercontent.com/raspberrypi/linux/rpi-3.10.y/Documentation/spi/spidev_test.c (wird hier ganz nett beschrieben: http://www.brianhensley.net/2012/07/getting-spi-working-on-raspberry-pi.html)
+
+Library zum Ansteuern der LEDs: https://bitbucket.org/ricblu/rpi-lpd8806/src bzw. https://www.npmjs.com/package/lpd8806
+
+Wie wird das ganze angeschlossen? https://learn.adafruit.com/raspberry-pi-spectrum-analyzer-display-on-rgb-led-strip/led-strip-and-rgb-led-software
+
+Auch als Video: https://www.youtube.com/watch?v=0uXjyvZ9JGM (Achtung: Betrieb des Raspberry über das gleiche 5V Netzteil ist schwierig, da so alle Schutzmaßnahmen des Raspberry außer Kraft gesetzt werden) 
+
+***Achtung:*** Unbedingt darauf achten, dass das LED Band richtig herum angeschlossen wird (Es gibt einen Eingang und einen Ausgang, die Seite ist also nicht egal), und das Ground mit dem Raspberry geteilt wird.
+
+---
+
+###Homematic Heizungssteuerung
+
+Hervorragende Übersicht der Möglichkeiten: http://www.meintechblog.de/2015/02/fhem-welches-gateway-fuer-welches-system/
+
+Thermostat: Homematic 105155 (http://www.amazon.de/gp/product/B00CFF3410/)
+
+Konfigurations-Adapter (statt CUL-Stick): Homematic 104134 - http://www.amazon.de/eQ-3-HomeMatic-104134-Homematic-Konfigurations-Adapter/dp/B007VTXP0A/
+
+Treiber für Konfigurations-Adapter:
+
+```
+apt-get install libusb-1.0-0-dev build-essential git
+mkdir /opt/hmlan
+cd /opt/hmlan
+wget https://git.zerfleddert.de/hmcfgusb/releases/hmcfgusb-0.102.tar.gz
+tar xzf hmcfgusb-0.102.tar.gz
+cd hmcfgusb-0.102
+make
+mv hmcfgusb-0.102/* .
+sudo cp hmcfgusb.rules /etc/udev/rules.d/
+```
+Siehe auch http://www.fhemwiki.de/wiki/HM-CFG-USB_USB_Konfigurations-Adapter bzw. https://git.zerfleddert.de/cgi-bin/gitweb.cgi/hmcfgusb
+
+***Firmware-Update des HMUSB***
+
+fhem bzw. den deamon stoppen, falls schon installiert. Dann: ```/opt/hmlan/hmland -i``` aufrufen.
+
+Die 03C4 ist vorher hierbei die Version in Hex (in Dezimal: 964).
+
+```Vor flash:  HHM-USB-IF,03C4,MEQ0231318,373300,000000,0614745A,0000```
+
+Flashen:
+```
+cd /opt/hmlan
+wget http://git.zerfleddert.de/hmcfgusb/firmware/hmusbif.03c7.enc
+./flash-hmcfgusb hmusbif.03c7.enc
+```
+
+```Nach Flash: HHM-USB-IF,03C7,MEQ0231318,373300,000000,00012D6B,0000,00```
+
+Manueller Start des HMUSB Deamons: ```/opt/hmlan/hmland -p 1234 -D```
+
+***Startscript in /etc/init.d/hmland***
+
+```
+#!/bin/sh
+# simple init for hmland
+### BEGIN INIT INFO
+# Provides:          hmland
+# Required-Start:    $network $local_fs $remote_fs
+# Required-Stop::    $network $local_fs $remote_fs
+# Should-Start:      $all
+# Should-Stop:       $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start hmland daemon at boot time
+# Description:       Provide Service to use HM-USB-CFG Adapter for FHEM.
+### END INIT INFO
+
+pidfile=/var/run/hmland.pid
+port=1234
+
+case "$1" in
+ start|"")
+	chrt 50 /opt/hmlan/hmland -r 0 -d -P -l 127.0.0.1 -p $port 2>&1 | perl -ne '$|=1; print localtime . ": [hmland] $_"' >> /var/log/hmland.log &
+	;;
+ restart|reload|force-reload)
+	echo "Error: argument '$1' not supported" >&2
+	exit 3
+	;;
+ stop)
+	killall hmland
+	;;
+ status)
+	if [ ! -e $pidfile ]; then
+		echo "No pid"
+		exit 1
+	fi
+	pid=`cat $pidfile`
+	if kill -0 $pid &>1 > /dev/null; then
+		echo "Running"
+		exit 0
+	else
+		rm $pidfile
+		echo "Not running"
+		exit 1
+	fi
+	;;
+ *)
+	echo "Usage: hmland [start|stop|status]" >&2
+	exit 3
+	;;
+esac
+```
+
+Und aktivieren:
+
+```
+sudo chmod 755 /etc/init.d/hmland
+update-rc.d hmland defaults
+sudo service hmland start
+```
+
+***FHEM installieren***
+
+FHEM wird für die Interaktion mit den Homematic Komponenten benötigt.
+
+```
+mkdir /opt/fhem
+cd /opt/fhem
+wget http://fhem.de/fhem-5.7.deb 
+dpkg -i fhem-5.7.deb
+cd /opt && chmod -R a+w fhem && usermod -a -G tty pi && usermod -a -G tty fhem
+echo -n admin:admin | base64
+```
+Dann:
+```
+nano /opt/fhem/fhem.cfg
+```
+
+nach ```define WEB FHEMWEB 8083 global``` einfügen: ```attr WEB basicAuth YWRtaW46YWRtaW4=``` (entspricht base64 admin:admin)
+
+* Auth: ```attr global motd none```
+* Anmeldung: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen) 
+* HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300```
+* Aktivieren des Pairings für 60 Sekunden: ```set hmusb hmPairForSec 60```
+* State des HMUSB abrufen per http://RASPI_IP:8083/fhem?detail=hmusb 
+
+```
+rename HM_37F678 WohnzimmerFenster
+rename HM_37F678_Clima WohnzimmerFenster_Clima
+attr WohnzimmerFenster_Clima room Wozhnzimmer
+```
+
+* Ein paar sinnvolle FHEM Kommandos: http://www.ply.me.uk/bits_and_pieces/fhem_snippets.html
+* Artikel über das Anlernen (mit Schaltzeiten) des Homematic 105155: http://www.security-blog.eu/homematic-funk-thermostat-mit-fhem-zeitsteuern-steuern/ bzw. http://www.meintechblog.de/2013/12/fhem-heizungssteuerung-per-anwesenheitserkennung/
+
+---
+
+####HMUSB Intereaktion
+
+***get desired temperature***
+
+* http://RASPI_IP:8083/fhem?detail=thermomeister&dev.getthermomeister=thermomeister&cmd.getthermomeister=get&arg.getthermomeister=param&val.getthermomeister=desired-temp&XHR=1&addLinks=1
+* bzw: http://RASPI_IP:8083/fhem?cmd={ReadingsVal("WohnzimmerFenster_Clima","desired-temp","")}&XHR=1
+
+***get current temperature***
+* http://RASPI_IP:8083/fhem?detail=thermomeister&dev.getthermomeister=thermomeister&cmd.getthermomeister=get&arg.getthermomeister=param&val.getthermomeister=measured-temp&XHR=1&addLinks=1
+* http://RASPI_IP:8083/fhem?cmd={ReadingsVal("WohnzimmerFenster_Clima","measured-temp","")}&XHR=1
+
+
+***set current temperature***
+
+```
+POST http://RASPI_IP:8083/fhem
+Content-Type:application/x-www-form-urlencoded
+params
+	detail:WohnzimmerFenster_Clima
+	dev.setWohnzimmerFenster_Clima:WohnzimmerFenster_Clima
+	cmd.setWohnzimmerFenster_Clima:set
+	arg.setWohnzimmerFenster_Clima:desired-temp
+	val.setWohnzimmerFenster_Clima:11.5
+```
+
+---
+
+###Z-Wave
+
+Mittels Z-Wave ZME_UZB1 Me USB Stick (http://www.amazon.de/gp/product/B00QJEY6OC)
+
+* An FHEM anmelden: ```define ZWAVE1 ZWDongle /dev/ttyACM0@115200```
+* Inkludieren per ```set ZWAVE1 addNode nwOn```
+* Umbenennen von Z-Wave Komponenten: ```rename KomponentenNameZWave GewuenschterNeuerName```
+* Zuweisen von Komponenten zu Räumen: ```attr GewuenschterNeuerName room Wohnzimmer```
+
+Interaktion per REST so wie bei den Homematic Komponenten auch, nur mit anderem Name
+
+FHEM Referenz zu Z-Wave: http://fhem.de/commandref.html#ZWave
 
 ---
 
