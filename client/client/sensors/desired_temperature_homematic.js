@@ -29,7 +29,16 @@ class desired_temperature_homematic extends baseSensor
             if (err) {
                 logger.error(err);
             } else {
-                if (body.indexOf("on") !== -1) body = 30.5;
+
+                if (body.indexOf("on") !== -1)
+                {
+                    body = 30.5;
+                }
+                else if (body.indexOf("off") !== -1)
+                {
+                    body = 4.5;
+                }
+
                 var temp = parseFloat(body, 10);
 
                 if (isNaN(temp)) {

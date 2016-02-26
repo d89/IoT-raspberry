@@ -44,7 +44,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.addCondition = function()
     {
-        $scope.conditions.push({
+        $scope.conditions.unshift({
             conditiontext: "if () { }",
             isActive: true
         });
@@ -65,9 +65,9 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
                 if (needsInitializing)
                 {
-                    var isLast = $(e).index(selector) === elems.length - 1;
+                    var isFirst = $(e).index(selector) === 0;
                     var isReadonly = $(e).attr("readonly") !== "readonly";
-                    var autoFocus = (isLast && isReadonly);
+                    var autoFocus = (isFirst && isReadonly);
 
                     Styles.initAutoComplete(e, $scope.availableOptions, autoFocus);
                 }

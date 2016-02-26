@@ -348,8 +348,7 @@ exports.processIfClause = function(ifClause, sensors)
         var sensorType = contents[0];
         var method = contents[1].split(/[\(\)]/g);
         var methodName = method[0];
-        //remove quotes from parameters
-        var parameters = method[1].replace(/[\"\']/g, "");
+        var parameters = exports.processParamInput(method[1]);
 
         if (!sensorType || !(sensorType in sensors))
         {
@@ -364,7 +363,7 @@ exports.processIfClause = function(ifClause, sensors)
             throw new Error("Invalid Method Name " + methodName);
         }
 
-        return exposedMethods[methodName].method(parameters)
+        return exposedMethods[methodName].method.apply(this, parameters)
     });
 
     var evaluationDidRun = evaluated !== "";
@@ -407,6 +406,21 @@ exports.processIfClause = function(ifClause, sensors)
     };
 };
 
+//expects the params as a string, like: 155, 255, "foobar"
+exports.processParamInput = function(paramString)
+{
+    //split at , for multiple parameters
+    var params = paramString.split(/\s*,\s*/g);
+
+    //remove parameter quotes, as they are wrapped twice
+    params = params.map(function(e) {
+        e = e.replace(/[\"\']/g, "");
+        return e;
+    });
+
+    return params;
+};
+
 exports.processThenClause = function(thenClause, actors, simulateCall)
 {
     console.log("###");
@@ -427,11 +441,13 @@ exports.processThenClause = function(thenClause, actors, simulateCall)
         {
             //already ensured by previous regex, that first and last element is empty
 
+            var paramsOfAction = exports.processParamInput(actorCall[3]);
+
             extractedActorCalls.push({
                 // actorCall[0] === ""
                 actor: actorCall[1],
                 method: actorCall[2],
-                params: actorCall[3],
+                params: paramsOfAction,
                 raw: m
                 // actorCall[4] === ""
             });
@@ -486,9 +502,6 @@ exports.processThenClause = function(thenClause, actors, simulateCall)
             throw new Error("Invalid Method Name " + methodName);
         }
 
-        //remove parameter quotes
-        parameters = parameters.replace(/[\"\']/g, "");
-
         try
         {
             var result = "";
@@ -496,7 +509,7 @@ exports.processThenClause = function(thenClause, actors, simulateCall)
 
             if (!simulateCall)
             {
-                errorMessage = exposedMethods[methodName].method(parameters);
+                errorMessage = exposedMethods[methodName].method.apply(this, parameters);
             }
 
             var isSuccessfull = !errorMessage;
