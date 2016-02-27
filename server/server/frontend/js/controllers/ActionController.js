@@ -236,6 +236,18 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         SocketFactory.send("ui:action", options);
     };
 
+    $scope.randomColor = function()
+    {
+        var options = {
+            type: "ledstrip",
+            data: {
+                mode: "randomColor"
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.video = function()
     {
         $scope.videoActive = constant.get("camRecordingDuration");

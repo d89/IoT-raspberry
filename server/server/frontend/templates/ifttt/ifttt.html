@@ -31,7 +31,7 @@
                                     <span class="input-group-addon">
                                         <i class="fa fa-terminal"></i>
                                     </span>
-                                    <textarea autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" name="cond" ng-readonly="!condition.isActive" class="form-control monospace" type="text" placeholder="Statement" ng-model="conditions[key].conditiontext"></textarea>
+                                    <textarea ifttt-autocomplete="{{ condition.isNew }}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" name="cond" ng-readonly="!condition.isActive" class="form-control monospace" type="text" placeholder="Statement" ng-model="conditions[key].conditiontext"></textarea>
                                     <span class="input-group-btn">
                                         <button title="deactivate condition" class="btn btn-default" type="button" style="height: 60px" ng-click="toggleCondition(condition)"><i class="fa fa-eye"></i></button>
                                         <button title="delete condition" class="btn btn-danger" type="button" style="height: 60px" ng-click="removeCondition(condition)"><i class="fa fa-trash"></i></button>
@@ -82,7 +82,7 @@
                                     (
                                         <span ng-repeat="param in method.params track by $index">
                                             <span ng-show="$index > 0">, </span>
-                                            <span class="parameter" data-toggle="tooltip" title="{{ param.notes }}&#10;Optional: {{ param.isOptional }}">{{ param.dataType }} ${{ param.name }}</span>
+                                            <span title="{{ param.notes }}&#10;Optional: {{ param.isOptional }}" class="parameter" tooltip-activate>{{ param.dataType }} ${{ param.name }}</span>
                                         </span>
                                     )
 
@@ -108,7 +108,7 @@
                                     (
                                         <span ng-repeat="param in method.params track by $index">
                                             <span ng-show="$index > 0">, </span>
-                                            <span class="parameter" data-toggle="tooltip" title="{{ param.notes }}&#10;Optional: {{ param.isOptional }}">{{ param.dataType }} ${{ param.name }}</span>
+                                            <span title="{{ param.notes }}&#10;Optional: {{ param.isOptional }}" class="parameter" tooltip-activate>{{ param.dataType }} ${{ param.name }}</span>
                                         </span>
                                     )
 

@@ -275,3 +275,18 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         });
     };
 });
+
+IoT.directive('sideBarLink', function()
+{
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs)
+        {
+            var e = $(element);
+            e.on("click", function()
+            {
+                Styles.clickNavLink();
+            });
+        }
+    };
+});

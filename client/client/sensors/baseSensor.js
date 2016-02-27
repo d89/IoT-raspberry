@@ -18,12 +18,45 @@ class baseSensor
         };
         this.name = name;
         this.logger.info(`watching ${this.name}`);
+        this.triggerMap = {};
+        this.triggerMapTemp = {};
     }
 
-    processCondition(triggered)
+    shouldTrigger(method, triggered)
+    {
+        var shouldTrigger = false;
+
+        //only trigger once. Every other trigger for the same condition is ignored
+        if (method in this.triggerMap)
+        {
+            var currentState = this.triggerMap[method];
+
+            if (!currentState && triggered) {
+                //logger.info("Succint Activatation trigger for " + this.name + "." + method);
+                shouldTrigger = true;
+            } else {
+                //this is the interesting part, where the "retrigger" would happen
+                //logger.info("Skipping Repeated Activatation trigger for " + this.name + "." + method);
+                shouldTrigger = false;
+            }
+        } else {
+            if (triggered) {
+                //logger.info("First Activatation trigger for " + this.name + "." + method);
+                shouldTrigger = true;
+            } else {
+                shouldTrigger = false;
+            }
+        }
+
+        this.triggerMapTemp[method] = triggered;
+
+        return shouldTrigger;
+    }
+
+    processCondition(method, param, triggered)
     {
         //don't pay respect to the trigger, when we have null data
-        if (this.sensordata.is === null || this.sensordata.was === null)
+        if (this.sensordata.is === null)
         {
             return false;
         }
@@ -38,12 +71,17 @@ class baseSensor
         }
         */
 
-        if (triggered) //reset
-        {
-            this.sensordata.was = this.sensordata.is;
-        }
+        var signature = method + "(" + param + ")";
 
-        return triggered;
+        return this.shouldTrigger(signature, triggered);
+    }
+
+    setResult(methodName)
+    {
+        //console.log("\tsetting result for round end with " + this.name + "." + methodName);
+
+        //copy object
+        this.triggerMap = JSON.parse(JSON.stringify(this.triggerMapTemp));
     }
 
     exposed()
@@ -56,7 +94,11 @@ class baseSensor
                 method: function(val)
                 {
                     var triggered = (that.sensordata.is == val);
-                    return that.processCondition(triggered);
+                    return that.processCondition("is_equal", val, triggered);
+                },
+                setResult: function()
+                {
+                    that.setResult("is_equal");
                 },
                 params: [{
                     name: "val",
@@ -71,7 +113,11 @@ class baseSensor
                 method: function(val)
                 {
                     var triggered = (that.sensordata.is < val);
-                    return that.processCondition(triggered);
+                    return that.processCondition("is_lt", val, triggered);
+                },
+                setResult: function()
+                {
+                    that.setResult("is_lt");
                 },
                 params: [{
                     name: "val",
@@ -86,52 +132,11 @@ class baseSensor
                 method: function(val)
                 {
                     var triggered = (that.sensordata.is > val);
-                    return that.processCondition(triggered);
+                    return that.processCondition("is_gt", val, triggered);
                 },
-                params: [{
-                    name: "val",
-                    isOptional: false,
-                    dataType: "integer",
-                    notes: "The current value of the sensor"
-                }]
-            },
-            // -------------------------------------------------
-            became_equal:
-            {
-                method: function(val)
+                setResult: function()
                 {
-                    var triggered = (that.sensordata.is == val && that.sensordata.was != val);
-                    return that.processCondition(triggered);
-                },
-                params: [{
-                    name: "val",
-                    isOptional: false,
-                    dataType: "integer",
-                    notes: "The current value of the sensor"
-                }]
-            },
-            // -------------------------------------------------
-            became_gt:
-            {
-                method: function(val)
-                {
-                    var triggered = (that.sensordata.is > val && !(that.sensordata.was > val));
-                    return that.processCondition(triggered);
-                },
-                params: [{
-                    name: "val",
-                    isOptional: false,
-                    dataType: "integer",
-                    notes: "The current value of the sensor"
-                }]
-            },
-            // -------------------------------------------------
-            became_lt:
-            {
-                method: function(val)
-                {
-                    var triggered = (that.sensordata.is < val && !(that.sensordata.was < val));
-                    return that.processCondition(triggered);
+                    that.setResult("is_gt");
                 },
                 params: [{
                     name: "val",

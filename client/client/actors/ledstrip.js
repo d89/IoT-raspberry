@@ -16,6 +16,10 @@ exports.exposed = function()
             method: exports.allOff,
             params: []
         },
+        randomColor: {
+            method: exports.randomColor,
+            params: []
+        },
         singleColor: {
             method: exports.singleColor,
             params: [{
@@ -71,6 +75,18 @@ exports.colorParty = function()
     {
         logger.info("received data: ", data);
     });
+};
+
+exports.randomColor = function()
+{
+    var randomColor = function()
+    {
+        var min = 0;
+        var max = 255;
+        return Math.floor(Math.random()*(max-min+1)+min);
+    };
+
+    exports.singleColor(randomColor(), randomColor(), randomColor());
 };
 
 exports.singleColor = function(red, green, blue)

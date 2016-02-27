@@ -1534,10 +1534,13 @@ var Styles = function() {
 
                 if (typeof field.selectionStart === 'number')
                 {
-                    field.selectionStart = field.selectionEnd = $overlayElem.val().indexOf("(") + 1;
+                    field.selectionStart = field.selectionEnd = $overlayElem.val().indexOf("$") + 1;
                 }
 
-                $overlayElem.keyup();
+                setTimeout(function()
+                {
+                    $overlayElem.keyup();
+                }, 100);
             };
 
             // -----------------------------------------

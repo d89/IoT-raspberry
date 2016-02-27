@@ -45,34 +45,10 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
     $scope.addCondition = function()
     {
         $scope.conditions.unshift({
-            conditiontext: "if () { }",
-            isActive: true
+            conditiontext: "if ($) { }",
+            isActive: true,
+            isNew: true
         });
-
-        $scope.initAutoComplete();
-    };
-
-    $scope.initAutoComplete = function()
-    {
-        setTimeout(function() //TODO
-        {
-            var selector = "[name='cond']";
-            var elems = $(selector);
-
-            elems.each(function(i, e)
-            {
-                var needsInitializing = $(e).parents(".textoverlay-wrapper").length === 0;
-
-                if (needsInitializing)
-                {
-                    var isFirst = $(e).index(selector) === 0;
-                    var isReadonly = $(e).attr("readonly") !== "readonly";
-                    var autoFocus = (isFirst && isReadonly);
-
-                    Styles.initAutoComplete(e, $scope.availableOptions, autoFocus);
-                }
-            });
-        }, 200);
     };
 
     $scope.removeCondition = function(cond)
@@ -125,7 +101,6 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
                 setTimeout(function()
                 {
-                    $scope.initAutoComplete();
                     $("#opts").removeClass("block-opt-refresh");
                 }, 500);
             }
@@ -299,17 +274,6 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             $scope.conditionList();
             $scope.currentSensorValue = {};
 
-            //TODO
-            setTimeout(function()
-            {
-                //register popups
-                jQuery('[data-toggle="tooltip"], .js-tooltip').tooltip({
-                    container: 'body',
-                    animation: false
-                });
-            }, 200);
-
-
             SocketFactory.registerLifecycleCallback("dataupdate", function(sensorUpdate)
             {
                 $scope.currentSensorValue[sensorUpdate.type] = sensorUpdate.data;
@@ -325,4 +289,39 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
     //-----------------------------------------------------
 
     $scope.init();
+});
+
+IoT.directive('tooltipActivate', function()
+{
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs)
+        {
+            //title is set by angular later, so fire as soon as the title is ready
+            attrs.$observe('title', function(actual_value)
+            {
+                $(element).tooltip(scope.$eval({
+                    container: 'body',
+                    animation: false
+                }));
+            });
+        }
+    };
+});
+
+IoT.directive('iftttAutocomplete', function()
+{
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs)
+        {
+            attrs.$observe('readonly', function(isReadonly)
+            {
+                var e = $(element);
+                if (isReadonly) return;
+                var autotrigger = attrs.iftttAutocomplete === "true";
+                Styles.initAutoComplete(e, scope.availableOptions, autotrigger);
+            });
+        }
+    };
 });

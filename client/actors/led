@@ -8,9 +8,9 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(LED, GPIO.OUT)
 GPIO.setup(LED, GPIO.LOW)
 
-dauer = 0.5
+dauer = 0.2
 
-for x in range(10):
+for x in range(3):
 	GPIO.output(LED,GPIO.HIGH)
 	time.sleep(dauer)
 	GPIO.output(LED,GPIO.LOW)

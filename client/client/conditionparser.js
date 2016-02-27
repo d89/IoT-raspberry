@@ -249,10 +249,13 @@ exports.validTokensIfClause = ["true", "false", "||", "&&", "(", ")", "!"];
 
 exports.validTokensThenClause = [";"];
 
+exports.conditionRoundsPassed = 0;
+
 exports.process = function(type, data)
 {
     var sensors = sensormanagement.registeredSensors;
     var actors = actormanagement.registeredActors;
+    var allSensors = [];
 
     exports.applyConditions(function()
     {
@@ -272,6 +275,15 @@ exports.process = function(type, data)
                 DEBUG && console.log("###");
 
                 var condition = exports.processIfClause(ifClause, sensors);
+                allSensors.push(condition.method);
+                var exec = condition.executed;
+
+                /*
+                if (exec)
+                    console.log("YYYYYYYYYYYYYYYYYYYYYYYYYYYYY EXECUTED", exec);
+                else
+                    console.log("EXECUTED", exec);
+                */
 
                 DEBUG && console.log("evaluated", condition.evaluated);
                 DEBUG && console.log("executed", condition.executed);
@@ -291,11 +303,21 @@ exports.process = function(type, data)
             catch (err)
             {
                 exports.saveCallResult(false, "" + err, statement);
-                DEBUG && console.error(`Condition Evaluation error for ${statement}`, err);
+                console.error(`Condition Evaluation error for ${statement}`, err.stack);
             }
 
             DEBUG && console.log("-----------------------------------")
         }
+
+        //console.log("----------------------------------------------------");
+        //console.log((++exports.conditionRoundsPassed) + " - " + (new Date).getTime() + " !!!!!! Round done. Setting sensor values for finished round");
+
+        allSensors.forEach(function(s)
+        {
+            s.setResult();
+        });
+
+        //console.log("----------------------------------------------------");
     });
 };
 
@@ -335,8 +357,11 @@ exports.processIfClause = function(ifClause, sensors)
 {
     //match everything from $ until the first closing brace -> $foo.bar(1234)
     var reg = /\$([^\)]+\))/g;
+
+    var evaluated = null;
+
     //evaluate method calls
-    var evaluated = ifClause.replace(reg, function(match, contents, offset, s)
+    ifClause.replace(reg, function(match, contents, offset, s)
     {
         contents = contents.split(".");
 
@@ -363,18 +388,20 @@ exports.processIfClause = function(ifClause, sensors)
             throw new Error("Invalid Method Name " + methodName);
         }
 
-        return exposedMethods[methodName].method.apply(this, parameters)
+        evaluated = {
+            result: "" + exposedMethods[methodName].method.apply(this, parameters),
+            method: exposedMethods[methodName]
+        };
     });
 
-    var evaluationDidRun = evaluated !== "";
+    var evaluationDidRun = evaluated.result !== "";
 
     if (!evaluationDidRun)
     {
         throw new Error("Empty / Invalid condition.");
     }
 
-    var reducedCondition = evaluated;
-
+    var reducedCondition = evaluated.result;
     exports.validTokensIfClause.forEach(function(token)
     {
         var regex = new RegExp(exports.escapeRegExp(token), "g");
@@ -393,7 +420,7 @@ exports.processIfClause = function(ifClause, sensors)
 
     try
     {
-        executed = eval(evaluated);
+        executed = eval(evaluated.result);
     }
     catch (evalError)
     {
@@ -401,8 +428,9 @@ exports.processIfClause = function(ifClause, sensors)
     }
 
     return {
-        evaluated: evaluated,
-        executed: executed
+        evaluated: evaluated.result,
+        executed: executed,
+        method: evaluated.method
     };
 };
 

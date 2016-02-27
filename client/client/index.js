@@ -144,6 +144,10 @@ socketmanager.socket.on('actionrequest', function(msg)
         {
             actormanagement.registeredActors["ledstrip"].allOff();
         }
+        else if (mode === "randomColor")
+        {
+            actormanagement.registeredActors["ledstrip"].randomColor();
+        }
         else
         {
             logger.error("invalid led strip command type");
