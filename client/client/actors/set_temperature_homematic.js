@@ -29,24 +29,38 @@ exports.act = function(temp, thermostatName)
     thermostatName = thermostatName || "HM_37F678";
 
     thermostatName += "_Clima";
-
-    var requestObject = {
-        "detail": thermostatName
-    };
-
+    var requestObject = {};
     temp = parseFloat(temp, 10);
 
-    requestObject["dev.set" + thermostatName] = thermostatName;
-    requestObject["cmd.set" + thermostatName] = "set";
-    requestObject["arg.set" + thermostatName] = "desired-temp";
-    requestObject["val.set" + thermostatName] = "" + temp;
+    var url = `fhem?cmd=set ${thermostatName} desired-temp ${temp}&XHR=1`;
+    console.log("posting to ", url);
 
-    fhem.post("fhem", requestObject, function(err, msg)
+    fhem.post(url, requestObject, function(err, msg)
     {
         if (err) {
             logger.error(err);
         } else {
             logger.info(msg);
+
+            logger.info("sending burst for " + thermostatName);
+
+            var requestObject = {
+                "detail": thermostatName
+            };
+
+            requestObject["dev.set" + thermostatName] = thermostatName;
+            requestObject["cmd.set" + thermostatName] = "set";
+            requestObject["arg.set" + thermostatName] = "burstXmit";
+            requestObject["val.set" + thermostatName] = "";
+
+            fhem.post("fhem", requestObject, function(err, msg)
+            {
+                if (err) {
+                    logger.error(err);
+                } else {
+                    logger.info(msg);
+                }
+            });
         }
     });
 };

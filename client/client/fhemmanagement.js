@@ -45,7 +45,7 @@ exports.post = function(urlPath, requestObject, cb)
         {
             cb("fhem post error " + error + " for " + JSON.stringify(requestObject));
         }
-        else if (response && response.statusCode && response.statusCode != 200)
+        else if (response && response.statusCode && response.statusCode != 200 && response.statusCode != 302)
         {
             cb("fhem post response code " + response.statusCode + " for " + JSON.stringify(requestObject));
         }

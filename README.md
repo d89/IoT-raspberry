@@ -397,11 +397,11 @@ attr WohnzimmerFenster_Clima room Wozhnzimmer
 
 ***get desired temperature***
 
-* http://RASPI_IP:8083/fhem?detail=thermomeister&dev.getthermomeister=thermomeister&cmd.getthermomeister=get&arg.getthermomeister=param&val.getthermomeister=desired-temp&XHR=1&addLinks=1
+* http://RASPI_IP:8083/fhem?detail=HM_37F678&dev.getHM_37F678=HM_37F678&cmd.getHM_37F678=get&arg.getHM_37F678=param&val.getHM_37F678=desired-temp&XHR=1&addLinks=1
 * bzw: http://RASPI_IP:8083/fhem?cmd={ReadingsVal("WohnzimmerFenster_Clima","desired-temp","")}&XHR=1
 
 ***get current temperature***
-* http://RASPI_IP:8083/fhem?detail=thermomeister&dev.getthermomeister=thermomeister&cmd.getthermomeister=get&arg.getthermomeister=param&val.getthermomeister=measured-temp&XHR=1&addLinks=1
+* http://RASPI_IP:8083/fhem?detail=HM_37F678&dev.getHM_37F678=HM_37F678&cmd.getHM_37F678=get&arg.getHM_37F678=param&val.getHM_37F678=measured-temp&XHR=1&addLinks=1
 * http://RASPI_IP:8083/fhem?cmd={ReadingsVal("WohnzimmerFenster_Clima","measured-temp","")}&XHR=1
 
 
