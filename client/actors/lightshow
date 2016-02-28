@@ -1,0 +1,12 @@
+#!/bin/bash
+amixer set PCM 10
+args=("$@")
+LED_LIB_BASE=${args[0]}
+echo LED Base Library Location $LED_LIB_BASE
+SONG_NAME=${args[1]}
+echo Playing song $SONG_NAME
+LED_COUNT=${args[2]}
+echo LED count $LED_COUNT
+export SYNCHRONIZED_LIGHTS_HOME="/opt/lightshow/lightshowpi"
+export PYTHONPATH=$PYTHONPATH:$LED_LIB_BASE
+/opt/lightshow/lightshowpi/py/synchronized_lights.py --ledcount $LED_COUNT --file $SONG_NAME

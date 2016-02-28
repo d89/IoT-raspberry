@@ -1,9 +1,15 @@
 #!/usr/bin/python
 
+import sys
 from time import sleep
 from ledstripdriver import *
 
-num = 104;
+num = int(sys.argv[1])
+
+print "Num LEDs"
+print num
+sys.stdout.flush()
+
 led = LEDStrip(num)
 #led.setChannelOrder(ChannelOrder.BRG) #Only use this if your strip does not use the GRB order
 #led.setMasterBrightness(0.5) #use this to set the overall max brightness of the strip

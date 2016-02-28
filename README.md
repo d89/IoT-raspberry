@@ -126,26 +126,32 @@ Siehe Linux Config für systemd
 
 ###USB Soundkarte einrichten
 
-sudo nano /usr/share/alsa/alsa.conf
+```sudo nano /usr/share/alsa/alsa.conf```
 
 Folgende Zeilen ändern:
 
+```
 defaults.ctl.card 0
 defaults.pcm.card 0
+```
 
 in:
 
+```
 defaults.ctl.card 1
 defaults.pcm.card 1
+```
 
-Danach reboot und das Soundvolumen anpassen per Befehl: alsamixer
+Danach ```reboot``` und das Soundvolumen anpassen per Befehl: ```alsamixer``` bzw. ```amixer set PCM 10```
 
-Wav Dateien spielen:
-aplay /home/pi/Music/gong.wav
+Wav Dateien spielen: ```aplay /home/pi/Music/gong.wav```
 
 Mp3 Dateien spielen:
+
+```
 sudo apt-get -y install mpg321
 mpg321 /home/pi/Music/siren.mp3
+```
 
 Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei):
 http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
@@ -192,6 +198,55 @@ Wie wird das ganze angeschlossen? https://learn.adafruit.com/raspberry-pi-spectr
 Auch als Video: https://www.youtube.com/watch?v=0uXjyvZ9JGM (Achtung: Betrieb des Raspberry über das gleiche 5V Netzteil ist schwierig, da so alle Schutzmaßnahmen des Raspberry außer Kraft gesetzt werden) 
 
 ***Achtung:*** Unbedingt darauf achten, dass das LED Band richtig herum angeschlossen wird (Es gibt einen Eingang und einen Ausgang, die Seite ist also nicht egal), und das Ground mit dem Raspberry geteilt wird.
+
+---
+
+###Lightshow
+
+install lightshowpi with git from master
+
+```
+mkdir /opt/lightshow
+cd /opt/lightshow
+git clone https://togiles@bitbucket.org/togiles/lightshowpi.git
+cd lightshowpi
+git fetch && git checkout master
+./install.sh
+```
+
+And now: ```reboot```
+
+Afterwards:
+
+```
+cd /opt/lightshow/lightshowpi
+```
+
+Disable the "pre show": ```nano config/overrides.cfg```
+
+```
+[lightshow]
+preshow_script =
+preshow_configuration =
+```
+
+Now replace py/synchronized_lights.py with the one from the repo. This is necessary, because the led strip driver lpd8806 with SPI is not supported "out of the box" by lightshowpi. So some edits to the main file were necessary to support the lpd8806. All the edits that were done are wrapper with ```IOT EDIT START``` and ```IOT EDIT END```. The library https://bitbucket.org/ricblu/rpi-lpd8806/src is being used, that is described in this README. 
+
+If anything goes wrong, then the current config and the synchronized_lights.py are not in sync any more. In this case, take the one from  https://togiles@bitbucket.org/togiles/lightshowpi.git and add the sections between ```IOT EDIT START``` and ```IOT EDIT END``` to their respective place in the current version of synchronized_lights.py.
+
+```
+rm py/synchronized_lights.py
+mv /var/www/IoT-raspberry/actors/lightshowdriver/synchronized_lights.py py/synchronized_lights.py
+chmod +x py/synchronized_lights.py
+```
+
+Execute by hand to test:
+```
+export SYNCHRONIZED_LIGHTS_HOME="/opt/lightshow/lightshowpi"
+export PYTHONPATH=$PYTHONPATH:/var/www/IoT-raspberry/actors/ledstripdriver
+python /opt/lightshow/lightshowpi/py/synchronized_lights.py --file "/home/pi/Music/house.mp3" --ledcount 104
+/var/www/IoT-raspberry/actors/lightshow "/var/www/IoT-raspberry/actors/ledstripdriver" "/home/pi/Music/house.mp3" 104
+```
 
 ---
 

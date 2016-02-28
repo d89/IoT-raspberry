@@ -1,9 +1,10 @@
+var fs = require('fs');
 var logger = require('../logger');
 var config = require('../config');
 var spawn = require('child_process').spawn;
 var LPD8806 = require('lpd8806');
-var LED_COUNT = 104; //TODO
-var process = null;
+var LED_COUNT = config.ledStripLedCount;
+var spawned = null;
 
 exports.exposed = function()
 {
@@ -19,6 +20,15 @@ exports.exposed = function()
         randomColor: {
             method: exports.randomColor,
             params: []
+        },
+        lightshow: {
+            method: exports.lightshow,
+            params: [{
+                name: "title",
+                isOptional: false,
+                dataType: "string",
+                notes: "name of the song that should be played as lightshow"
+            }]
         },
         singleColor: {
             method: exports.singleColor,
@@ -46,32 +56,32 @@ exports.allOff = function()
 {
     logger.info("disabling ledstrip");
 
-    if (process)
+    if (spawned)
     {
-        process.kill();
-        process = null;
+        logger.info("killing pid group", spawned.pid);
+        //kill subprocesses aswell
+        process.kill(-spawned.pid);
+        spawned = null;
     }
 
-    exports.singleColor(0, 0, 0);
+    exports.singleColor(0, 0, 0, true);
 };
 
 exports.colorParty = function()
 {
-    logger.info("activating led color party");
-
-    if (process) return;
+    exports.allOff();
 
     logger.info("enabling color party");
 
-    process = spawn(config.baseBath + '/actors/ledstrip',  []);
-    process.stdout.setEncoding('utf8');
+    spawned = spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT], {detached: true});
+    spawned.stdout.setEncoding('utf8');
 
-    process.stderr.on('data', function (data)
+    spawned.stderr.on('data', function (data)
     {
         logger.error("received err: ", data.toString());
     });
 
-    process.stdout.on('data', function (data)
+    spawned.stdout.on('data', function (data)
     {
         logger.info("received data: ", data);
     });
@@ -89,26 +99,54 @@ exports.randomColor = function()
     exports.singleColor(randomColor(), randomColor(), randomColor());
 };
 
-exports.singleColor = function(red, green, blue)
+exports.lightshow = function(title)
 {
-    if (process)
+    title = title || "song.mp3";
+    title = title.replace("..", "");
+    title = config.mediaBasePath + "/" + title;
+
+    if (!fs.existsSync(title))
     {
-        exports.allOff();
+        logger.error("file does not exist");
+        return "file does not exist";
     }
 
-    if (isNaN(red))
+    exports.allOff();
+
+    var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
+    var lightshowStarter = config.baseBath + '/actors/lightshow';
+
+    logger.info("starting " + lightshowStarter + " with file " + title + " and " + LED_COUNT + " leds, led base lib: " + ledLibLocation);
+
+    spawned = spawn(lightshowStarter, [ledLibLocation, title, LED_COUNT], {detached: true});
+    spawned.stdout.setEncoding('utf8');
+
+    spawned.stderr.on('data', function (data)
     {
-        var colors = red.split(",");
-        red = parseInt(colors[0], 10);
-        green = parseInt(colors[1], 10);
-        blue = parseInt(colors[2], 10);
-    }
-    
+        logger.error("received err: ", data.toString());
+    });
+
+    spawned.stdout.on('data', function (data)
+    {
+        //console.log(data.toString());
+    });
+
+    spawned.on("close", function(returnCode)
+    {
+        logger.info("lightshow finished with " + returnCode);
+    });
+};
+
+exports.singleColor = function(red, green, blue, skipReset)
+{
+    if (!skipReset)
+        exports.allOff();
+
     logger.info("setting led color to " + red + " / " + green + " / " + blue);
 
-    red = parseInt(red);
-    green = parseInt(green);
-    blue = parseInt(blue);
+    red = parseInt(red, 10);
+    green = parseInt(green, 10);
+    blue = parseInt(blue, 10);
 
     if (isNaN(red)) red = 255;
     if (isNaN(green)) green = 0;

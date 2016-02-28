@@ -25,6 +25,7 @@ constants.provider('constant', function()
             "reachability": "Smartphone Reachability",
             "measured_temperature_homematic": "Measured Temp (Homematic)",
             "desired_temperature_homematic": "Desired Temp (Homematic)",
+            "desired_temperature_zwave": "Desired Temp (Z-Wave)",
             "measured_temperature_zwave": "Measured Temp (Z-Wave)",
             "battery_zwave": "Battery (Z-Wave)"
         }

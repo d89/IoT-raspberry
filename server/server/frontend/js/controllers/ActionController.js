@@ -154,7 +154,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             data: {
                 type: "zwave",
                 temp: res,
-                thermostat: "ZWave_THERMOSTAT_9"
+                thermostat: "ZWave_THERMOSTAT_11"
             }
         };
 
@@ -242,6 +242,22 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             type: "ledstrip",
             data: {
                 mode: "randomColor"
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
+    $scope.lightshow = function()
+    {
+        var res = window.prompt("Please enter the file name of music to be played", "house.mp3");
+        if (!res) return;
+
+        var options = {
+            type: "ledstrip",
+            data: {
+                mode: "lightshow",
+                file: res
             }
         };
 

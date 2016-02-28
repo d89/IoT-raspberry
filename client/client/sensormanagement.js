@@ -23,6 +23,7 @@ var date = require('./sensors/date');
 var reachability = require('./sensors/reachability');
 var desired_temperature_homematic = require('./sensors/desired_temperature_homematic');
 var measured_temperature_homematic = require('./sensors/measured_temperature_homematic');
+var desired_temperature_zwave = require('./sensors/desired_temperature_zwave');
 var measured_temperature_zwave = require('./sensors/measured_temperature_zwave');
 var battery_zwave = require('./sensors/battery_zwave');
 // ------------------------------------------------------
@@ -152,14 +153,19 @@ exports.init = function(cb)
             thermostatName: "HM_37F678"
         });
 
+        exports.registeredSensors["desired_temperature_zwave"] = new desired_temperature_zwave({
+            onData: exports.sensorUpdateCallback,
+            thermostatName: "ZWave_THERMOSTAT_11"
+        });
+
         exports.registeredSensors["measured_temperature_zwave"] = new measured_temperature_zwave({
             onData: exports.sensorUpdateCallback,
-            thermostatName: "ZWave_THERMOSTAT_9"
+            thermostatName: "ZWave_THERMOSTAT_11"
         });
 
         exports.registeredSensors["battery_zwave"] = new battery_zwave({
             onData: exports.sensorUpdateCallback,
-            thermostatName: "ZWave_THERMOSTAT_9"
+            thermostatName: "ZWave_THERMOSTAT_11"
         });
     }
     else

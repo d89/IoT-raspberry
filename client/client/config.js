@@ -22,12 +22,13 @@ module.exports = {
         "reachability",
         "measured_temperature_homematic",
         "desired_temperature_homematic",
+        "desired_temperature_zwave",
         "measured_temperature_zwave",
         "battery_zwave"
     ],
     restartSensorAfter: 10, //s - if no message for X seconds is received, restart the sensor
     smartphoneIp: "192.168.0.53",
-
+    ledStripLedCount: 104,
     fhem: {
         basic_auth_username: "admin",
         basic_auth_password: "admin",
