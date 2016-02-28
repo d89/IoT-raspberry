@@ -33,7 +33,6 @@ exports.act = function(temp, thermostatName)
     temp = parseFloat(temp, 10);
 
     var url = `fhem?cmd=set ${thermostatName} desired-temp ${temp}&XHR=1`;
-    console.log("posting to ", url);
 
     fhem.post(url, requestObject, function(err, msg)
     {

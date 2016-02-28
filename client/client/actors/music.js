@@ -1,5 +1,6 @@
 var logger = require('../logger');
 var config = require('../config');
+var youtube = require('../youtube');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
 var musicProcess = null;
@@ -13,7 +14,7 @@ exports.exposed = function()
                 name: "title",
                 isOptional: true,
                 dataType: "string",
-                notes: "filename of .mp3 file to be played"
+                notes: "filename of .mp3 file or full link to youtube video to be played"
             }]
         },
         stop: {
@@ -34,20 +35,37 @@ exports.stop = function()
     }
     else
     {
-        logger.error("no music is running that could be stopped");
+        logger.info("no music is running that could be stopped");
     }
 };
 
 exports.act = function(title)
 {
-    //activated.mp3  deactivated.mp3  gong.mp3  light.mp3  siren.mp3  song.mp3
+    if (title.indexOf("http") === 0)
+    {
+        return youtube.download(title, function onout(text)
+        {
+            logger.info(text);
+        },
+        function onclose(code, fileName)
+        {
+            logger.info("Done with response code: " + code + " and file " + fileName);
+
+            if (code === 0 && fileName)
+            {
+                logger.info("Playing " + fileName);
+                exports.act(fileName);
+            }
+        });
+    }
+
     title = title || "siren.mp3";
     title = title.replace("..", "");
     title = config.mediaBasePath + "/" + title;
 
     if (!fs.existsSync(title))
     {
-        logger.error("file does not exist");
+        logger.error("file " + title + " does not exist");
         return "file does not exist";
     }
 

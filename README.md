@@ -477,3 +477,15 @@ sudo apt-get install gpac
 * https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
 * http://jankarres.de/2013/05/raspberry-pi-raspistill-und-raspivid-parameter/
 * http://raspberrypiguide.de/howtos/raspberry-pi-camera-how-to/
+
+---
+
+###Youtube Download
+
+Möglichkeit, auch Youtube Videos wiederzugeben. Diese werden auf der SD gecached.
+
+```
+wget https://yt-dl.org/latest/youtube-dl -O /usr/local/bin/youtube-dl
+chmod a+x /usr/local/bin/youtube-dl
+hash -r
+```

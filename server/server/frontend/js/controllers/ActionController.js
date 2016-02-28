@@ -120,7 +120,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.music = function()
     {
-        var res = window.prompt("Please enter the file name of music to be played", "siren.mp3");
+        var res = window.prompt("Please enter the file name of music to be played or the full youtube video to be played.", "siren.mp3");
         if (!res) return;
 
         var options = {
@@ -143,7 +143,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.voice = function()
     {
-        var res = window.prompt("Please enter the file name of music to be played", "Hello, dude!");
+        var res = window.prompt("Please enter the text to be spoken out loud.", "Hello, dude!");
         if (!res) return;
 
         var options = {
@@ -260,7 +260,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.lightshow = function()
     {
-        var res = window.prompt("Please enter the file name of music to be played", "house.mp3");
+        var res = window.prompt("Please enter the file name of music to be played or the full link to the youtube video.", "house.mp3");
         if (!res) return;
 
         var options = {

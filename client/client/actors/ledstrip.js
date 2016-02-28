@@ -1,6 +1,7 @@
 var fs = require('fs');
 var logger = require('../logger');
 var config = require('../config');
+var youtube = require('../youtube');
 var spawn = require('child_process').spawn;
 var LPD8806 = require('lpd8806');
 var LED_COUNT = config.ledStripLedCount;
@@ -27,7 +28,7 @@ exports.exposed = function()
                 name: "title",
                 isOptional: false,
                 dataType: "string",
-                notes: "name of the song that should be played as lightshow"
+                notes: "name of the song or full link to youtube video that should be played as lightshow"
             }]
         },
         singleColor: {
@@ -101,6 +102,24 @@ exports.randomColor = function()
 
 exports.lightshow = function(title)
 {
+    if (title.indexOf("http") === 0)
+    {
+        return youtube.download(title, function onout(text)
+        {
+            logger.info(text);
+        },
+        function onclose(code, fileName)
+        {
+            logger.info("Done with response code: " + code + " and file " + fileName);
+
+            if (code === 0 && fileName)
+            {
+                logger.info("Playing " + fileName);
+                exports.lightshow(fileName);
+            }
+        });
+    }
+
     title = title || "song.mp3";
     title = title.replace("..", "");
     title = config.mediaBasePath + "/" + title;
