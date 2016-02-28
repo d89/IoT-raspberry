@@ -131,6 +131,16 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         SocketFactory.send("ui:action", options);
     };
 
+    $scope.stopMusic = function()
+    {
+        var options = {
+            type: "music",
+            data: false
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.voice = function()
     {
         var res = window.prompt("Please enter the file name of music to be played", "Hello, dude!");

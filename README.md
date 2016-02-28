@@ -378,6 +378,10 @@ nach ```define WEB FHEMWEB 8083 global``` einfügen: ```attr WEB basicAuth YWRta
 * Aktivieren des Pairings für 60 Sekunden: ```set hmusb hmPairForSec 60```
 * State des HMUSB abrufen per http://RASPI_IP:8083/fhem?detail=hmusb 
 
+***Update FHEM***
+
+```update``` in Actionbar eingeben. Danach ```shutdown restart```
+
 ```
 rename HM_37F678 WohnzimmerFenster
 rename HM_37F678_Clima WohnzimmerFenster_Clima
@@ -421,9 +425,25 @@ params
 Mittels Z-Wave ZME_UZB1 Me USB Stick (http://www.amazon.de/gp/product/B00QJEY6OC)
 
 * An FHEM anmelden: ```define ZWAVE1 ZWDongle /dev/ttyACM0@115200```
-* Inkludieren per ```set ZWAVE1 addNode nwOn```
+* Inkludieren per ```set ZWAVE1 addNode on```
+* Stoppen der Inklusion per ```set ZWAVE1 addNode off```
+
+***Achtung*** Das Device Danfoss Z Thermostat 014G0013 braucht 2 Zusatzkommandos, um korrekt zu funktionieren.
+
+* ```set WakeupInterval 100 1``` -> Alle 100 Sekunden aufwachen und an Controller (mit ID 1) reporten.
+* ```define zwtrigger1 at +*00:01 get ZWave_THERMOSTAT_11 battery``` -> Jede Minute bei Thermostat 11 nachfragen (Batterie-Trigger)
+
+* Exkludieren per ```set ZWAVE1 removeNode onNw```, dann Knopf am Gerät drücken, danach ```set ZWAVE1 removeNode off```. Anschließend Gerät aus FHEM entfernen: ```delete ZWave_THERMOSTAT_10```
 * Umbenennen von Z-Wave Komponenten: ```rename KomponentenNameZWave GewuenschterNeuerName```
 * Zuweisen von Komponenten zu Räumen: ```attr GewuenschterNeuerName room Wohnzimmer```
+
+***Sonstige Kommandos***
+
+```
+get ZWAVE1 homeId
+get ZWAVE1 nodeList
+list ZWave_THERMOSTAT_10
+```
 
 Interaktion per REST so wie bei den Homematic Komponenten auch, nur mit anderem Name
 

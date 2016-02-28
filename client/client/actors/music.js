@@ -2,6 +2,7 @@ var logger = require('../logger');
 var config = require('../config');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
+var musicProcess = null;
 
 exports.exposed = function()
 {
@@ -14,8 +15,27 @@ exports.exposed = function()
                 dataType: "string",
                 notes: "filename of .mp3 file to be played"
             }]
+        },
+        stop: {
+            method: exports.stop,
+            params: []
         }
     };
+};
+
+exports.stop = function()
+{
+    logger.info("stopping music");
+
+    if (musicProcess)
+    {
+        musicProcess.kill();
+        logger.info("... killed!");
+    }
+    else
+    {
+        logger.error("no music is running that could be stopped");
+    }
 };
 
 exports.act = function(title)
@@ -31,5 +51,7 @@ exports.act = function(title)
         return "file does not exist";
     }
 
-    spawn('/usr/bin/mpg321', [title]);
+    exports.stop();
+
+    musicProcess = spawn('/usr/bin/mpg321', [title]);
 };

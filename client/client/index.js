@@ -91,9 +91,15 @@ socketmanager.socket.on('actionrequest', function(msg)
     //Music ------------------------------------------------------------------------------
     if (msg.type === "music")
     {
-        logger.info(`actionrequest for music with title ${msg.data}`);
+        var turnOff = msg.data === false;
 
-        actormanagement.registeredActors["music"].act(msg.data);
+        if (turnOff) {
+            logger.info("turning music off");
+            actormanagement.registeredActors["music"].stop();
+        } else {
+            logger.info(`actionrequest for music with title ${msg.data}`);
+            actormanagement.registeredActors["music"].act(msg.data);
+        }
     }
 
     //Temperature -------------------------------------------------------------------------
