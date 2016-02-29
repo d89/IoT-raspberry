@@ -175,6 +175,11 @@ IoT.factory('SocketFactory', function(constant)
             SocketFactory.callLifecycleCallback("iftttupdate", msg);
         });
 
+        SocketFactory.receive("youtube-download", function(msg)
+        {
+            SocketFactory.callLifecycleCallback("youtube-download", msg);
+        });
+
         SocketFactory.send('ui:get-socket-info', {}, function(err, resp)
         {
             if (err)

@@ -32,12 +32,25 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         {
             title: "Video",
             href: "#video/" + $routeParams.client_id
+        },
+        {
+            title: "Audio",
+            href: "#audio/" + $routeParams.client_id
         }],
         "Device Overview":
         [{
             title: "Connected Devices",
             href: "#index"
         }]
+    };
+
+    //-----------------------------------------------------
+
+    //from http://stackoverflow.com/questions/3452546/javascript-regex-how-to-get-youtube-video-id-from-url
+    var ytIdExtractor = function(url) {
+        var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
+        var match = url.match(regExp);
+        return (match&&match[7].length==11)? match[7] : false;
     };
 
     //-----------------------------------------------------
@@ -120,12 +133,27 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.music = function()
     {
-        var res = window.prompt("Please enter the file name of music to be played or the full youtube video to be played.", "siren.mp3");
-        if (!res) return;
+        $location.path('/audio/' + $routeParams.client_id);
+    };
 
+    $scope.playMusic = function(fileName)
+    {
         var options = {
             type: "music",
-            data: res
+            data: fileName
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
+    $scope.playLightshow = function(fileName)
+    {
+        var options = {
+            type: "ledstrip",
+            data: {
+                mode: "lightshow",
+                file: fileName
+            }
         };
 
         SocketFactory.send("ui:action", options);
@@ -156,15 +184,18 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.zwaveTemp = function()
     {
-        var res = window.prompt("Please enter the desired temperature", "26");
-        if (!res) return;
+        var thermostat = window.prompt("Please enter the ID of the thermostat", "ZWave_THERMOSTAT_11");
+        if (!thermostat) return;
+
+        var temp = window.prompt("Please enter the desired temperature", "26");
+        if (!temp) return;
 
         var options = {
             type: "settemperature",
             data: {
                 type: "zwave",
-                temp: res,
-                thermostat: "ZWave_THERMOSTAT_11"
+                temp: temp,
+                thermostat: thermostat
             }
         };
 
@@ -173,15 +204,18 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.homematicTemp = function()
     {
-        var res = window.prompt("Please enter the desired temperature", "26");
-        if (!res) return;
+        var thermostat = window.prompt("Please enter the ID of the thermostat", "HM_37F678");
+        if (!thermostat) return;
+
+        var temp = window.prompt("Please enter the desired temperature", "26");
+        if (!temp) return;
 
         var options = {
             type: "settemperature",
             data: {
                 type: "homematic",
-                temp: res,
-                thermostat: "HM_37F678"
+                temp: temp,
+                thermostat: thermostat
             }
         };
 
@@ -260,18 +294,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.lightshow = function()
     {
-        var res = window.prompt("Please enter the file name of music to be played or the full link to the youtube video.", "house.mp3");
-        if (!res) return;
-
-        var options = {
-            type: "ledstrip",
-            data: {
-                mode: "lightshow",
-                file: res
-            }
-        };
-
-        SocketFactory.send("ui:action", options);
+        $location.path('/audio/' + $routeParams.client_id);
     };
 
     $scope.video = function()
@@ -308,6 +331,40 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         }
     };
 
+    $scope.checkAutoPlay = function()
+    {
+        var audio = $routeParams.audio;
+        var lightshow = $routeParams.lightshow;
+
+        if (audio || lightshow)
+        {
+            if (audio) {
+                $scope.playMusic(audio);
+            } else {
+                $scope.playLightshow(lightshow);
+            }
+
+            setTimeout(function()
+            {
+                var element = audio ? $("#music") : $("#lightshow");
+                Styles.hightlightScroll(element);
+            }, 500);
+        }
+    };
+
+    $scope.youtube = function()
+    {
+        var url = window.prompt("Enter full youtube link of the video to be downloaded as .mp3 file", "https://www.youtube.com/watch?v=DLzxrzFCyOs");
+
+        if (!url) return;
+
+        var ytid = ytIdExtractor(url);
+
+        if (!ytid) return;
+
+        $location.path('/audio/' + $routeParams.client_id + "/youtube-download/" + ytid);
+    };
+
     //-----------------------------------------------------
 
     $scope.init = function()
@@ -324,6 +381,8 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
         $scope.connect(false, function()
         {
+            $scope.checkAutoPlay();
+
             SocketFactory.receive("cam-stream", function(msg)
             {
                 var image = msg.image;

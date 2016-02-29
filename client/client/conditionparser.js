@@ -275,7 +275,12 @@ exports.process = function(type, data)
                 DEBUG && console.log("###");
 
                 var condition = exports.processIfClause(ifClause, sensors);
-                allSensors.push(condition.method);
+
+                condition.method.forEach(function(m)
+                {
+                    allSensors.push(m);
+                });
+
                 var exec = condition.executed;
 
                 /*
@@ -358,10 +363,10 @@ exports.processIfClause = function(ifClause, sensors)
     //match everything from $ until the first closing brace -> $foo.bar(1234)
     var reg = /\$([^\)]+\))/g;
 
-    var evaluated = null;
+    var methods = [];
 
     //evaluate method calls
-    ifClause.replace(reg, function(match, contents, offset, s)
+    var evaluated = ifClause.replace(reg, function(match, contents, offset, s)
     {
         contents = contents.split(".");
 
@@ -388,20 +393,19 @@ exports.processIfClause = function(ifClause, sensors)
             throw new Error("Invalid Method Name " + methodName);
         }
 
-        evaluated = {
-            result: "" + exposedMethods[methodName].method.apply(this, parameters),
-            method: exposedMethods[methodName]
-        };
+        methods.push(exposedMethods[methodName]);
+
+        return exposedMethods[methodName].method.apply(this, parameters);
     });
 
-    var evaluationDidRun = evaluated.result !== "";
+    var evaluationDidRun = evaluated !== "";
 
     if (!evaluationDidRun)
     {
         throw new Error("Empty / Invalid condition.");
     }
 
-    var reducedCondition = evaluated.result;
+    var reducedCondition = evaluated;
     exports.validTokensIfClause.forEach(function(token)
     {
         var regex = new RegExp(exports.escapeRegExp(token), "g");
@@ -420,7 +424,8 @@ exports.processIfClause = function(ifClause, sensors)
 
     try
     {
-        executed = eval(evaluated.result);
+        //console.log("evaluated", evaluated);
+        executed = eval(evaluated);
     }
     catch (evalError)
     {
@@ -428,9 +433,9 @@ exports.processIfClause = function(ifClause, sensors)
     }
 
     return {
-        evaluated: evaluated.result,
+        evaluated: evaluated,
         executed: executed,
-        method: evaluated.method
+        method: methods
     };
 };
 

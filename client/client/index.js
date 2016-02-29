@@ -10,6 +10,8 @@ var sensormanagement = require('./sensormanagement');
 var actormanagement = require('./actormanagement');
 var conditionparser = require('./conditionparser');
 var socketmanager = require('./socket');
+var audio = require('./audio');
+var youtube = require('./youtube');
 
 var socket = socketmanager.getConnectionHandle();
 
@@ -31,7 +33,7 @@ socketmanager.socket.on('connect', function()
     });
 });
 
-socketmanager.socket.on('actionrequest', function(msg)
+socketmanager.socket.on('actionrequest', function(msg, resp)
 {
     /*
     known messages:
@@ -163,6 +165,68 @@ socketmanager.socket.on('actionrequest', function(msg)
         {
             logger.error("invalid led strip command type");
         }
+    }
+
+    //YT Download --------------------------------------------------------------------------
+    if (msg.type === "youtube")
+    {
+        youtube.download(msg.data, function onout(text)
+        {
+            logger.info(text);
+            socketmanager.socket.emit("client:youtube-download", {
+                output: text
+            });
+        },
+        function onclose(code, fileName)
+        {
+            logger.info("Done with response code: " + code + " and file " + fileName);
+
+            var resp = { success: true };
+
+            if (code === 0 && fileName)
+            {
+                resp.file = fileName;
+            }
+            else
+            {
+                resp.success = false;
+            }
+
+            socketmanager.socket.emit("client:youtube-download", resp);
+        });
+    }
+});
+
+socketmanager.socket.on('audio', function(msg, resp)
+{
+    if (msg.mode === "list")
+    {
+        audio.list(function(err, audios)
+        {
+            if (err)
+            {
+                logger.error("audio listing: ", err);
+                return resp(err);
+            }
+            logger.info("audio listing: got", audios);
+
+            resp(null, audios);
+        });
+    }
+    else if (msg.mode === "delete")
+    {
+        audio.delete(msg.file, function(err, msg)
+        {
+            if (err)
+            {
+                logger.error("audio deleting: ", err);
+                return resp(err);
+            }
+
+            logger.info("audio deleting: got", msg);
+
+            resp(null, msg);
+        });
     }
 });
 

@@ -32,6 +32,10 @@ IoT.controller('IoTHistoryCtrl', function ($scope, $rootScope, $timeout, $compil
         {
             title: "Video",
             href: "#video/" + $routeParams.client_id
+        },
+        {
+            title: "Audio",
+            href: "#audio/" + $routeParams.client_id
         }],
         "Device Overview":
         [{

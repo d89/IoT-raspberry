@@ -11262,11 +11262,6 @@ a.navlink {
     opacity: 0.3 !important;
 }
 
-.textoverlay {
-  padding-top: 16px !important;
-  background: white !important;
-}
-
 .dropdown-menu a {
   cursor: pointer;
 }
@@ -11286,13 +11281,25 @@ a.navlink {
 
 [name=cond] {
   height: 60px !important;
-  font-size: 19px;
-  padding-top: 16px;
+  font-size: 17px;
+  padding-top: 12px;
+  overflow: hidden;
+}
+
+.textoverlay {
+    padding-top: 12px !important;
+    background: white !important;
+    margin-right: 0px !important;
+    /*color: red !important;*/
 }
 
 @media screen and (max-width: 1600px) {
   [name=cond] {
     font-size: 14px;
+  }
+
+  .textoverlay {
+    margin-right: 0px !important;
   }
 }
 
@@ -11303,7 +11310,8 @@ a.navlink {
   }
 
   .textoverlay {
-    top: -14px !important;
+    top: -11px !important;
+    margin-right: 0px !important;
   }
 }
 

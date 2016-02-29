@@ -32,6 +32,10 @@ IoT.controller('IoTVideoCtrl', function ($scope, $rootScope, $timeout, $compile,
             title: "Video",
             href: "#video/" + $routeParams.client_id,
             active: true
+        },
+        {
+            title: "Audio",
+            href: "#audio/" + $routeParams.client_id
         }],
         "Device Overview":
         [{

@@ -27,7 +27,8 @@ constants.provider('constant', function()
             "desired_temperature_homematic": "Desired Temp (Homematic)",
             "desired_temperature_zwave": "Desired Temp (Z-Wave)",
             "measured_temperature_zwave": "Measured Temp (Z-Wave)",
-            "battery_zwave": "Battery (Z-Wave)"
+            "battery_zwave": "Battery (Z-Wave)",
+            "diskfree": "Free Disk (MB)"
         }
     };
 

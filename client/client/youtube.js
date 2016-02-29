@@ -19,36 +19,46 @@ var idExtractor = function(url) {
     return (match&&match[7].length==11)? match[7] : false;
 };
 
-exports.download = function(url, onout, ondone)
+exports.download = function(ytID, onout, ondone)
 {
+    //accept both youtube ids and full urls.
+    //if we receive a full url, extract to see if things are fine
+    if (idExtractor(ytID))
+    {
+        ytID = idExtractor(ytID);
+    }
+
+    if (!ytID) return ondone(-1, "Invalid youtube ID");
+
+    var url = 'https://www.youtube.com/watch?v=' + ytID;
+
+    // ----------------------------------------------
+
     var search = function()
     {
-        var ytID = idExtractor(url);
+        onout("Output: Found youtube id: " + ytID);
 
-        if (ytID)
+        glob(config.mediaBasePath + "/*-" + ytID + ".mp3", {}, function(err, files)
         {
-            onout("Output: Found youtube id: " + ytID);
-
-            glob(config.mediaBasePath + "/*-" + ytID + ".mp3", {}, function(err, files)
+            if (err)
             {
-                if (err)
-                {
-                    onout("Error: " + err);
-                }
-                else if (files.length === 0)
-                {
-                    onout("Output: Video not found on disk, downloading");
-                    download();
-                }
-                else
-                {
-                    var file = files[0];
-                    onout("Output: Found file " + file);
-                    ondone(0, path.basename(file));
-                }
-            });
-        }
+                onout("Error: " + err);
+            }
+            else if (files.length === 0)
+            {
+                onout("Output: Video not found on disk, downloading");
+                download();
+            }
+            else
+            {
+                var file = files[0];
+                onout("Output: Found file " + file);
+                ondone(0, path.basename(file));
+            }
+        });
     };
+
+    // ----------------------------------------------
 
     var download = function()
     {
@@ -83,6 +93,8 @@ exports.download = function(url, onout, ondone)
             ondone(retCode, extractedFilename);
         });
     };
+
+    // ----------------------------------------------
 
     search();
 };

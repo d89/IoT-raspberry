@@ -9,6 +9,7 @@ module.exports = {
         "temperature",
         "cputemp",
         "mem",
+        "diskfree",
         "load",
         "humidity",
         "distance",

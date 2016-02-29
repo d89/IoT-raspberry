@@ -222,9 +222,12 @@ Afterwards:
 cd /opt/lightshow/lightshowpi
 ```
 
-Disable the "pre show": ```nano config/overrides.cfg```
+Disable the "pre show" and set as much zeros as you have rows in the led strip. The number of LEDs will be split by the amount of rows. These are not real "gpio pins", they are just used to separate the rows: ```nano config/overrides.cfg```
 
 ```
+[hardware]
+gpio_pins = 0,0,0,0,0,0,0,0
+
 [lightshow]
 preshow_script =
 preshow_configuration =

@@ -7,6 +7,7 @@ var actormanagement = require('./actormanagement');
 var config = require('./config');
 var temperature = require('./sensors/temperature');
 var cputemp = require('./sensors/cputemp');
+var diskfree = require('./sensors/diskfree');
 var mem = require('./sensors/mem');
 var load = require('./sensors/load');
 var humidity = require('./sensors/humidity');
@@ -131,6 +132,10 @@ exports.init = function(cb)
         });
 
         exports.registeredSensors["mem"] = new mem({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["diskfree"] = new diskfree({
             onData: exports.sensorUpdateCallback
         });
 

@@ -32,6 +32,10 @@ IoT.controller('IoTDashboardCtrl', function ($scope, $rootScope, $timeout, $comp
         {
             title: "Video",
             href: "#video/" + $routeParams.client_id
+        },
+        {
+            title: "Audio",
+            href: "#audio/" + $routeParams.client_id
         }],
         "Device Overview":
         [{

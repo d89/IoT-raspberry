@@ -25,9 +25,25 @@ IoT.config(['$routeProvider', function($routeProvider)
             templateUrl: 'templates/action/action.html',
             controller: 'IoTActionCtrl'
         })
+        .when('/action/:client_id/audio/:audio', {
+            templateUrl: 'templates/action/action.html',
+            controller: 'IoTActionCtrl'
+        })
+        .when('/action/:client_id/lightshow/:lightshow', {
+            templateUrl: 'templates/action/action.html',
+            controller: 'IoTActionCtrl'
+        })
         .when('/video/:client_id/:autoplay?', {
             templateUrl: 'templates/video/video.html',
             controller: 'IoTVideoCtrl'
+        })
+        .when('/audio/:client_id', {
+            templateUrl: 'templates/audio/audio.html',
+            controller: 'IoTAudioCtrl'
+        })
+        .when('/audio/:client_id/youtube-download/:ytid', {
+            templateUrl: 'templates/audio/audio.html',
+            controller: 'IoTAudioCtrl'
         })
         .when('/ifttt/:client_id', {
             templateUrl: 'templates/ifttt/ifttt.html',

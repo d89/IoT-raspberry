@@ -1208,6 +1208,22 @@ var Styles = function() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         },
 
+        hightlightScroll: function(element)
+        {
+            element = $(element);
+
+            $('html, body').animate
+            ({
+                scrollTop: element.offset().top - 130
+            }, 500, function()
+            {
+                for (var i = 0; i < 3; i++)
+                {
+                    element.fadeOut(100).fadeIn(100);
+                }
+            });
+        },
+
         supportsTouch: function()
         {
             return 'ontouchstart' in window || navigator.msMaxTouchPoints;

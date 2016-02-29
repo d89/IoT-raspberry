@@ -687,13 +687,13 @@ io.on('connection', function(socket)
                 });
             },
             //-------------------------------------------------------------------------------------
-            'ui:action': function (clientSocket, msg) {
+            'ui:action': function (clientSocket, msg, cb) {
                 var request = {
                     type: msg.type,
                     data: msg.data
                 };
 
-                clientSocket.emit("actionrequest", request);
+                clientSocket.emit("actionrequest", request, cb);
             },
             //-------------------------------------------------------------------------------------
             'ui:maintenance': function (clientSocket, msg) {
@@ -702,6 +702,18 @@ io.on('connection', function(socket)
                 };
 
                 clientSocket.emit("maintenance", request);
+            },
+            //-------------------------------------------------------------------------------------
+            'ui:audio': function (clientSocket, msg, resp) {
+
+                if (msg.mode === "list")
+                {
+                    clientSocket.emit("audio", { mode: "list" }, resp);
+                }
+                else if (msg.mode === "delete")
+                {
+                    clientSocket.emit("audio", { mode: "delete", file: msg.file }, resp);
+                }
             },
             //-------------------------------------------------------------------------------------
             'ui:ifttt': function (clientSocket, msg, resp) {
@@ -860,6 +872,19 @@ io.on('connection', function(socket)
 
                     return sendToUi(socket, msg);
                 });
+            },
+            //-------------------------------------------------------------------------------------
+            'client:youtube-download': function(msg, resp)
+            {
+                var uiSocket = getUiSocketByClientSocket(socket);
+
+                if (!uiSocket)
+                {
+                    //logger.info(`no waiting ui client for client data`);
+                    return;
+                }
+
+                uiSocket.emit("youtube-download", msg);
             },
             //-------------------------------------------------------------------------------------
             'client:live-stream': function(msg, resp)

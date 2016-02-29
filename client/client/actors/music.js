@@ -14,7 +14,7 @@ exports.exposed = function()
                 name: "title",
                 isOptional: true,
                 dataType: "string",
-                notes: "filename of .mp3 file or full link to youtube video to be played"
+                notes: "filename of .mp3 file to be played"
             }]
         },
         stop: {
@@ -41,24 +41,6 @@ exports.stop = function()
 
 exports.act = function(title)
 {
-    if (title.indexOf("http") === 0)
-    {
-        return youtube.download(title, function onout(text)
-        {
-            logger.info(text);
-        },
-        function onclose(code, fileName)
-        {
-            logger.info("Done with response code: " + code + " and file " + fileName);
-
-            if (code === 0 && fileName)
-            {
-                logger.info("Playing " + fileName);
-                exports.act(fileName);
-            }
-        });
-    }
-
     title = title || "siren.mp3";
     title = title.replace("..", "");
     title = config.mediaBasePath + "/" + title;

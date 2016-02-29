@@ -133,6 +133,12 @@ var Cam = {
 
         fs.readFile(Cam.streamImage, function(err, buffer)
         {
+            if (!buffer)
+            {
+                logger.error("invalid cam response");
+                return Cam.stopStreaming();
+            }
+
             Cam.socket.emit('client:live-stream', {
                 date: new Date(),
                 image: buffer.toString('base64')

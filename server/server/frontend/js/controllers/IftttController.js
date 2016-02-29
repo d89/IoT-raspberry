@@ -32,6 +32,10 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
         {
             title: "Video",
             href: "#video/" + $routeParams.client_id
+        },
+        {
+            title: "Audio",
+            href: "#audio/" + $routeParams.client_id
         }],
         "Device Overview":
         [{
