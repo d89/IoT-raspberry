@@ -278,15 +278,17 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
             $scope.conditionList();
             $scope.currentSensorValue = {};
 
+            console.info("ifttt register dataupdate!");
             SocketFactory.registerLifecycleCallback("dataupdate", function(sensorUpdate)
             {
                 $scope.currentSensorValue[sensorUpdate.type] = sensorUpdate.data;
-            });
+            }, "ifttt");
 
+            console.info("ifttt register iftttupdate!");
             SocketFactory.registerLifecycleCallback("iftttupdate", function(statementResultUpdate)
             {
                 $scope.onIftttUpdate(statementResultUpdate);
-            });
+            }, "ifttt");
         });
     };
 

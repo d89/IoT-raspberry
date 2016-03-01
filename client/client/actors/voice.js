@@ -5,6 +5,8 @@ var fs = require('fs');
 var crypto = require('crypto');
 var spawn = require('child_process').spawn;
 var glob = require('glob');
+var path = require('path');
+var music = require('./music');
 const MAX_KEEP_FILES = 5;
 
 exports.exposed = function()
@@ -62,7 +64,7 @@ exports.act = function(text)
 
     var play = function(fileName)
     {
-        spawn('/usr/bin/mpg321', [fileName]);
+        music.act(path.basename(fileName));
     };
 
     var ttsApiKey = config.ttsApiKey;

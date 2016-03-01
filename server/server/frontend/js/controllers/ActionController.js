@@ -299,22 +299,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.video = function()
     {
-        $scope.videoActive = constant.get("camRecordingDuration");
-
-        SocketFactory.send('ui:start-video', { duration: constant.get("camRecordingDuration") }, function(err, msg)
-        {
-            $scope.videoActive = false;
-            console.log("done recording video", err, msg);
-
-            if (err)
-            {
-                SocketFactory.callLifecycleCallback("functional_error", "Could not record video: " + err);
-            }
-            else
-            {
-                $location.path('/video/' + $routeParams.client_id + "/autoplay");
-            }
-        });
+        $location.path('/video/' + $routeParams.client_id + "/startrecording/1");
     };
 
     $scope.camera = function(state)

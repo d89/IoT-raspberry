@@ -129,11 +129,11 @@ IoT.controller('IoTVideoCtrl', function ($scope, $rootScope, $timeout, $compile,
         {
             $scope.getVideos(function()
             {
-                var autoplay = $routeParams.autoplay;
+                var startrecording = $routeParams.startrecording;
 
-                if (autoplay && $scope.videos.length)
+                if (startrecording)
                 {
-                    $scope.play($scope.videos[0].fileName);
+                    $scope.video();
                 }
             });
         });

@@ -1,5 +1,7 @@
 #!/bin/bash
-amixer set PCM 10
+#amixer set PCM 10
+pkill aplay
+pkill mpg321
 args=("$@")
 LED_LIB_BASE=${args[0]}
 echo LED Base Library Location $LED_LIB_BASE

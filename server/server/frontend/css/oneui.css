@@ -11310,7 +11310,7 @@ a.navlink {
   }
 
   .textoverlay {
-    top: -11px !important;
+    margin-top: -11px !important;
     margin-right: 0px !important;
   }
 }

@@ -33,7 +33,11 @@ IoT.config(['$routeProvider', function($routeProvider)
             templateUrl: 'templates/action/action.html',
             controller: 'IoTActionCtrl'
         })
-        .when('/video/:client_id/:autoplay?', {
+        .when('/video/:client_id', {
+            templateUrl: 'templates/video/video.html',
+            controller: 'IoTVideoCtrl'
+        })
+        .when('/video/:client_id/startrecording/:startrecording', {
             templateUrl: 'templates/video/video.html',
             controller: 'IoTVideoCtrl'
         })

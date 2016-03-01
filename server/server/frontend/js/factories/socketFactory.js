@@ -41,14 +41,28 @@ IoT.factory('SocketFactory', function(constant)
 
     SocketFactory.lifecycleCallbacks = {};
 
-    SocketFactory.registerLifecycleCallback = function(eventType, callback)
+    SocketFactory.registerLifecycleCallback = function(eventType, callback, registerKey)
     {
         if (!SocketFactory.lifecycleCallbacks[eventType])
         {
-            SocketFactory.lifecycleCallbacks[eventType] = [];
+            SocketFactory.lifecycleCallbacks[eventType] = {};
         }
 
-        SocketFactory.lifecycleCallbacks[eventType].push(callback);
+        //the registerKey is used to determined if this callback type has already been registered.
+        //do not register twice
+        if (!registerKey)
+        {
+            registerKey = "randkey-" + Math.random() + "-" + (new Date).getTime();
+        }
+
+        if (registerKey in SocketFactory.lifecycleCallbacks[eventType])
+        {
+            console.log("overwriting callback for " + eventType + " - only once is allowed");
+        }
+
+        SocketFactory.lifecycleCallbacks[eventType][registerKey] = callback;
+
+        console.log("registered " + Object.keys(SocketFactory.lifecycleCallbacks[eventType]).length + " callbacks for " + eventType);
     };
 
     SocketFactory.callLifecycleCallback = function(eventType)
@@ -72,10 +86,10 @@ IoT.factory('SocketFactory', function(constant)
             console.log("called lifecycle callback for " + eventType, parameters);
         }
 
-        SocketFactory.lifecycleCallbacks[eventType].forEach(function(cb)
+        for (var registerKey in SocketFactory.lifecycleCallbacks[eventType])
         {
-            cb.apply(this, parameters);
-        })
+            SocketFactory.lifecycleCallbacks[eventType][registerKey].apply(this, parameters);
+        }
     };
 
     SocketFactory.resetLifecycleCallbacks = function()

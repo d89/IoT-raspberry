@@ -116,11 +116,7 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
     {
         if (msg.output)
         {
-            $scope.youtubeLog.unshift({
-                text: msg.output,
-                date: moment().format("HH:mm:ss"),
-                type: "info"
-            });
+            $scope.youtubeProgressMessage("info", msg.output);
         }
         else if ("success" in msg)
         {
@@ -129,12 +125,9 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
 
             if (isSuccess)
             {
-                $scope.youtubeLog.unshift({
-                    text: "Successfully downloaded file " + file,
-                    date: moment().format("HH:mm:ss"),
-                    type: "success"
-                });
+                $scope.youtubeProgressMessage("success", "Successfully downloaded file " + file);
 
+                console.log("is success");
                 $scope.loadAudios(function()
                 {
                     Styles.hightlightScroll($("[data-filename='" + file + "']"));
@@ -142,17 +135,24 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
             }
             else
             {
-                $scope.youtubeLog.unshift({
-                    text: "Error downloading!",
-                    date: moment().format("HH:mm:ss"),
-                    type: "error"
-                });
+                $scope.youtubeProgressMessage("error", "Error downloading!");
             }
 
             $scope.downloading = false;
         }
 
         $scope.$apply();
+    };
+
+    $scope.youtubeProgressMessage = function(level, text)
+    {
+        if (!$scope.youtubeLog) $scope.youtubeLog = [];
+
+        $scope.youtubeLog.unshift({
+            text: text,
+            date: moment().format("HH:mm:ss"),
+            type: level
+        });
     };
 
     //-----------------------------------------------------
@@ -164,13 +164,14 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         $scope.connect(false, function()
         {
+            console.log("is connection");
             $scope.loadAudios();
 
             //register youtube download status
             SocketFactory.registerLifecycleCallback("youtube-download", function(msg)
             {
                 $scope.youtubeProgress(msg);
-            });
+            }, "yt");
 
             //check auto play
             var ytid = $routeParams.ytid;
@@ -180,13 +181,7 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
                 $scope.downloading = true;
 
                 console.log("starting youtube download");
-
-                $scope.youtubeLog = [{
-                    text: "Starting Youtube Download",
-                    date: moment().format("HH:mm:ss"),
-                    type: "info"
-                }];
-
+                $scope.youtubeProgressMessage("info", "Starting Youtube Download");
                 $scope.youtube(ytid);
             }
         });

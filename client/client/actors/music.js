@@ -1,8 +1,9 @@
 var logger = require('../logger');
 var config = require('../config');
-var youtube = require('../youtube');
+var ledstrip = require('./ledstrip');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
+var path = require('path');
 var musicProcess = null;
 
 exports.exposed = function()
@@ -31,7 +32,7 @@ exports.stop = function()
     if (musicProcess)
     {
         musicProcess.kill();
-        logger.info("... killed!");
+        logger.info("... playing music killed!");
     }
     else
     {
@@ -41,6 +42,8 @@ exports.stop = function()
 
 exports.act = function(title)
 {
+    logger.info("playing music " + title);
+
     title = title || "siren.mp3";
     title = title.replace("..", "");
     title = config.mediaBasePath + "/" + title;
@@ -51,7 +54,10 @@ exports.act = function(title)
         return "file does not exist";
     }
 
+    ledstrip.allOff();
     exports.stop();
 
-    musicProcess = spawn('/usr/bin/mpg321', [title]);
+    var extension = path.extname(title);
+    var executable = extension === ".wav" ? "/usr/bin/aplay" : "/usr/bin/mpg321";
+    musicProcess = spawn(executable, [title]);
 };
