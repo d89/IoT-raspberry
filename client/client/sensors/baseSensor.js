@@ -18,39 +18,6 @@ class baseSensor
         };
         this.name = name;
         this.logger.info(`watching ${this.name}`);
-        this.triggerMap = {};
-        this.triggerMapTemp = {};
-    }
-
-    shouldTrigger(method, triggered)
-    {
-        var shouldTrigger = false;
-
-        //only trigger once. Every other trigger for the same condition is ignored
-        if (method in this.triggerMap)
-        {
-            var currentState = this.triggerMap[method];
-
-            if (!currentState && triggered) {
-                //logger.info("Succint Activatation trigger for " + this.name + "." + method);
-                shouldTrigger = true;
-            } else {
-                //this is the interesting part, where the "retrigger" would happen
-                //logger.info("Skipping Repeated Activatation trigger for " + this.name + "." + method);
-                shouldTrigger = false;
-            }
-        } else {
-            if (triggered) {
-                //logger.info("First Activatation trigger for " + this.name + "." + method);
-                shouldTrigger = true;
-            } else {
-                shouldTrigger = false;
-            }
-        }
-
-        this.triggerMapTemp[method] = triggered;
-
-        return shouldTrigger;
     }
 
     processCondition(method, param, triggered)
@@ -59,6 +26,11 @@ class baseSensor
         if (this.sensordata.is === null)
         {
             return false;
+        }
+
+        if (triggered) //reset
+        {
+            this.sensordata.was = this.sensordata.is;
         }
 
         /*
@@ -71,17 +43,16 @@ class baseSensor
         }
         */
 
-        var signature = method + "(" + param + ")";
-
-        return this.shouldTrigger(signature, triggered);
+        return triggered;
     }
 
-    setResult(methodName)
+    validateDataPresence()
     {
-        //console.log("\tsetting result for round end with " + this.name + "." + methodName);
-
-        //copy object
-        this.triggerMap = JSON.parse(JSON.stringify(this.triggerMapTemp));
+        return this.sensordata
+            && this.sensordata.is != null
+            && typeof this.sensordata.is != "undefined"
+            && this.sensordata.was != null
+            && typeof this.sensordata.was != "undefined";
     }
 
     exposed()
@@ -93,12 +64,9 @@ class baseSensor
             {
                 method: function(val)
                 {
+                    if (!that.validateDataPresence()) return false;
                     var triggered = (that.sensordata.is == val);
                     return that.processCondition("is_equal", val, triggered);
-                },
-                setResult: function()
-                {
-                    that.setResult("is_equal");
                 },
                 params: [{
                     name: "val",
@@ -112,12 +80,9 @@ class baseSensor
             {
                 method: function(val)
                 {
+                    if (!that.validateDataPresence()) return false;
                     var triggered = (that.sensordata.is < val);
                     return that.processCondition("is_lt", val, triggered);
-                },
-                setResult: function()
-                {
-                    that.setResult("is_lt");
                 },
                 params: [{
                     name: "val",
@@ -131,12 +96,9 @@ class baseSensor
             {
                 method: function(val)
                 {
+                    if (!that.validateDataPresence()) return false;
                     var triggered = (that.sensordata.is > val);
                     return that.processCondition("is_gt", val, triggered);
-                },
-                setResult: function()
-                {
-                    that.setResult("is_gt");
                 },
                 params: [{
                     name: "val",

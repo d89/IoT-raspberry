@@ -35,7 +35,7 @@ module.exports = {
         basic_auth_password: "admin",
         port: 8083
     },
-
+    volume: "-1500", //-15.00 db
     ttsApiKey: "*** snip ***", //voicerss.org
     password: "*** snip ***"
 };

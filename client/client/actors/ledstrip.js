@@ -1,11 +1,12 @@
 var fs = require('fs');
 var logger = require('../logger');
 var config = require('../config');
-var youtube = require('../youtube');
+var soundmanager = require('../soundmanager');
 var spawn = require('child_process').spawn;
 var LPD8806 = require('lpd8806');
 var LED_COUNT = config.ledStripLedCount;
-var spawned = null;
+
+exports.spawned = null;
 
 exports.exposed = function()
 {
@@ -57,21 +58,24 @@ exports.allOff = function()
 {
     logger.info("disabling ledstrip");
 
-    if (spawned && spawned.pid)
+    if (exports.spawned && exports.spawned.pid)
     {
-        logger.info("killing pid group", spawned.pid);
+        logger.info("killing pid group", exports.spawned.pid);
         //kill subprocesses aswell
         try
         {
-            process.kill(-spawned.pid);
+            process.kill(-exports.spawned.pid);
         }
         catch (err)
         {
             logger.error("could not kill process", err);
         }
 
-        spawned = null;
+        exports.spawned = null;
     }
+
+    //music would interfere with the lightshow aswell
+    soundmanager.stop();
 
     exports.singleColor(0, 0, 0, true);
 };
@@ -82,15 +86,15 @@ exports.colorParty = function()
 
     logger.info("enabling color party");
 
-    spawned = spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT], {detached: true});
-    spawned.stdout.setEncoding('utf8');
+    exports.spawned = spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT], {detached: true});
+    exports.spawned.stdout.setEncoding('utf8');
 
-    spawned.stderr.on('data', function (data)
+    exports.spawned.stderr.on('data', function (data)
     {
         logger.error("received err: ", data.toString());
     });
 
-    spawned.stdout.on('data', function (data)
+    exports.spawned.stdout.on('data', function (data)
     {
         logger.info("received data: ", data);
     });
@@ -124,23 +128,24 @@ exports.lightshow = function(title)
 
     var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
     var lightshowStarter = config.baseBath + '/actors/lightshow';
+    var volume = config.volume;
 
-    logger.info("starting " + lightshowStarter + " with file " + title + " and " + LED_COUNT + " leds, led base lib: " + ledLibLocation);
+    logger.info("starting " + lightshowStarter + " with file " + title + " and " + LED_COUNT + " leds @volume " + volume + ", led base lib: " + ledLibLocation);
 
-    spawned = spawn(lightshowStarter, [ledLibLocation, title, LED_COUNT], {detached: true});
-    spawned.stdout.setEncoding('utf8');
+    exports.spawned = spawn(lightshowStarter, [ledLibLocation, title, LED_COUNT, volume], {detached: true});
+    exports.spawned.stdout.setEncoding('utf8');
 
-    spawned.stderr.on('data', function (data)
+    exports.spawned.stderr.on('data', function (data)
     {
         logger.error("received err: ", data.toString());
     });
 
-    spawned.stdout.on('data', function (data)
+    exports.spawned.stdout.on('data', function (data)
     {
         //console.log(data.toString());
     });
 
-    spawned.on("close", function(returnCode)
+    exports.spawned.on("close", function(returnCode)
     {
         logger.info("lightshow finished with " + returnCode);
     });

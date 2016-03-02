@@ -246,10 +246,7 @@ exports.escapeRegExp = function(str)
 };
 
 exports.validTokensIfClause = ["true", "false", "||", "&&", "(", ")", "!"];
-
 exports.validTokensThenClause = [";"];
-
-exports.conditionRoundsPassed = 0;
 
 exports.process = function(type, data)
 {
@@ -283,13 +280,6 @@ exports.process = function(type, data)
 
                 var exec = condition.executed;
 
-                /*
-                if (exec)
-                    console.log("YYYYYYYYYYYYYYYYYYYYYYYYYYYYY EXECUTED", exec);
-                else
-                    console.log("EXECUTED", exec);
-                */
-
                 DEBUG && console.log("evaluated", condition.evaluated);
                 DEBUG && console.log("executed", condition.executed);
 
@@ -313,16 +303,6 @@ exports.process = function(type, data)
 
             DEBUG && console.log("-----------------------------------")
         }
-
-        //console.log("----------------------------------------------------");
-        //console.log((++exports.conditionRoundsPassed) + " - " + (new Date).getTime() + " !!!!!! Round done. Setting sensor values for finished round");
-
-        allSensors.forEach(function(s)
-        {
-            s.setResult();
-        });
-
-        //console.log("----------------------------------------------------");
     });
 };
 
@@ -357,6 +337,8 @@ exports.validateStructure = function(statement)
         then: parsed[3]
     };
 };
+
+exports.conditionEvaluationMemory = {};
 
 exports.processIfClause = function(ifClause, sensors)
 {
@@ -420,12 +402,36 @@ exports.processIfClause = function(ifClause, sensors)
         throw new Error("Invalid tokens: " + invalidTokens.join(" "));
     }
 
-    var executed = null;
+    var sentExecuted = null;
+    var realExecuted = null;
 
     try
     {
-        //console.log("evaluated", evaluated);
-        executed = eval(evaluated);
+        if (!(ifClause in exports.conditionEvaluationMemory))
+        {
+            DEBUG && console.log("setting ifClause initially");
+            exports.conditionEvaluationMemory[ifClause] = false;
+        }
+
+        DEBUG && console.log("----------------------------------");
+        DEBUG && console.log(ifClause);
+        realExecuted = eval(evaluated);
+        DEBUG && console.log("evaluated", evaluated);
+        DEBUG && console.log("real executed", realExecuted);
+
+        if (exports.conditionEvaluationMemory[ifClause] === false && realExecuted === true)
+        {
+            DEBUG && console.log("setting condition evaluation to true");
+            sentExecuted = true;
+        }
+        else
+        {
+            sentExecuted = false;
+        }
+
+        DEBUG && console.log("sent executed", sentExecuted);
+
+        exports.conditionEvaluationMemory[ifClause] = realExecuted;
     }
     catch (evalError)
     {
@@ -434,7 +440,7 @@ exports.processIfClause = function(ifClause, sensors)
 
     return {
         evaluated: evaluated,
-        executed: executed,
+        executed: sentExecuted,
         method: methods
     };
 };

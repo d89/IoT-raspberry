@@ -126,6 +126,8 @@ Siehe Linux Config für systemd
 
 ###USB Soundkarte einrichten
 
+Falls nicht der 3,5" Klinkenstecker verwendet werden soll (bessere Soundqualität):
+
 ```sudo nano /usr/share/alsa/alsa.conf```
 
 Folgende Zeilen ändern:
@@ -142,19 +144,48 @@ defaults.ctl.card 1
 defaults.pcm.card 1
 ```
 
-Danach ```reboot``` und das Soundvolumen anpassen per Befehl: ```alsamixer``` bzw. ```amixer set PCM 10```
+Danach ```reboot``` 
+
+Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei):
+http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
+
+###Sound wiedergeben
+
+Soundvolumen anpassen per Befehl: 
+
+```
+amixer set PCM -- -2000
+```
+
+Setzt Volume auf -20db.
+
+Kontrolle per ```alsamixer```
 
 Wav Dateien spielen: ```aplay /home/pi/Music/gong.wav```
 
 Mp3 Dateien spielen:
+
+Entweder
 
 ```
 sudo apt-get -y install mpg321
 mpg321 /home/pi/Music/siren.mp3
 ```
 
-Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei):
-http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
+oder
+
+```
+apt-get install -y omxplayer
+omxplayer /home/pi/Music/siren.mp3
+```
+
+Empfehlung: ```omxplayer```, weil mp3 ***und*** wav Dateien wiedergegeben werden. Problem: ```omxplayer``` respektiert nicht die Einstellungen von ```alsamixer``` und ```amixer```. Daher muss die Lautstärke mitgegben werden:
+
+```
+omxplayer --vol -2000 /home/pi/Music/siren.mp3
+```
+
+Stellt die Lautstärke ebenso auf -20db.
 
 ---
 

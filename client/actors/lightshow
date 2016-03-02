@@ -1,13 +1,14 @@
 #!/bin/bash
-#amixer set PCM 10
-pkill aplay
-pkill mpg321
 args=("$@")
 LED_LIB_BASE=${args[0]}
-echo LED Base Library Location $LED_LIB_BASE
 SONG_NAME=${args[1]}
-echo Playing song $SONG_NAME
 LED_COUNT=${args[2]}
+VOLUME=${args[3]}
+
+echo setting volume to $VOLUME
+amixer set PCM -- $VOLUME
+echo LED Base Library Location $LED_LIB_BASE
+echo Playing song $SONG_NAME
 echo LED count $LED_COUNT
 export SYNCHRONIZED_LIGHTS_HOME="/opt/lightshow/lightshowpi"
 export PYTHONPATH=$PYTHONPATH:$LED_LIB_BASE

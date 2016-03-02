@@ -54,14 +54,13 @@ class date extends baseSensor
                 {
                     method: function(val)
                     {
-                        if (that.sensordata.is.length === null) return false;
-                        var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
-                        var triggered = (readValue == val);
+                        if (!that.validateDataPresence()) return false;
+
+                        val = parseInt(val, 10);
+                        //var oldValue = parseInt(that.sensordata.was.substr(functions[unit].from, functions[unit].length), 10);
+                        var currentValue = parseInt(that.sensordata.is.substr(functions[unit].from, functions[unit].length), 10);
+                        var triggered = (currentValue == val);
                         return that.processCondition(unit + "_is_equal", val, triggered);
-                    },
-                    setResult: function()
-                    {
-                        that.setResult(unit + "_is_equal");
                     },
                     params: [{
                         name: "val",
@@ -75,14 +74,13 @@ class date extends baseSensor
                 {
                     method: function(val)
                     {
-                        if (that.sensordata.is.length === null) return false;
-                        var readValue = that.sensordata.is.substr(functions[unit].from, functions[unit].length);
-                        var triggered = (readValue > val);
+                        if (!that.validateDataPresence()) return false;
+
+                        val = parseInt(val, 10);
+                        //var oldValue = parseInt(that.sensordata.was.substr(functions[unit].from, functions[unit].length), 10);
+                        var currentValue = parseInt(that.sensordata.is.substr(functions[unit].from, functions[unit].length), 10);
+                        var triggered = (currentValue > val);
                         return that.processCondition(unit + "_is_gt", val, triggered);
-                    },
-                    setResult: function()
-                    {
-                        that.setResult(unit + "_is_gt");
                     },
                     params: [{
                         name: "val",
