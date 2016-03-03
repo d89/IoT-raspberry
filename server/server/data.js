@@ -911,6 +911,7 @@ io.on('connection', function(socket)
 
                 uiSocket.emit('cam-stream', {
                     date: msg.date,
+                    now: msg.now,
                     image: msg.image
                 });
             }

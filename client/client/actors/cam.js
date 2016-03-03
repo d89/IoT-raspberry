@@ -129,7 +129,9 @@ var Cam = {
             return;
         }
 
-        logger.info('sending image @ ' + (new Date), Cam.streamImage);
+        var fileModDate = fs.statSync(Cam.streamImage).mtime;
+
+        logger.info('sending image @ ' + fileModDate, Cam.streamImage);
 
         fs.readFile(Cam.streamImage, function(err, buffer)
         {
@@ -140,7 +142,8 @@ var Cam = {
             }
 
             Cam.socket.emit('client:live-stream', {
-                date: new Date(),
+                now: (new Date).getTime(),
+                date: fileModDate.getTime(),
                 image: buffer.toString('base64')
             }, function resp(response)
             {

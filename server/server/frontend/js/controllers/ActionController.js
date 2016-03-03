@@ -372,9 +372,10 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
             {
                 var image = msg.image;
                 var date = msg.date;
+                var now = msg.now;
 
                 $('#stream').attr('src', 'data:image/jpg;base64,' + image);
-                $scope.streamTime = "Now: " + moment().format("HH:mm:ss") + " | " + "Img: " + moment(date).format("HH:mm:ss");
+                $scope.streamTime = "Now: " + moment(now).format("HH:mm:ss") + " | " + "Img: " + moment(date).format("HH:mm:ss");
             });
         });
     };

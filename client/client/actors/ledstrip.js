@@ -8,6 +8,8 @@ var LED_COUNT = config.ledStripLedCount;
 
 exports.spawned = null;
 
+exports.lightshowStarter = config.baseBath + '/actors/startlightshow';
+
 exports.exposed = function()
 {
     return {
@@ -58,13 +60,37 @@ exports.allOff = function()
 {
     logger.info("disabling ledstrip");
 
-    if (exports.spawned && exports.spawned.pid)
+    if (exports.spawned)
     {
-        logger.info("killing pid group", exports.spawned.pid);
-        //kill subprocesses aswell
         try
         {
-            process.kill(-exports.spawned.pid);
+            if (exports.spawned.type === "colorparty")
+            {
+                logger.info("killing colorparty");
+                exports.spawned.process.kill();
+            }
+            else if (exports.spawned.type === "lightshow")
+            {
+                logger.info("killing lightshow");
+                var params = ["stop", exports.spawned.process.pid];
+                var killer = spawn(exports.lightshowStarter, params);
+
+                killer.stderr.on('data', function (data)
+                {
+                    logger.error("received killer err: ", data.toString());
+                });
+
+                killer.stdout.on('data', function (data)
+                {
+                    logger.info("received killer data: ", data.toString());
+                });
+
+                logger.info("killed led strip group!");
+            }
+            else
+            {
+                logger.error("nothing to kill!");
+            }
         }
         catch (err)
         {
@@ -86,15 +112,19 @@ exports.colorParty = function()
 
     logger.info("enabling color party");
 
-    exports.spawned = spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT], {detached: true});
-    exports.spawned.stdout.setEncoding('utf8');
+    exports.spawned = {
+        process: spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT]),
+        type: "colorparty"
+    };
 
-    exports.spawned.stderr.on('data', function (data)
+    exports.spawned.process.stdout.setEncoding('utf8');
+
+    exports.spawned.process.stderr.on('data', function (data)
     {
         logger.error("received err: ", data.toString());
     });
 
-    exports.spawned.stdout.on('data', function (data)
+    exports.spawned.process.stdout.on('data', function (data)
     {
         logger.info("received data: ", data);
     });
@@ -127,25 +157,29 @@ exports.lightshow = function(title)
     exports.allOff();
 
     var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
-    var lightshowStarter = config.baseBath + '/actors/lightshow';
     var volume = config.volume;
+    var params = ["start", ledLibLocation, title, LED_COUNT, volume];
 
-    logger.info("starting " + lightshowStarter + " with file " + title + " and " + LED_COUNT + " leds @volume " + volume + ", led base lib: " + ledLibLocation);
+    logger.info("calling " + exports.lightshowStarter + " " + params.join(" "));
 
-    exports.spawned = spawn(lightshowStarter, [ledLibLocation, title, LED_COUNT, volume], {detached: true});
-    exports.spawned.stdout.setEncoding('utf8');
+    exports.spawned = {
+        process: spawn(exports.lightshowStarter, params, { detached: true }),
+        type: "lightshow"
+    };
 
-    exports.spawned.stderr.on('data', function (data)
+    exports.spawned.process.stdout.setEncoding('utf8');
+
+    exports.spawned.process.stderr.on('data', function (data)
     {
         logger.error("received err: ", data.toString());
     });
 
-    exports.spawned.stdout.on('data', function (data)
+    exports.spawned.process.stdout.on('data', function (data)
     {
         //console.log(data.toString());
     });
 
-    exports.spawned.on("close", function(returnCode)
+    exports.spawned.process.on("close", function(returnCode)
     {
         logger.info("lightshow finished with " + returnCode);
     });
