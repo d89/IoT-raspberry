@@ -95,7 +95,7 @@ class date extends baseSensor
 
         ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"].forEach(function(day, i)
         {
-            (function(day, i)
+            (function(day, count)
             {
                 exposedParent["is_" + day] =
                 {
@@ -103,12 +103,13 @@ class date extends baseSensor
                     {
                         if (!that.validateDataPresence()) return false;
                         var dayOfWeek = moment(that.sensordata.is).toDate().getDay();
-                        var triggered = (dayOfWeek == i);
+                        var triggered = (dayOfWeek == count);
+
                         return that.processCondition("is_" + day, val, triggered);
                     },
                     params: []
                 };
-            }(day));
+            }(day, i));
         });
 
         delete exposedParent["is_lt"];

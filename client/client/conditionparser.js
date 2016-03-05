@@ -459,6 +459,12 @@ exports.processParamInput = function(paramString)
         return e;
     });
 
+    //special case, because $sensor.method() or $actor.method() is reported as empty string parameter
+    if (params.length === 1 && params[0] === "")
+    {
+        params = [];
+    }
+
     return params;
 };
 
