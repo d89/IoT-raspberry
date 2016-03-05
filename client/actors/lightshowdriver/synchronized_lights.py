@@ -119,10 +119,9 @@ parser.add_argument('--ledcount', type=int, default=20, help='Number of leds in 
 # --------------- IOT EDIT END ----------------
 
 filegroup = parser.add_mutually_exclusive_group()
-filegroup.add_argument('--playlist', default="playlist_path",
-                       help='Playlist to choose song from.')
-filegroup.add_argument('--file', help='path to the song to play (required if no '
-                                      'playlist is designated)')
+filegroup.add_argument('--playlist', default="playlist_path", help='Playlist to choose song from.')
+filegroup.add_argument('--file', help='path to the song to play (required if no playlist is designated)')
+filegroup.add_argument('--linein', help='sound card that the led strip should synchronize with')
 
 parser.add_argument('--readcache', type=int, default=1,
                     help='read light timing from cache if available. Default: true')
@@ -322,6 +321,9 @@ def audio_in():
 
     sample_rate = cm.lightshow.input_sample_rate
     num_channels = cm.lightshow.input_channels
+
+    print "input sound card"
+    print cm.lightshow.audio_in_card
 
     if cm.lightshow.mode == 'audio-in':
         # Open the input stream from default input device
@@ -931,9 +933,9 @@ if __name__ == "__main__":
         print "One of --playlist or --file must be specified"
         sys.exit()
 
-    if "-in" in cm.lightshow.mode:
-        audio_in()
-    elif client:
-        network_client()
-    else:
+    if args.file:
         play_song()
+    elif args.linein:
+        cm.lightshow.mode = "audio-in"
+        cm.lightshow.audio_in_card = args.linein
+        audio_in()

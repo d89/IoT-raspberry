@@ -114,6 +114,38 @@
                         </div>
                     </a>
                 </div>
+
+                <div class="col-xs-6 col-sm-4 col-lg-2">
+                    <a style="cursor: pointer" class="block block-link-hover2 text-center" ng-click="volume()">
+                        <div class="block-content block-content-full bg-primary">
+                            <i class="fa fa-microphone fa-4x text-white"></i>
+                            <div class="font-w600 text-white-op push-15-t">Change base volume</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="block">
+        <div class="block-header">
+            <h3 class="block-title">Audio Recorder</h3>
+        </div>
+        <div class="block-content text-white">
+
+            <div class="alert alert-info" ng-show="isRecording">
+                <p>Currently recording audio.</p>
+            </div>
+
+            <div class="row">
+                <div ng-hide="isRecording" class="col-xs-6 col-sm-4 col-lg-2">
+                    <a style="cursor: pointer" class="block block-link-hover2 text-center" ng-click="startRecording()">
+                        <div class="block-content block-content-full bg-primary">
+                            <i class="fa fa-microphone fa-4x text-white"></i>
+                            <div class="font-w600 text-white-op push-15-t">Record Audio</div>
+                        </div>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -199,8 +231,17 @@
                 <div class="col-xs-6 col-sm-4 col-lg-2" id="lightshow">
                     <a style="cursor: pointer" class="block block-link-hover2 text-center" ng-click="lightshow()">
                         <div class="block-content block-content-full bg-danger">
-                            <i class="fa fa-music fa-4x text-white"></i>
+                            <i class="si si-music-tone fa-4x text-white"></i>
                             <div class="font-w600 text-white-op push-15-t">Sound Lightshow</div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-xs-6 col-sm-4 col-lg-2" ng-hide="isRecording">
+                    <a style="cursor: pointer" class="block block-link-hover2 text-center" ng-click="lightshowSynchronize()">
+                        <div class="block-content block-content-full bg-primary-dark">
+                            <i class="fa fa-music fa-4x text-white"></i>
+                            <div class="font-w600 text-white-op push-15-t">Synchronize Sounds</div>
                         </div>
                     </a>
                 </div>

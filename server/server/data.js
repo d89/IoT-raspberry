@@ -261,7 +261,7 @@ app.post('/putvideo', upload.single('vid'), function(req, res)
     var clientNameHashed = crypto.createHash('md5').update(req.body.client).digest('hex');
     var targetName = req.file.originalname + "-" + clientNameHashed;
 
-    video.convertVideo(req.file.path, targetName, function(err, msg)
+    video.moveVideo(req.file.path, targetName, function(err, msg)
     {
         if (err)
         {
@@ -286,8 +286,8 @@ app.get('/video/:videofile', function(req, res)
     var clientNameHashed = crypto.createHash('md5').update(req.query.client).digest('hex');
 
     //in videoName:  video-20160220-152355
-    //on filesystem: video-20160220-152355.h264-ac66844e53bc30cfbb02a422a8290980.mp4
-    var videoName = config.mediaBasePath + "/" + videofile + ".h264-" + clientNameHashed + ".mp4";
+    //on filesystem: video-20160220-152355.mp4-ac66844e53bc30cfbb02a422a8290980.mp4
+    var videoName = config.mediaBasePath + "/" + videofile + ".mp4-" + clientNameHashed + ".mp4";
 
     if (!fs.existsSync(videoName))
     {

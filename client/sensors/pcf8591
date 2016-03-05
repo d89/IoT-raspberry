@@ -13,25 +13,26 @@ import datetime
 json_template = { 'poti': 0, 'light': 0, 'time': str(datetime.datetime.now().time()) }
 
 def setup():
-	ADC.setup(0x48)
+    ADC.setup(0x48)
 
 def loop():
-	while True:
+    while True:
 
-		if False:
-			print "---------------------------"
-			for i in range(4):
-				print i, ADC.read(i)
-				ADC.write(ADC.read(i))
+        if False:
+            print "---------------------------"
+            for i in range(4):
+                print i, ADC.read(i)
+                ADC.write(ADC.read(i))
 
-		json_template['time'] = str(datetime.datetime.now().time())
-		json_template['poti'] = ADC.read(3)
-		json_template['light'] = ADC.read(0)
-		print json.dumps(json_template)
-		sys.stdout.flush()
+        json_template['time'] = str(datetime.datetime.now().time())
+        json_template['poti'] = ADC.read(3)
+        json_template['light'] = ADC.read(0)
 
-		time.sleep(2.0)
+        print json.dumps(json_template)
+        sys.stdout.flush()
+
+        time.sleep(2.0)
 
 if __name__ == "__main__":
-	setup()
-	loop()
+    setup()
+    loop()

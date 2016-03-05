@@ -223,7 +223,6 @@ var Styles = function() {
                     .addClass('sidebar-r');
                 break;
             case 'sidebar_toggle':
-                console.log("!!!!!!!!!!!!!!!!!!!!! TOGGLE !!!!!!!!!!!!!!!!!!!!!!!!!!");
                 if ($windowW > 991) {
                     $lPage.toggleClass('sidebar-o');
                 } else {
@@ -1208,9 +1207,19 @@ var Styles = function() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         },
 
+        escapeStringForSelector: function(str)
+        {
+            if (str)
+                return str.replace(/([ #;?%&,.+*~\':"!^$[\]()=>|\/@])/g,'\\$1');
+
+            return str;
+        },
+
         hightlightScroll: function(element)
         {
             element = $(element);
+
+            if (!element.length) return;
 
             $('html, body').animate
             ({

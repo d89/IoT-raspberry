@@ -1,5 +1,0 @@
-#!/bin/bash
-
-DATE=$(date +"%Y-%m-%d_%H%M%S")
-
-raspistill --width 640 --height 480 -ex sports --nopreview --timeout 1 -o /home/pi/camera/$DATE.jpg

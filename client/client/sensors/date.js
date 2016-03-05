@@ -93,6 +93,24 @@ class date extends baseSensor
             }(unit));
         }
 
+        ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"].forEach(function(day, i)
+        {
+            (function(day, i)
+            {
+                exposedParent["is_" + day] =
+                {
+                    method: function(val)
+                    {
+                        if (!that.validateDataPresence()) return false;
+                        var dayOfWeek = moment(that.sensordata.is).toDate().getDay();
+                        var triggered = (dayOfWeek == i);
+                        return that.processCondition("is_" + day, val, triggered);
+                    },
+                    params: []
+                };
+            }(day));
+        });
+
         delete exposedParent["is_lt"];
 
         return exposedParent;

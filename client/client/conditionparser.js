@@ -377,6 +377,8 @@ exports.processIfClause = function(ifClause, sensors)
 
         methods.push(exposedMethods[methodName]);
 
+        exports.validateParameterPresence(methodName, exposedMethods[methodName].params, parameters);
+
         return exposedMethods[methodName].method.apply(this, parameters);
     });
 
@@ -458,6 +460,23 @@ exports.processParamInput = function(paramString)
     });
 
     return params;
+};
+
+exports.validateParameterPresence = function(methodName, expectedParameters, receivedParameters)
+{
+    if (expectedParameters.length < receivedParameters.length)
+    {
+        throw "got " + receivedParameters.length + " parameters for " + methodName + ", expected " + expectedParameters.length;
+    }
+
+    expectedParameters.forEach(function(exp, i)
+    {
+        //ensured to be a string
+        if (typeof receivedParameters[i] == "undefined" || !receivedParameters[i].length)
+        {
+           throw "missing required parameter " + (i + 1) + " for " + methodName;
+        }
+    });
 };
 
 exports.processThenClause = function(thenClause, actors, simulateCall)
@@ -545,6 +564,8 @@ exports.processThenClause = function(thenClause, actors, simulateCall)
         {
             var result = "";
             var errorMessage = false;
+
+            exports.validateParameterPresence(methodName, exposedMethods[methodName].params, parameters);
 
             if (!simulateCall)
             {

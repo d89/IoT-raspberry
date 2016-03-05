@@ -25,6 +25,10 @@ exports.exposed = function()
             method: exports.randomColor,
             params: []
         },
+        synchronize: {
+            method: exports.synchronize,
+            params: []
+        },
         lightshow: {
             method: exports.lightshow,
             params: [{
@@ -72,18 +76,26 @@ exports.allOff = function()
             else if (exports.spawned.type === "lightshow")
             {
                 logger.info("killing lightshow");
-                var params = ["stop", exports.spawned.process.pid];
-                var killer = spawn(exports.lightshowStarter, params);
 
-                killer.stderr.on('data', function (data)
+                if (exports.spawned.process.pid)
                 {
-                    logger.error("received killer err: ", data.toString());
-                });
+                    var params = ["stop", exports.spawned.process.pid];
+                    var killer = spawn(exports.lightshowStarter, params);
 
-                killer.stdout.on('data', function (data)
+                    killer.stderr.on('data', function (data)
+                    {
+                        logger.error("received killer err: ", data.toString());
+                    });
+
+                    killer.stdout.on('data', function (data)
+                    {
+                        logger.info("received killer data: ", data.toString());
+                    });
+                }
+                else
                 {
-                    logger.info("received killer data: ", data.toString());
-                });
+                    logger.error("No pid known of lightshow to be stopped");
+                }
 
                 logger.info("killed led strip group!");
             }
@@ -142,6 +154,39 @@ exports.randomColor = function()
     exports.singleColor(randomColor(), randomColor(), randomColor());
 };
 
+exports.synchronize = function()
+{
+    exports.allOff();
+
+    var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
+    var volume = config.volume;
+    var params = ["line-in", ledLibLocation, config.soundCardInput, LED_COUNT];
+
+    logger.info("calling " + exports.lightshowStarter + " " + params.join(" "));
+
+    exports.spawned = {
+        process: spawn(exports.lightshowStarter, params, { detached: true }),
+        type: "lightshow"
+    };
+
+    exports.spawned.process.stdout.setEncoding('utf8');
+
+    exports.spawned.process.stderr.on('data', function (data)
+    {
+        logger.error("received err: ", data.toString());
+    });
+
+    exports.spawned.process.stdout.on('data', function (data)
+    {
+        //console.log(data.toString());
+    });
+
+    exports.spawned.process.on("close", function(returnCode)
+    {
+        logger.info("lightshow finished with " + returnCode);
+    });
+};
+
 exports.lightshow = function(title)
 {
     title = title || "song.mp3";
@@ -157,8 +202,7 @@ exports.lightshow = function(title)
     exports.allOff();
 
     var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
-    var volume = config.volume;
-    var params = ["start", ledLibLocation, title, LED_COUNT, volume];
+    var params = ["start-music", ledLibLocation, title, LED_COUNT];
 
     logger.info("calling " + exports.lightshowStarter + " " + params.join(" "));
 

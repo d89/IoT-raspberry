@@ -5,11 +5,15 @@ import sys
 
 lcd = lcddriver.lcd()
 
+#lcd.backlight(1)
+
 if (len(sys.argv) >= 2):
-    lcd.lcd_display_string(sys.argv[1], 1)
+    lcd.display_string(sys.argv[1], 1)
 if (len(sys.argv) >= 3):
-    lcd.lcd_display_string(sys.argv[2], 2)
+    lcd.display_string(sys.argv[2], 2)
 if (len(sys.argv) >= 4):
-    lcd.lcd_display_string(sys.argv[3], 3)
+    lcd.display_string(sys.argv[3], 3)
 if (len(sys.argv) >= 5):
-    lcd.lcd_display_string(sys.argv[4], 4)
+    lcd.display_string(sys.argv[4], 4)
+
+#lcd.backlight(0)

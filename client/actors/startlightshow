@@ -7,20 +7,27 @@ if [ "$MODE" == "stop" ]; then
     echo "killing $KILL_PID"
     kill -SIGINT -$KILL_PID
     exit
-elif [ "$MODE" == "start" ]; then
+elif [ "$MODE" == "start-music" ]; then
     LED_LIB_BASE=${args[1]}
     SONG_NAME=${args[2]}
     LED_COUNT=${args[3]}
-    VOLUME=${args[4]}
-    echo "starting with $LED_LIB_BASE"
-    echo setting volume to $VOLUME
-    amixer set PCM -- $VOLUME
     echo LED Base Library Location $LED_LIB_BASE
     echo Playing song $SONG_NAME
     echo LED count $LED_COUNT
     export SYNCHRONIZED_LIGHTS_HOME="/opt/lightshow/lightshowpi"
     export PYTHONPATH=$PYTHONPATH:$LED_LIB_BASE
     /opt/lightshow/lightshowpi/py/synchronized_lights.py --ledcount $LED_COUNT --file "$SONG_NAME"
+elif [ "$MODE" == "line-in" ]; then
+    LED_LIB_BASE=${args[1]}
+    SOUND_CARD_INPUT=${args[2]}
+    LED_COUNT=${args[3]}
+    echo LED Base Library Location $LED_LIB_BASE
+    echo Synchronizing with input
+    echo LED count $LED_COUNT
+    echo Sound Card Input $SOUND_CARD_INPUT
+    export SYNCHRONIZED_LIGHTS_HOME="/opt/lightshow/lightshowpi"
+    export PYTHONPATH=$PYTHONPATH:$LED_LIB_BASE
+    /opt/lightshow/lightshowpi/py/synchronized_lights.py --ledcount $LED_COUNT --linein $SOUND_CARD_INPUT
 else
     echo "invalid command"
     exit

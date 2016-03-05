@@ -3,6 +3,7 @@ var config = require('./config');
 var spawn = require('child_process').spawn;
 var glob = require('glob');
 var path = require('path');
+var fs = require('fs');
 
 var receiveLine = function(str) {
     return ("" + str).replace(/(\r\n|\n|\r)/gm,"");
@@ -90,7 +91,23 @@ exports.download = function(ytID, onout, ondone)
 
         process.on("close", function(retCode)
         {
-            ondone(retCode, extractedFilename);
+            if (extractedFilename && fs.existsSync(config.mediaBasePath + "/" + extractedFilename))
+            {
+                //remove braces from file name, otherwise the clip cannot be played from ifttt parser
+                var withoutBraces = extractedFilename.replace(/[\(\)]/g, "");
+
+                if (withoutBraces !== extractedFilename)
+                {
+                    logger.info("filename contains braces - renaming to " + withoutBraces);
+                    fs.renameSync(config.mediaBasePath + "/" + extractedFilename, config.mediaBasePath + "/" + withoutBraces);
+                }
+
+                ondone(retCode, withoutBraces);
+            }
+            else
+            {
+                ondone(retCode, extractedFilename);
+            }
         });
     };
 

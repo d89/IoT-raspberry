@@ -35,7 +35,9 @@ module.exports = {
         basic_auth_password: "admin",
         port: 8083
     },
-    volume: "-1500", //-15.00 db
+    volume: 70, //in percent from 0 to 100
+    soundCardInput: 1, //alsamixer -> F6 -> number of interface
+    soundCardOutput: 0, //alsamixer -> F6 -> number of interface
     ttsApiKey: "*** snip ***", //voicerss.org
     password: "*** snip ***"
 };

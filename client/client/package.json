@@ -9,6 +9,7 @@
   "author": "David Müller",
   "license": "MIT",
   "dependencies": {
+    "async": "^1.5.2",
     "glob": "^7.0.0",
     "lpd8806": "^0.2.0",
     "moment": "^2.11.1",

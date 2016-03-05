@@ -3,8 +3,8 @@
 var io = require('socket.io-client');
 var config = require('./config');
 var spawn = require('child_process').spawn;
-var exec = require('child_process').exec;
 var fs = require('fs');
+var path = require('path');
 var logger = require('./logger');
 var sensormanagement = require('./sensormanagement');
 var actormanagement = require('./actormanagement');
@@ -104,6 +104,42 @@ socketmanager.socket.on('actionrequest', function(msg, resp)
         }
     }
 
+    //Recording ---------------------------------------------------------------------------
+    if (msg.type === "record")
+    {
+        var start = msg.data.mode === "start";
+
+        if (start) {
+            logger.info("start recording");
+            actormanagement.registeredActors["recorder"].act(false, msg.data.maxLength, config.mediaBasePath, function(err, fileName)
+            {
+                if (err)
+                    return resp(err);
+
+                //the full path is returned, we only want the raw file name
+                if (fileName)
+                    return resp(null, path.basename(fileName));
+            });
+        }
+    }
+
+    //Volume ---------------------------------------------------------------------------
+    if (msg.type === "volume")
+    {
+        var volume = parseFloat(msg.data, 10);
+
+        if (isNaN(volume) || volume < 0 || volume > 100)
+        {
+            logger.error("invalid volume - setting to default");
+            volume = config.volume;
+        }
+
+        //Volume ranges from 0 to 100%
+        logger.info("setting volume to ", volume);
+        spawn("amixer", ["set", "PCM", "--", volume + "%"]);
+        config.volume = volume;
+    }
+
     //Temperature -------------------------------------------------------------------------
     if (msg.type === "settemperature")
     {
@@ -158,8 +194,17 @@ socketmanager.socket.on('actionrequest', function(msg, resp)
         }
         else if (mode === "lightshow")
         {
-            var file = msg.data.file;
-            actormanagement.registeredActors["ledstrip"].lightshow(file);
+            var style = msg.data.style;
+
+            if (style === "music")
+            {
+                var file = msg.data.file;
+                actormanagement.registeredActors["ledstrip"].lightshow(file);
+            }
+            else if (style === "linein")
+            {
+                actormanagement.registeredActors["ledstrip"].synchronize();
+            }
         }
         else
         {
@@ -208,7 +253,8 @@ socketmanager.socket.on('audio', function(msg, resp)
                 logger.error("audio listing: ", err);
                 return resp(err);
             }
-            logger.info("audio listing: got", audios);
+
+            //logger.info("audio listing: got", audios);
 
             resp(null, audios);
         });

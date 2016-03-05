@@ -130,7 +130,7 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
                 console.log("is success");
                 $scope.loadAudios(function()
                 {
-                    Styles.hightlightScroll($("[data-filename='" + file + "']"));
+                    Styles.hightlightScroll($("[data-filename='" + Styles.escapeStringForSelector(file) + "']"));
                 });
             }
             else
@@ -155,6 +155,29 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
         });
     };
 
+    $scope.checkAutoPlay = function()
+    {
+        var track = $routeParams.track;
+        var ytid = $routeParams.ytid;
+
+        if (ytid)
+        {
+            $scope.downloading = true;
+
+            console.log("starting youtube download");
+            $scope.youtubeProgressMessage("info", "Starting Youtube Download");
+            $scope.youtube(ytid);
+        }
+        else if (track)
+        {
+            setTimeout(function()
+            {
+                var element = $("[data-filename='" + Styles.escapeStringForSelector(track) + "']");
+                Styles.hightlightScroll(element);
+            }, 500);
+        }
+    };
+
     //-----------------------------------------------------
 
     $scope.init = function()
@@ -165,25 +188,16 @@ IoT.controller('IoTAudioCtrl', function ($scope, $rootScope, $timeout, $compile,
         $scope.connect(false, function()
         {
             console.log("is connection");
-            $scope.loadAudios();
+            $scope.loadAudios(function()
+            {
+                $scope.checkAutoPlay();
+            });
 
             //register youtube download status
             SocketFactory.registerLifecycleCallback("youtube-download", function(msg)
             {
                 $scope.youtubeProgress(msg);
             }, "yt");
-
-            //check auto play
-            var ytid = $routeParams.ytid;
-
-            if (ytid)
-            {
-                $scope.downloading = true;
-
-                console.log("starting youtube download");
-                $scope.youtubeProgressMessage("info", "Starting Youtube Download");
-                $scope.youtube(ytid);
-            }
         });
     };
 

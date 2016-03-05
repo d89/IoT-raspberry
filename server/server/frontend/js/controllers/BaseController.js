@@ -144,8 +144,12 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         });
     };
 
+    $scope.currentSensorValue = {};
+
     $scope.onDataUpdate = function(message, messageCount)
     {
+        $scope.currentSensorValue[message.type] = message.data;
+
         $scope.clientMessages = messageCount;
         $scope.$apply();
     };

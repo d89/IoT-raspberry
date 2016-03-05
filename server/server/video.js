@@ -5,43 +5,22 @@ var logger = require("./logger");
 var spawn = require('child_process').spawn;
 const MAX_KEEP_FILES = 5;
 
-exports.convertVideo = function(inputFile, targetName, cb)
+exports.moveVideo = function(inputFile, targetName, cb)
 {
     exports.deleteOldFiles();
 
-    var finalVideoName = config.mediaBasePath + "/" + targetName;
-    logger.info("received file upload at " + inputFile + " and converting to " + finalVideoName);
+    var finalVideoName = config.mediaBasePath + "/" + targetName + ".mp4";
+    logger.info("received file upload at " + inputFile + " and moving to " + finalVideoName);
 
     if (!fs.existsSync(inputFile))
     {
         return cb("error receiveing video");
     }
 
-    //extension .h264 needed for MP4Box to know the format
-    var originalVideoName = inputFile + ".h264";
-    fs.renameSync(inputFile, originalVideoName);
-
-    //original file could not be moved?
-    if (!fs.existsSync(originalVideoName))
+    fs.rename(inputFile, finalVideoName, function(err)
     {
-        return cb("could not move file");
-    }
-
-    //.mp4 extension needed for the html5 player
-    finalVideoName = finalVideoName + ".mp4";
-    var conversion = spawn("MP4Box", ["-add", originalVideoName, finalVideoName]);
-
-    conversion.on("close", function(retCode)
-    {
-        logger.info("converted video with code " + retCode, "removing original " + originalVideoName);
-        fs.unlinkSync(originalVideoName);
-
-        var msg = "problem converting video";
-
-        if (retCode !== 0 || !fs.existsSync(finalVideoName))
-        {
-            return cb(msg);
-        }
+        if (err)
+            return cb(null, "could not move video");
 
         return cb(null, "successfully processed video");
     });

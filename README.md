@@ -126,7 +126,7 @@ Siehe Linux Config für systemd
 
 ###USB Soundkarte einrichten
 
-Falls nicht der 3,5" Klinkenstecker verwendet werden soll (bessere Soundqualität):
+Falls nicht der 3,5" Klinkenstecker verwendet werden soll (zwar bessere Soundqualität, aber anfälliger für System-Crashes):
 
 ```sudo nano /usr/share/alsa/alsa.conf```
 
@@ -144,6 +144,8 @@ defaults.ctl.card 1
 defaults.pcm.card 1
 ```
 
+Die ```1``` ist das USB Soundkarten-Interface aus ```cat /proc/asound/cards``` bzw. ```alsamixer -> F6```
+
 Danach ```reboot``` 
 
 Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei):
@@ -157,7 +159,7 @@ Soundvolumen anpassen per Befehl:
 amixer set PCM -- -2000
 ```
 
-Setzt Volume auf -20db.
+Setzt Volume auf -20db. 
 
 Kontrolle per ```alsamixer```
 
@@ -179,7 +181,7 @@ apt-get install -y omxplayer
 omxplayer /home/pi/Music/siren.mp3
 ```
 
-Empfehlung: ```omxplayer```, weil mp3 ***und*** wav Dateien wiedergegeben werden. Problem: ```omxplayer``` respektiert nicht die Einstellungen von ```alsamixer``` und ```amixer```. Daher muss die Lautstärke mitgegben werden:
+Empfehlung: ```omxplayer```, weil mp3 ***und*** wav Dateien wiedergegeben werden. Problem: ```omxplayer``` respektiert nicht die Einstellungen von ```alsamixer``` und ```amixer``` - Wiedergabe über alsa geht generell nicht (d.h. nur USB wird unterstützt, nicht der normale Klinkenanschluss). Daher muss die Lautstärke mitgegben werden:
 
 ```
 omxplayer --vol -2000 /home/pi/Music/siren.mp3
@@ -281,6 +283,20 @@ export PYTHONPATH=$PYTHONPATH:/var/www/IoT-raspberry/actors/ledstripdriver
 python /opt/lightshow/lightshowpi/py/synchronized_lights.py --file "/home/pi/Music/house.mp3" --ledcount 104
 /var/www/IoT-raspberry/actors/lightshow "/var/www/IoT-raspberry/actors/ledstripdriver" "/home/pi/Music/house.mp3" 104
 ```
+
+---
+
+###Camera
+
+MP4Box (required for camera conversion)
+```
+sudo apt-get install gpac
+```
+
+* https://www.raspberrypi.org/documentation/usage/camera/raspicam/raspivid.md
+* https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
+* http://jankarres.de/2013/05/raspberry-pi-raspistill-und-raspivid-parameter/
+* http://raspberrypiguide.de/howtos/raspberry-pi-camera-how-to/
 
 ---
 
@@ -497,20 +513,6 @@ FHEM Referenz zu Z-Wave: http://fhem.de/commandref.html#ZWave
 	for: SainSmart IIC/I2C/TWI Serial 2004 Character 20x4 LCD Display Modul 
 	https://www.auctoritas.ch/bauprojekte/4-ein-sainsmart-lcd-display-am-raspberry-pi-verwenden
 	"i2cdetect 1" instead of "i2cdetect -y 1"
-	
----
-
-###Camera
-
-MP4Box (required for camera conversion)
-```
-sudo apt-get install gpac
-```
-
-* https://www.raspberrypi.org/documentation/usage/camera/raspicam/raspivid.md
-* https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
-* http://jankarres.de/2013/05/raspberry-pi-raspistill-und-raspivid-parameter/
-* http://raspberrypiguide.de/howtos/raspberry-pi-camera-how-to/
 
 ---
 

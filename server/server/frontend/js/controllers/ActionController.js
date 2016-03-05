@@ -81,6 +81,24 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         SocketFactory.send("ui:action", rc);
     };
 
+    $scope.volume = function()
+    {
+        var volumeSetting = localStorage.getItem("volume") || 70;
+
+        var volume = window.prompt("Please enter sound volume between 0 (silent) and 100 (loudest).", volumeSetting);
+
+        if (!volume) return;
+
+        localStorage.setItem("volume", volume);
+
+        var options = {
+            type: "volume",
+            data: volume
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.servo = function(onoff)
     {
         onoff = !!onoff;
@@ -146,12 +164,26 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         SocketFactory.send("ui:action", options);
     };
 
+    $scope.lightshowSynchronize = function()
+    {
+        var options = {
+            type: "ledstrip",
+            data: {
+                mode: "lightshow",
+                style: "linein"
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.playLightshow = function(fileName)
     {
         var options = {
             type: "ledstrip",
             data: {
                 mode: "lightshow",
+                style: "music",
                 file: fileName
             }
         };
@@ -180,6 +212,38 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         };
 
         SocketFactory.send("ui:action", options);
+    };
+
+    $scope.startRecording = function()
+    {
+        var maxLength = window.prompt("Please enter the duration in seconds you want to record.", 8);
+
+        if (!maxLength) return;
+
+        $scope.isRecording = true;
+
+        var recording = {
+            type: "record",
+            data: {
+                mode: "start",
+                maxLength: maxLength
+            }
+        };
+
+        SocketFactory.send("ui:action", recording, function(err, title)
+        {
+            $scope.isRecording = false;
+
+            if (err)
+            {
+                SocketFactory.callLifecycleCallback("functional_error", "Could not record audio: " + err);
+            }
+            else
+            {
+                console.info("finished recording title", title);
+                $location.path('/audio/' + $routeParams.client_id + '/autoplay/' + title);
+            }
+        });
     };
 
     $scope.zwaveTemp = function()
@@ -358,10 +422,23 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         $rootScope.subHeadline = "Trigger Actions On Your IoT device";
         $scope.rgbPicker = "rgb(30,112,23)";
 
+        /*
+        //alternatively: much faster, but tends to overflow
+        $scope.$watch('rgbPicker', function() {
+            var rgb = $scope.rgbPicker.match(/(\d+)/g);
+            $scope.singleColor(rgb[0], rgb[1], rgb[2]);
+        });
+        */
+
         $scope.$on('colorpicker-selected', function(event, colorObject)
         {
-            var rgb = colorObject.value.match(/(\d+)/g);
-            $scope.singleColor(rgb[0], rgb[1], rgb[2]);
+            //alternatively use this, but not always accurate
+            //var rgb = colorObject.value.match(/(\d+)/g);
+            setTimeout(function()
+            {
+                var rgb = $scope.rgbPicker.match(/(\d+)/g);
+                $scope.singleColor(rgb[0], rgb[1], rgb[2]);
+            }, 100);
         });
 
         $scope.connect(false, function()

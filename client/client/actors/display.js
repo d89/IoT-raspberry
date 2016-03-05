@@ -25,6 +25,6 @@ exports.act = function(displaycontent)
         displaycontent = [displaycontent];
     }
 
-    var prc = spawn(config.baseBath + '/sensors/display', displaycontent);
+    var prc = spawn(config.baseBath + '/actors/display', displaycontent);
     prc.stdout.setEncoding('utf8');
 };
