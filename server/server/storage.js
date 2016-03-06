@@ -418,6 +418,11 @@ exports.fullAggregation = function(cb)
     var end = null;
     //--------------------------------------------------
 
+    logger.info("fullAggregation");
+    logger.info("##################################################");
+    logger.info("##################################################");
+    logger.info("##################################################");
+
     var start = function()
     {
         logger.info("##################################################");
@@ -455,7 +460,7 @@ exports.fullAggregation = function(cb)
             var first = moment(firstDoc[0].created);
 
             logger.info("first doc:", firstDoc);
-            logger.info("first date:" + first.format("DD.MM.YYYY HH:mm"));
+            logger.info("first date: " + first.format("DD.MM.YYYY HH:mm"));
 
             start = first.startOf("hour");
             end = moment(first).add(1, "hour");
@@ -580,7 +585,9 @@ exports.fullAggregation = function(cb)
     var flagAggregatedPoints = function()
     {
         coll.update({
-            created: { $gte: start.toDate(), $lt: end.toDate()
+            created: {
+                $gte: start.toDate(),
+                $lt: end.toDate()
         }}, {
             $set: { aggregated: true }
         },  {
@@ -612,6 +619,192 @@ exports.fullAggregation = function(cb)
         logger.info("next round");
         logger.info("##################################################");
         exports.fullAggregation(cb);
+    };
+
+    start();
+};
+
+exports.oldAggregation = function(cb)
+{
+    var AGGREGATION_LEVEL = 1;
+    var coll = db.collection('aggregationpoints');
+    var overallEnd = moment().subtract(7, "days").startOf("day");
+    var startTime = new Date(); //performance measurement
+    //--------------------------------------------------
+
+    logger.info("oldAggregation");
+    logger.info("##################################################");
+    logger.info("##################################################");
+    logger.info("##################################################");
+
+    var start = function()
+    {
+        logger.info("##################################################");
+        logger.info("processing items until " + overallEnd.format("DD.MM.YYYY HH:mm"));
+        logger.info("fetching first item");
+
+        coll.find({ $or: [ {
+            aggregationlevel: null
+        }, {
+            aggregationlevel: { $lt: AGGREGATION_LEVEL }
+        }]}, { sort: [['from', 1]], limit : 1 }).toArray(function(err, firstDoc)
+        {
+            if (!firstDoc || !firstDoc[0] || !firstDoc[0].from)
+            {
+                return cb("No or invalid item found in timespan!" + firstDoc);
+            }
+
+            if (err)
+            {
+                return cb("full aggregation fetch first: " + err);
+            }
+
+            var first = moment(firstDoc[0].from);
+
+            logger.info("first doc:", firstDoc);
+            logger.info("first date: " + first.format("DD.MM.YYYY HH:mm"));
+
+            var start = first.startOf("day");
+            var end = moment(start).add(1, "day").startOf("day");
+
+            if (overallEnd < end)
+            {
+                return cb(null, "stopping aggregation, because the first element >= end " + overallEnd.format("DD.MM.YYYY HH:mm"));
+            }
+
+            logger.info("--------------------------------------------------");
+
+            aggregateTimespan(start, end);
+        });
+    };
+
+    //--------------------------------------------------
+
+    var aggregateTimespan = function(start, end)
+    {
+        logger.info("=> aggregation span: " + start.format("DD.MM.YYYY HH:mm") + " to " + end.format("DD.MM.YYYY HH:mm"));
+
+        coll.aggregate
+        ([
+            {
+                $match: {
+                    from: { $gte: start.toDate() },
+                    to: { $lte: end.toDate() },
+                    $or: [ {
+                        aggregationlevel: null
+                    }, {
+                        aggregationlevel: { $lt: AGGREGATION_LEVEL }
+                    }]
+                }
+            },
+            {
+                $group:
+                {
+                    _id: {
+                        type: '$type',
+                        client_id: '$client_id'
+                    },
+                    avg: {$avg: '$avg'}
+                }
+            }
+        ]).toArray(function(err, docs)
+        {
+            if (err)
+            {
+                return cb("full aggregation agg: " + err);
+            }
+
+            //process aggregation
+            var aggregatedDatapoints = [];
+
+            docs.forEach(function(d)
+            {
+                aggregatedDatapoints.push({
+                    type: d["_id"].type,
+                    avg: d["avg"],
+                    client_id: d["_id"].client_id,
+                    created: (new Date),
+                    from: start.toDate(),
+                    to: end.toDate(),
+                    aggregationlevel: AGGREGATION_LEVEL
+                });
+            });
+
+            exports.logEntry("info", "Aggregation success: " + aggregatedDatapoints.length + " datapoints", true);
+            logger.info("aggregation results: " + aggregatedDatapoints.length + " datapoints");
+            logger.info("--------------------------------------------------");
+
+            storeAggregation(aggregatedDatapoints, start, end);
+        });
+    };
+
+    //--------------------------------------------------
+
+    var storeAggregation = function(aggregatedDatapoints, start, end)
+    {
+        logger.info("storing aggregation for " + aggregatedDatapoints.length + " datapoints");
+
+        if (aggregatedDatapoints.length === 0)
+        {
+            return removeOld(start, end);
+        }
+
+        coll.insertMany(aggregatedDatapoints, function(err, res)
+        {
+            if (err && err.toString().indexOf("duplicate key") === -1)
+            {
+                return cb("full aggregation storage: " + err);
+            }
+
+            logger.info("stored in aggregationpoints: " + aggregatedDatapoints.length + " datapoints");
+            logger.info("--------------------------------------------------");
+
+            return removeOld(start, end);
+        });
+    };
+
+    //--------------------------------------------------
+
+    var removeOld = function(start, end)
+    {
+        logger.info("deleting already aggregated items");
+
+        coll.deleteMany({
+            from: { $gte: start.toDate() },
+            to: { $lte: end.toDate() },
+            $or: [ {
+                aggregationlevel: null
+            }, {
+                aggregationlevel: { $lt: AGGREGATION_LEVEL }
+            }]
+        }, function(err, res)
+        {
+            if (err)
+            {
+                return cb("delete aggregation: " + err);
+            }
+
+            var log = "deleted " + res.result.n + " too old aggregated datapoints";
+            exports.logEntry("info", log, true);
+            logger.info(log);
+
+            logger.info("--------------------------------------------------");
+
+            roundDone();
+        });
+    };
+
+    //--------------------------------------------------
+
+    var roundDone = function()
+    {
+        var timeSpend = ((new Date).getTime() - startTime.getTime()) / 1000;
+        var log = "aggregation round done in " + timeSpend + " seconds";
+        logger.info(log);
+        exports.logEntry("success", log, true);
+        logger.info("next round");
+        logger.info("##################################################");
+        exports.oldAggregation(cb);
     };
 
     start();

@@ -420,7 +420,17 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
     {
         $rootScope.mainHeadline = "IoT Portal: Actions";
         $rootScope.subHeadline = "Trigger Actions On Your IoT device";
-        $scope.rgbPicker = "rgb(30,112,23)";
+
+        var randomColor = function()
+        {
+            var min = 0;
+            var max = 255;
+            return Math.floor(Math.random()*(max-min+1)+min);
+        };
+
+        var color = [randomColor(), randomColor(), randomColor()].join(",");
+
+        $scope.rgbPicker = "rgb(" + color + ")";
 
         /*
         //alternatively: much faster, but tends to overflow
