@@ -6,7 +6,7 @@ var path = require('path');
 var fs = require('fs');
 
 var SOUND_CARD = config.soundCardInput;
-const MAKE_LOUDER = 4; //make the recording 4 times louder
+const MAKE_LOUDER = 12; //make the recording 4 times louder
 
 var receiveLine = function(str) {
     return ("" + str).replace(/(\r\n|\n|\r)/gm,"");

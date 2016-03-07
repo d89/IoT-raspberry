@@ -5,6 +5,7 @@ import sys
 LED = int(sys.argv[1])
 
 GPIO.setmode(GPIO.BOARD)
+GPIO.setwarnings(False)
 GPIO.setup(LED, GPIO.OUT)
 GPIO.setup(LED, GPIO.LOW)
 
