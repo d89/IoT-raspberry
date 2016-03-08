@@ -39,7 +39,7 @@ class watt extends baseSensor
                 logger.error(err);
             } else {
                 var watt = msg.match(/\d+\.\d+/);
-                if (watt.length !== 1 || isNaN(parseFloat(watt[0], 10))) {
+                if (!watt || watt.length !== 1 || isNaN(parseFloat(watt[0], 10))) {
                     logger.error("fhem zwave get measured watt could not parse " + msg);
                 } else {
                     that.senddata(watt[0], that);
