@@ -51,7 +51,7 @@ exports.post = function(urlPath, requestObject, cb)
         }
         else //success
         {
-            cb(null, "fhem successfully set " + JSON.stringify(requestObject));
+            cb(null, body);
         }
     });
 };

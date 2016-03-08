@@ -55,16 +55,47 @@ socketmanager.socket.on('actionrequest', function(msg, resp)
 
         logger.info(`actionrequest for rc switch ${switchNumber} to status ${onoff}`);
 
-        actormanagement.registeredActors["switchrc"].act(1, switchNumber, onoff);
+        actormanagement.registeredActors["switchrc"].turnSwitch(1, switchNumber, onoff);
     }
 
+    //RC SWITCH  -----------------------------------------------------------------------
+    if (msg.type === "switchzwave")
+    {
+        var switchName = msg.data.switchName;
+        var onoff = msg.data.onoff;
+
+        logger.info(`actionrequest for zwave switch ${switchName} to status ${onoff}`);
+
+        if (onoff)
+            actormanagement.registeredActors["switchzwave"].on(switchName);
+        else
+            actormanagement.registeredActors["switchzwave"].off(switchName);
+    }
+
+    //Servo Engine  ---------------------------------------------------------------------
     if (msg.type === "servo")
     {
         var onoff = msg.data.onoff;
 
         logger.info(`actionrequest for servo to status ${onoff}`);
 
-        actormanagement.registeredActors["servo"].act(onoff);
+        if (onoff)
+            actormanagement.registeredActors["servo"].on();
+        else
+            actormanagement.registeredActors["servo"].off();
+    }
+
+    //Stepper Engine  -------------------------------------------------------------------
+    if (msg.type === "stepper")
+    {
+        var onoff = msg.data.onoff;
+
+        logger.info(`actionrequest for stepper to status ${onoff}`);
+
+        if (onoff)
+            actormanagement.registeredActors["stepper"].on();
+        else
+            actormanagement.registeredActors["stepper"].off();
     }
 
     //LED ------------------------------------------------------------------------------
@@ -87,7 +118,7 @@ socketmanager.socket.on('actionrequest', function(msg, resp)
     {
         logger.info(`actionrequest for Voice with text ${msg.data}`);
 
-        actormanagement.registeredActors["voice"].act(msg.data);
+        actormanagement.registeredActors["voice"].speak(msg.data);
     }
 
     //Music ------------------------------------------------------------------------------
@@ -100,7 +131,7 @@ socketmanager.socket.on('actionrequest', function(msg, resp)
             actormanagement.registeredActors["music"].stop();
         } else {
             logger.info(`actionrequest for music with title ${msg.data}`);
-            actormanagement.registeredActors["music"].act(msg.data);
+            actormanagement.registeredActors["music"].play(msg.data);
         }
     }
 
@@ -111,7 +142,7 @@ socketmanager.socket.on('actionrequest', function(msg, resp)
 
         if (start) {
             logger.info("start recording");
-            actormanagement.registeredActors["recorder"].act(false, msg.data.maxLength, config.mediaBasePath, function(err, fileName)
+            actormanagement.registeredActors["recorder"].record(false, msg.data.maxLength, config.mediaBasePath, function(err, fileName)
             {
                 if (err)
                     return resp(err);
@@ -157,11 +188,11 @@ socketmanager.socket.on('actionrequest', function(msg, resp)
 
         if (type === "zwave")
         {
-            actormanagement.registeredActors["set_temperature_zwave"].act(temp, thermostat);
+            actormanagement.registeredActors["set_temperature_zwave"].settemp(temp, thermostat);
         }
         else if (type === "homematic")
         {
-            actormanagement.registeredActors["set_temperature_homematic"].act(temp, thermostat);
+            actormanagement.registeredActors["set_temperature_homematic"].settemp(temp, thermostat);
         }
         else
         {
@@ -316,7 +347,7 @@ socketmanager.socket.on('ifttt', function(msg, resp)
     //saveconditions  -------------------------------------------------------------------
     if (msg.mode === "saveconditions")
     {
-        logger.info("ifttt request for saveconditions with conds", msg.conditions);
+        logger.info("ifttt request for saveconditions");
 
         try
         {

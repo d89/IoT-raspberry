@@ -15,8 +15,8 @@ var receiveLine = function(str) {
 exports.exposed = function()
 {
     return {
-        act: {
-            method: exports.act,
+        record: {
+            method: exports.record,
             params: [{
                 name: "title",
                 isOptional: true,
@@ -99,7 +99,7 @@ exports.convert = function(title, cb)
     });
 };
 
-exports.act = function(title, maxLength, basePath, recordCb)
+exports.record = function(title, maxLength, basePath, recordCb)
 {
     title = title || "recording-" + (new Date).getTime() + ".wav";
     title = title.replace("..", "");

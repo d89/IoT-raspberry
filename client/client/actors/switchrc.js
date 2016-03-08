@@ -34,36 +34,36 @@ exports.exposed = function()
 
 exports.switch1on = function()
 {
-    exports.act(1, 1, 1);
+    exports.turnSwitch(1, 1, 1);
 };
 
 exports.switch1off = function()
 {
-    exports.act(1, 1, 0);
+    exports.turnSwitch(1, 1, 0);
 };
 
 exports.switch2on = function()
 {
-    exports.act(1, 2, 1);
+    exports.turnSwitch(1, 2, 1);
 };
 
 exports.switch2off = function()
 {
-    exports.act(1, 2, 0);
+    exports.turnSwitch(1, 2, 0);
 };
 
 exports.switch3on = function()
 {
-    exports.act(1, 3, 1);
+    exports.turnSwitch(1, 3, 1);
 };
 
 exports.switch3off = function()
 {
-    exports.act(1, 3, 0);
+    exports.turnSwitch(1, 3, 0);
 };
 
 
-exports.act = function(channel, device, state)
+exports.turnSwitch = function(channel, device, state)
 {
     logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
     var spawn = require('child_process').spawn;

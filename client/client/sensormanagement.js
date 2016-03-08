@@ -26,7 +26,12 @@ var desired_temperature_homematic = require('./sensors/desired_temperature_homem
 var measured_temperature_homematic = require('./sensors/measured_temperature_homematic');
 var desired_temperature_zwave = require('./sensors/desired_temperature_zwave');
 var measured_temperature_zwave = require('./sensors/measured_temperature_zwave');
-var battery_zwave = require('./sensors/battery_zwave');
+var battery_thermostat_zwave = require('./sensors/battery_thermostat_zwave');
+var watt = require('./sensors/watt');
+var meter = require('./sensors/meter');
+var lux = require('./sensors/lux');
+var battery_motionsensor_zwave = require('./sensors/battery_motionsensor_zwave');
+var movement_zwave = require('./sensors/movement_zwave');
 // ------------------------------------------------------
 
 actormanagement.registeredActors.led.green();
@@ -168,9 +173,34 @@ exports.init = function(cb)
             thermostatName: "ZWave_THERMOSTAT_11"
         });
 
-        exports.registeredSensors["battery_zwave"] = new battery_zwave({
+        exports.registeredSensors["battery_thermostat_zwave"] = new battery_thermostat_zwave({
             onData: exports.sensorUpdateCallback,
             thermostatName: "ZWave_THERMOSTAT_11"
+        });
+
+        exports.registeredSensors["watt"] = new watt({
+            onData: exports.sensorUpdateCallback,
+            switchName: "ZWave_SWITCH_BINARY_15"
+        });
+
+        exports.registeredSensors["meter"] = new meter({
+            onData: exports.sensorUpdateCallback,
+            switchName: "ZWave_SWITCH_BINARY_15"
+        });
+
+        exports.registeredSensors["lux"] = new lux({
+            onData: exports.sensorUpdateCallback,
+            motionSensorName: "ZWave_SENSOR_BINARY_16"
+        });
+
+        exports.registeredSensors["battery_motionsensor_zwave"] = new battery_motionsensor_zwave({
+            onData: exports.sensorUpdateCallback,
+            motionSensorName: "ZWave_SENSOR_BINARY_16"
+        });
+
+        exports.registeredSensors["movement_zwave"] = new movement_zwave({
+            onData: exports.sensorUpdateCallback,
+            motionSensorName: "ZWave_SENSOR_BINARY_16"
         });
     }
     else
@@ -187,7 +217,7 @@ exports.displayUpdate = function(memUsage)
     {
         exec("ps aux | grep node | wc -l", function(err, out2, stderr)
         {
-            actormanagement.registeredActors.display.act([
+            actormanagement.registeredActors.display.print([
                 "python-proc: " + parseInt(out1, 10),
                 "node-proc: " + parseInt(out2, 10),
                 "mem-usage " + memUsage.toFixed(2) + "%",

@@ -11,6 +11,8 @@ var set_temperature_homematic = require('./actors/set_temperature_homematic');
 var set_temperature_zwave = require('./actors/set_temperature_zwave');
 var ledstrip = require('./actors/ledstrip');
 var recorder = require('./actors/recorder');
+var switchzwave = require('./actors/switchzwave');
+var stepper = require('./actors/stepper');
 
 exports.registeredActors = {
     display: display,
@@ -23,5 +25,7 @@ exports.registeredActors = {
     set_temperature_homematic: set_temperature_homematic,
     set_temperature_zwave: set_temperature_zwave,
     ledstrip: ledstrip,
-    recorder: recorder
+    recorder: recorder,
+    switchzwave: switchzwave,
+    stepper: stepper
 };

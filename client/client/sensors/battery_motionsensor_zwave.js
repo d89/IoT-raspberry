@@ -8,11 +8,11 @@ const INTERVAL = 5000;
 
 // ######################################################
 
-class battery_zwave extends baseSensor
+class battery_motionsensor_zwave extends baseSensor
 {
     constructor(options)
     {
-        super("battery_zwave", options);
+        super("battery_motionsensor_zwave", options);
         this.read();
         this.refreshCounter = 0;
     }
@@ -27,7 +27,7 @@ class battery_zwave extends baseSensor
             return;
         }
 
-        var t = this.options.thermostatName;
+        var t = this.options.motionSensorName;
         var refreshattribute = "battery";
 
         var url = `fhem?detail=${t}&dev.get${t}=${t}&cmd.get${t}=get&arg.get${t}=${refreshattribute}&val.get${t}=&XHR=1`;
@@ -35,9 +35,9 @@ class battery_zwave extends baseSensor
         fhem.get(url, function(err, body)
         {
             if (err) {
-                logger.error("zwave battery refresh: ", err);
+                logger.error("zwave battery motion sensor refresh: ", err);
             } else {
-                //logger.info("zwave battery refresh: ", body);
+                //logger.info("zwave battery motion sensor refresh: ", body);
             }
         });
     }
@@ -47,8 +47,8 @@ class battery_zwave extends baseSensor
         var that = this;
         this.refresh();
 
-        var thermostatName = that.options.thermostatName;
-        var requestObject = '{ReadingsVal("' + thermostatName + '","battery","")}';
+        var motionSensorName = this.options.motionSensorName;
+        var requestObject = '{ReadingsVal("' + motionSensorName + '","battery","")}';
         var url = "fhem?cmd=" + requestObject + "&XHR=1";
 
         fhem.get(url, function(err, body)
@@ -59,9 +59,8 @@ class battery_zwave extends baseSensor
                 var battery = parseFloat(body, 10);
 
                 if (isNaN(battery)) {
-                    logger.error("fhem zwave get battery could not parse " + body);
+                    logger.error("fhem zwave get motion sensor battery could not parse " + body);
                 } else {
-                    //console.log("temp", temp);
                     that.senddata(battery, that);
                 }
             }
@@ -75,8 +74,8 @@ class battery_zwave extends baseSensor
 }
 
 /*
-var t = new measured_temperature_zwave({
-    thermostatName: "ZWave_THERMOSTAT_9",
+var t = new battery_motionsensor_zwave({
+    motionSensorName: "ZWave_SENSOR_BINARY_16",
     onData: function(data, val)
     {
         console.log(data, val);
@@ -84,4 +83,4 @@ var t = new measured_temperature_zwave({
 });
 */
 
-module.exports = battery_zwave;
+module.exports = battery_motionsensor_zwave;

@@ -12,8 +12,8 @@ const MAX_KEEP_FILES = 5;
 exports.exposed = function()
 {
     return {
-        act: {
-            method: exports.act,
+        speak: {
+            method: exports.speak,
             params: [{
                 name: "text",
                 isOptional: false,
@@ -56,7 +56,7 @@ exports.deleteOldFiles = function()
     });
 };
 
-exports.act = function(text)
+exports.speak = function(text)
 {
     logger.info("voice acting");
 
@@ -64,7 +64,7 @@ exports.act = function(text)
 
     var play = function(fileName)
     {
-        music.act(path.basename(fileName));
+        music.play(path.basename(fileName));
     };
 
     var ttsApiKey = config.ttsApiKey;

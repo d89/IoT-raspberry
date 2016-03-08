@@ -94,7 +94,7 @@ var Cam = {
 
         callbacks.push(function(recordingDone)
         {
-            recorder.act(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
+            recorder.record(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
             {
                 if (err)
                     return recordingDone(err);

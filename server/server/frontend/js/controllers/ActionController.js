@@ -65,6 +65,22 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.streamActive = false;
 
+    $scope.zwaveSwitch = function(state)
+    {
+        var switchName = window.prompt("Please enter the ID of the switch", "ZWave_SWITCH_BINARY_15");
+        if (!switchName) return;
+
+        var options = {
+            type: "switchzwave",
+            data: {
+                onoff: !!state,
+                switchName: switchName
+            }
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.rcSwitch = function(nr, state)
     {
         var text = "Turning " + (state ? "on" : "off") + " rc switch " + nr;
@@ -113,6 +129,22 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         };
 
         SocketFactory.send("ui:action", servo);
+    };
+
+    $scope.stepper = function(onoff)
+    {
+        onoff = !!onoff;
+
+        console.log("acting with stepper ", onoff);
+
+        var stepper = {
+            type: "stepper",
+            data: {
+                onoff: onoff
+            }
+        };
+
+        SocketFactory.send("ui:action", stepper);
     };
 
     $scope.led = function(nr)

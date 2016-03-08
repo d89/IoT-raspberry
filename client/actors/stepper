@@ -15,6 +15,16 @@ for pin in StepPins:
   GPIO.setup(pin,GPIO.OUT)
   GPIO.output(pin, False)
 
+
+turnOff = len(sys.argv) == 2 and sys.argv[1] == "off"
+
+if turnOff:
+  for pin in range(0, 4):
+    xpin = StepPins[pin]
+    GPIO.output(xpin, False)
+  print "motor turned off. exiting"
+  sys.exit()
+
 # Define advanced sequence
 # as shown in manufacturers datasheet
 Seq = [[1,0,0,1],

@@ -27,8 +27,13 @@ constants.provider('constant', function()
             "desired_temperature_homematic": "Desired Temp (Homematic)",
             "desired_temperature_zwave": "Desired Temp (Z-Wave)",
             "measured_temperature_zwave": "Measured Temp (Z-Wave)",
-            "battery_zwave": "Battery (Z-Wave)",
-            "diskfree": "Free Disk (MB)"
+            "battery_thermostat_zwave": "Battery Thermostat (Z-Wave)",
+            "diskfree": "Free Disk (MB)",
+            "watt": "Power consumption (Watt)",
+            "meter": "Energy Meter (kwh)",
+            "lux" : "Light intensity Z-Wave (Lux)",
+            "battery_motionsensor_zwave": "Battery Motion Sensor (Z-Wave)",
+            "movement_zwave": "Detected Movement (Z-Wave)"
         }
     };
 

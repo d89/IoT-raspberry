@@ -7,8 +7,8 @@ var fs = require('fs');
 exports.exposed = function()
 {
     return {
-        act: {
-            method: exports.act,
+        play: {
+            method: exports.play,
             params: [{
                 name: "title",
                 isOptional: true,
@@ -31,7 +31,7 @@ exports.stop = function()
     soundmanager.stop();
 };
 
-exports.act = function(title)
+exports.play = function(title)
 {
     logger.info("playing music " + title);
 

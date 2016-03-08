@@ -3,7 +3,7 @@
 #include <stdlib.h>  
 #include <stdint.h>  
 #define MAX_TIME 85  
-#define DHT11PIN 4
+#define DHT11PIN 6
 int dht11_val[5]={0,0,0,0,0};  
   
 void dht11_read_val()  

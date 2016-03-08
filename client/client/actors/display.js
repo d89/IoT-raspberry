@@ -5,8 +5,8 @@ var spawn = require('child_process').spawn;
 exports.exposed = function()
 {
     return {
-        act: {
-            method: exports.act,
+        print: {
+            method: exports.print,
             params: [{
                 name: "displaycontent",
                 isOptional: false,
@@ -17,7 +17,7 @@ exports.exposed = function()
     };
 };
 
-exports.act = function(displaycontent)
+exports.print = function(displaycontent)
 {
     //make array
     if (!displaycontent.splice)

@@ -18,15 +18,15 @@ exports.exposed = function()
 
 exports.red = function()
 {
-    exports.act(40);
+    exports.blink(40);
 };
 
 exports.green = function()
 {
-    exports.act(13);
+    exports.blink(13);
 };
 
-exports.act = function(pin)
+exports.blink = function(pin)
 {
     logger.info("blinking LED PIN " + pin);
 

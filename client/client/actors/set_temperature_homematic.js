@@ -8,7 +8,7 @@ exports.exposed = function()
 {
     return {
         act: {
-            method: exports.act,
+            method: exports.settemp,
             params: [{
                 name: "temp",
                 isOptional: false,
@@ -24,7 +24,7 @@ exports.exposed = function()
     };
 };
 
-exports.act = function(temp, thermostatName)
+exports.settemp = function(temp, thermostatName)
 {
     thermostatName = thermostatName || "HM_37F678";
 
@@ -63,5 +63,3 @@ exports.act = function(temp, thermostatName)
         }
     });
 };
-
-//exports.act(19.5, "HM_37F678");
