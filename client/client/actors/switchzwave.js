@@ -43,14 +43,14 @@ exports.turnSwitch = function(state, switchName)
 
 exports.on = function(switchName)
 {
-    switchName = switchName || "ZWave_SWITCH_BINARY_15";
+    switchName = switchName || "ZWave_SWITCH_BINARY_17";
     logger.info("enabling zwave switch " + switchName);
     exports.turnSwitch(true, switchName);
 };
 
 exports.off = function(switchName)
 {
-    switchName = switchName || "ZWave_SWITCH_BINARY_15";
+    switchName = switchName || "ZWave_SWITCH_BINARY_17";
     logger.info("disabling zwave switch " + switchName);
     exports.turnSwitch(false, switchName);
 };

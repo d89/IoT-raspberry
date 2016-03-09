@@ -1,0 +1,23 @@
+#!/usr/bin/python
+import Adafruit_BMP.BMP085 as BMP085
+import RPi.GPIO as GPIO
+import time
+import json
+import sys
+sensor = BMP085.BMP085()
+#sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
+
+json_template = { 'temp': 0, 'pressure': 0, 'altitude': 0, 'sealevel': 0 }
+send_delay = 3
+
+try:
+    while 1:
+        json_template['temp'] = '{0:0.2f}'.format(sensor.read_temperature())
+        json_template['pressure'] = '{0:0.2f}'.format(sensor.read_pressure())
+        json_template['altitude'] = '{0:0.2f}'.format(sensor.read_altitude())
+        json_template['sealevel'] = '{0:0.2f}'.format(sensor.read_sealevel_pressure())
+        print json.dumps(json_template)
+        sys.stdout.flush()
+        time.sleep(send_delay)
+finally:                   # run on exit
+    GPIO.cleanup()         # clean up

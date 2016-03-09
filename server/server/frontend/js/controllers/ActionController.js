@@ -67,7 +67,7 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.zwaveSwitch = function(state)
     {
-        var switchName = window.prompt("Please enter the ID of the switch", "ZWave_SWITCH_BINARY_15");
+        var switchName = window.prompt("Please enter the ID of the switch", "ZWave_SWITCH_BINARY_17");
         if (!switchName) return;
 
         var options = {

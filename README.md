@@ -501,6 +501,109 @@ FHEM Referenz zu Z-Wave: http://fhem.de/commandref.html#ZWave
 
 ---
 
+### Fibaro Motion Sensor
+
+Fibaro Motion Sensor: http://www.amazon.de/Z-Wave-FGMS-001-Fibaro-Motionsensor-FIB_FGMS-001/dp/B00JHHNUPY
+
+***Reset:*** Knopf drücken, bis der Sensor gelb leuchtet. Button loslassen und direkt danach wieder kurz drücken. Jetzt das Gerät aus FHEM entfernen.
+
+***Inkludieren:***
+
+```
+set ZWAVE1 addNode onNw
+```
+
+Knopf am Motion Sensor 3mal direkt hintereinander drücken.
+
+***Config***
+* Mit Controller assoziieren (um Live-Updates zu bekommen): ```associationAdd 3 1```
+* Regelmäßig Lux-Updates schicken: configIlluminationReportsInterval 60
+* Regelmäßig Temp-Updates schicken: configIntervalOfTemperatureMeasuring 60
+* Regelmäßg Temperatur-Updates schicken: configTemperatureReportsInterval 60
+* Bei 0,1°C Änderung Temperatur-Report schicken: configTemperatureReportThreshold 1	
+* Ab 1 Lux Änderung Report schicken: configIlluminationReportThreshold 1
+* Alarm 15 Sekunden aufrecht erhalten und danach dann neu triggern: configMotionAlarmCancellationDelay 15
+
+***Werte:***
+```
+smStatus: Lux
+sbStatus: Alarmstatus
+battery
+```
+
+---
+
+### Fibaro Zwischenstecker
+
+Fibaro Zwischenstecker: http://www.amazon.de/Z-Wave-Fibaro-Zwischenstecker-Schalter-FIBEFGWPF-102/dp/B00F9X7NLC/
+
+***Reset:*** So lange den Button am Stecker drücken, bis der Ring gelb leuchtet. Dann die Taste loslassen und kurz erneut drücken. Der Stecker selbst kann dann aus FHEM entfernt werden (und sollte ausgeschaltet bleiben, bis der Stecker entfernt wurde).
+
+***Inkludieren:***
+
+```
+set ZWAVE1 addNode onNw
+```
+
+***Config***
+* Mit Controller assoziieren (um Live-Updates zu bekommen): ```associationAdd 3 1```
+* Bei 1% Änderung neuen Stand an Controller senden: ```configImmediatePowerReport 1```
+* Alle 0,01kwH Gesamt-Verbrauchsupdates schicken: ```configReportingChangesInEnergyConsumed45 1```
+* Bei 1% Änderung neuen Stand an Controller senden: ```configStandardPowerLoadReporting  1```
+
+***Werte:***
+```
+smStatus: Wattzahl
+swbStatus: on/off
+meter: kwh
+```
+
+---
+
+###Barometer BMP180
+
+Anschluss an GND, 3V und i2c (siehe Display)
+
+```
+git clone https://github.com/adafruit/Adafruit_Python_BMP.git /opt/barometric
+cd /opt/barometric
+python setup.py install
+```
+
+---
+
+###1 Wire ds18b20
+
+Module aktivieren:
+```
+modprobe wire
+modprobe w1-gpio pullup=1
+modprobe w1-therm
+```
+
+Prüfen, ob aktiviert: ```lsmod```
+
+Module auch nach Boot wieder laden:
+```
+nano /etc/modules
+wire
+w1-gpio pullup=1
+w1-therm
+```
+
+Für neuere Raspbians auch noch für den Device-Tree aktivieren:
+```
+nano /boot/config.txt 
+dtoverlay=w1-gpio,gpiopin=4,pullup=on
+```
+
+Temperatur auslesen dann per:
+```
+grep "t=" /sys/bus/w1/devices/28-*/w1_slave
+```
+
+---
+
 ###Server Installation:
 
 	apt-get install libkrb5-dev

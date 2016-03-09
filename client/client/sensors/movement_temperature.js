@@ -8,11 +8,11 @@ const INTERVAL = 5000;
 
 // ######################################################
 
-class lux extends baseSensor
+class movement_temperature extends baseSensor
 {
     constructor(options)
     {
-        super("lux", options);
+        super("movement_temperature", options);
         this.read();
     }
 
@@ -21,7 +21,7 @@ class lux extends baseSensor
         var that = this;
 
         var motionSensorName = this.options.motionSensorName;
-        var requestObject = '{ReadingsVal("' + motionSensorName + '","luminance","")}';
+        var requestObject = '{ReadingsVal("' + motionSensorName + '","temperature","")}';
         var url = "fhem?cmd=" + requestObject + "&XHR=1";
 
         fhem.get(url, function(err, body)
@@ -29,13 +29,12 @@ class lux extends baseSensor
             if (err) {
                 logger.error(err);
             } else {
-                var lux = body.match(/(\d+)\sLux/);
+                var temp = parseFloat(body, 10);
 
-                if (!lux) {
-                    logger.error("fhem zwave get lux could not parse " + body);
+                if (isNaN(temp)) {
+                    logger.error("fhem zwave get temp could not parse " + body);
                 } else {
-                    lux = lux[1];
-                    that.senddata(lux, that);
+                    that.senddata(temp, that);
                 }
             }
 
@@ -47,4 +46,4 @@ class lux extends baseSensor
     }
 }
 
-module.exports = lux;
+module.exports = movement_temperature;

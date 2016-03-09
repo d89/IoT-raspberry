@@ -32,6 +32,11 @@ var meter = require('./sensors/meter');
 var lux = require('./sensors/lux');
 var battery_motionsensor_zwave = require('./sensors/battery_motionsensor_zwave');
 var movement_zwave = require('./sensors/movement_zwave');
+var barometric_temp = require('./sensors/barometric_temp');
+var pressure = require('./sensors/pressure');
+var altitude = require('./sensors/altitude');
+var outside_temp = require('./sensors/outside_temp');
+var movement_temperature = require('./sensors/movement_temperature');
 // ------------------------------------------------------
 
 actormanagement.registeredActors.led.green();
@@ -180,27 +185,48 @@ exports.init = function(cb)
 
         exports.registeredSensors["watt"] = new watt({
             onData: exports.sensorUpdateCallback,
-            switchName: "ZWave_SWITCH_BINARY_15"
+            switchName: "ZWave_SWITCH_BINARY_17"
         });
 
         exports.registeredSensors["meter"] = new meter({
             onData: exports.sensorUpdateCallback,
-            switchName: "ZWave_SWITCH_BINARY_15"
+            switchName: "ZWave_SWITCH_BINARY_17"
         });
 
         exports.registeredSensors["lux"] = new lux({
             onData: exports.sensorUpdateCallback,
-            motionSensorName: "ZWave_SENSOR_BINARY_16"
+            motionSensorName: "ZWave_SENSOR_BINARY_18"
         });
 
         exports.registeredSensors["battery_motionsensor_zwave"] = new battery_motionsensor_zwave({
             onData: exports.sensorUpdateCallback,
-            motionSensorName: "ZWave_SENSOR_BINARY_16"
+            motionSensorName: "ZWave_SENSOR_BINARY_18"
         });
 
         exports.registeredSensors["movement_zwave"] = new movement_zwave({
             onData: exports.sensorUpdateCallback,
-            motionSensorName: "ZWave_SENSOR_BINARY_16"
+            motionSensorName: "ZWave_SENSOR_BINARY_18"
+        });
+
+        exports.registeredSensors["movement_temperature"] = new movement_temperature({
+            onData: exports.sensorUpdateCallback,
+            motionSensorName: "ZWave_SENSOR_BINARY_18"
+        });
+
+        exports.registeredSensors["barometric_temp"] = new barometric_temp({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["altitude"] = new altitude({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["pressure"] = new pressure({
+            onData: exports.sensorUpdateCallback
+        });
+
+        exports.registeredSensors["outside_temp"] = new outside_temp({
+            onData: exports.sensorUpdateCallback
         });
     }
     else

@@ -21,7 +21,7 @@ class meter extends baseSensor
         var that = this;
 
         var switchName = that.options.switchName;
-        switchName = switchName || "ZWave_SWITCH_BINARY_15";
+        switchName = switchName || "ZWave_SWITCH_BINARY_17";
 
         var requestObject = {
             "detail": switchName

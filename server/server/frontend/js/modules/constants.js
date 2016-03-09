@@ -33,7 +33,12 @@ constants.provider('constant', function()
             "meter": "Energy Meter (kwh)",
             "lux" : "Light intensity Z-Wave (Lux)",
             "battery_motionsensor_zwave": "Battery Motion Sensor (Z-Wave)",
-            "movement_zwave": "Detected Movement (Z-Wave)"
+            "movement_zwave": "Detected Movement (Z-Wave)",
+            "altitude" : "Altitude (Meter)",
+            "pressure": "Pressure (Pa)",
+            "barometric_temp": "Temperature (Barometric)",
+            "outside_temp": "Outside Temperature (°C)",
+            "movement_temperature": "Temperature Movement Sensor"
         }
     };
 

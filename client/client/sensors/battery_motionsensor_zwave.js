@@ -75,7 +75,7 @@ class battery_motionsensor_zwave extends baseSensor
 
 /*
 var t = new battery_motionsensor_zwave({
-    motionSensorName: "ZWave_SENSOR_BINARY_16",
+    motionSensorName: "ZWave_SENSOR_BINARY_18",
     onData: function(data, val)
     {
         console.log(data, val);

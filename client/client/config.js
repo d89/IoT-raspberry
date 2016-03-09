@@ -30,7 +30,12 @@ module.exports = {
         "meter",
         "lux",
         "battery_motionsensor_zwave",
-        "movement_zwave"
+        "movement_zwave",
+        "altitude",
+        "pressure",
+        "barometric_temp",
+        "outside_temp",
+        "movement_temperature"
     ],
     restartSensorAfter: 10, //s - if no message for X seconds is received, restart the sensor
     smartphoneIp: "192.168.0.53",
