@@ -1,30 +1,44 @@
-var logger = require('../logger');
+"use strict";
+
+var baseActor = require("./baseActor");
 var config = require('../config');
 var spawn = require('child_process').spawn;
 
-exports.exposed = function()
-{
-    return {
-        print: {
-            method: exports.print,
-            params: [{
-                name: "displaycontent",
-                isOptional: false,
-                dataType: "string or array",
-                notes: "The text that should be shown on the display"
-            }]
-        }
-    };
-};
+// ######################################################
 
-exports.print = function(displaycontent)
+class display extends baseActor
 {
-    //make array
-    if (!displaycontent.splice)
+    constructor(options)
     {
-        displaycontent = [displaycontent];
+        super("display", options);
     }
 
-    var prc = spawn(config.baseBath + '/actors/display', displaycontent);
-    prc.stdout.setEncoding('utf8');
-};
+    exposed()
+    {
+        return {
+            print: {
+                method: this.print.bind(this),
+                params: [{
+                    name: "displaycontent",
+                    isOptional: false,
+                    dataType: "string or array",
+                    notes: "The text that should be shown on the display"
+                }]
+            }
+        };
+    }
+
+    print(displaycontent)
+    {
+        //make array
+        if (!displaycontent.splice)
+        {
+            displaycontent = [displaycontent];
+        }
+
+        var prc = spawn(config.baseBath + '/actors/display', displaycontent);
+        prc.stdout.setEncoding('utf8');
+    }
+}
+
+module.exports = display;

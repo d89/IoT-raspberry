@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
 var fhem = require("../fhemmanagement");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,14 +11,13 @@ class lux extends baseSensor
 {
     constructor(options)
     {
-        super("lux", options);
+        super("lux", "Light intensity Z-Wave (Lux)", options);
         this.read();
     }
 
     read()
     {
         var that = this;
-
         var motionSensorName = this.options.motionSensorName;
         var requestObject = '{ReadingsVal("' + motionSensorName + '","luminance","")}';
         var url = "fhem?cmd=" + requestObject + "&XHR=1";
@@ -42,7 +40,7 @@ class lux extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 }

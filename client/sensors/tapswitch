@@ -5,7 +5,7 @@ import json
 import sys
 import datetime
 
-board_pin = 35
+board_pin = int(sys.argv[1])
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(board_pin, GPIO.IN)

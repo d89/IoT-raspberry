@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
 var fhem = require("../fhemmanagement");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,7 +11,7 @@ class movement_zwave extends baseSensor
 {
     constructor(options)
     {
-        super("movement_zwave", options);
+        super("movement_zwave", "Detected Movement (Z-Wave)", options);
         this.read();
     }
 
@@ -44,7 +43,7 @@ class movement_zwave extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 }

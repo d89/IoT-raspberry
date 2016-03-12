@@ -8,7 +8,7 @@ class temperature extends baseSensor
 {
     constructor(options)
     {
-        super("temperature", options);
+        super("temperature", "Temperature (°C)", options);
         this.read();
     }
 
@@ -16,7 +16,7 @@ class temperature extends baseSensor
     {
         var that = this;
 
-        that.spawn('dht11', [], function ondata(data)
+        that.spawn('dht11', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {

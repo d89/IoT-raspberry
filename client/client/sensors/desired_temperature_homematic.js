@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
 var fhem = require("../fhemmanagement");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,7 +11,7 @@ class desired_temperature_homematic extends baseSensor
 {
     constructor(options)
     {
-        super("desired_temperature_homematic", options);
+        super("desired_temperature_homematic", "Desired Temp (Homematic)", options);
         this.read();
     }
 
@@ -30,12 +29,9 @@ class desired_temperature_homematic extends baseSensor
                 logger.error(err);
             } else {
 
-                if (body.indexOf("on") !== -1)
-                {
+                if (body.indexOf("on") !== -1) {
                     body = 30.5;
-                }
-                else if (body.indexOf("off") !== -1)
-                {
+                } else if (body.indexOf("off") !== -1) {
                     body = 4.5;
                 }
 
@@ -44,7 +40,6 @@ class desired_temperature_homematic extends baseSensor
                 if (isNaN(temp)) {
                     logger.error("fhem homematic get desired temperature could not parse " + body);
                 } else {
-                    //console.log("temp", temp);
                     that.senddata(temp, that);
                 }
             }
@@ -52,15 +47,9 @@ class desired_temperature_homematic extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 }
-
-/*
-var t = new desired_temperature_homematic({
-    thermostatName: "HM_37F678"
-});
-*/
 
 module.exports = desired_temperature_homematic;

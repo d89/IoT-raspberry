@@ -5,7 +5,8 @@ import json
 import sys
 import datetime
 
-board_pin = 37
+board_pin = int(sys.argv[1])
+delay = int(sys.argv[2])
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(board_pin, GPIO.IN)
@@ -15,8 +16,6 @@ duration = 0.0005
 json_template = { 'state': 0, 'time': str(datetime.datetime.now().time()) }
 
 send_counter = 0
-send_interval = 2
-
 louds = 0
 silents = 0
 
@@ -30,7 +29,7 @@ try:
 		time.sleep(duration)
 		send_counter += duration
 
-		if send_counter >= send_interval:
+		if send_counter >= delay:
 			json_template['state'] = louds
 			json_template['time'] = str(datetime.datetime.now().time())
 			print json.dumps(json_template)

@@ -8,7 +8,7 @@ class tapswitch extends baseSensor
 {
     constructor(options)
     {
-        super("tapswitch", options);
+        super("tapswitch", false, options);
         this.read();
         this.currentState = false;
     }
@@ -17,7 +17,7 @@ class tapswitch extends baseSensor
     {
         var that = this;
 
-        that.spawn('switch', [], function ondata(data)
+        that.spawn('tapswitch', [that.options.pin], function ondata(data)
         {
             try
             {
@@ -31,15 +31,5 @@ class tapswitch extends baseSensor
         });
     }
 }
-
-/*
-new tapswitch({
-    restartSensorAfter: false,
-    onData: function(data)
-    {
-        console.log(data);
-    }
-});
-*/
 
 module.exports = tapswitch;

@@ -1,58 +1,73 @@
-var logger = require('../logger');
-var process = null;
-var spawn = require('child_process').spawn;
+"use strict";
+
+var baseActor = require("./baseActor");
 var config = require('../config');
+var spawn = require('child_process').spawn;
+var process = null;
 
-exports.exposed = function()
+// ######################################################
+
+class servo extends baseActor
 {
-    return {
-        on: {
-            method: exports.on,
-            params: []
-        },
-        off: {
-            method: exports.off,
-            params: []
+    constructor(options)
+    {
+        super("servo", options);
+    }
+
+    exposed()
+    {
+        return {
+            on: {
+                method: this.on.bind(this),
+                params: []
+            },
+            off: {
+                method: this.off.bind(this),
+                params: []
+            }
+        };
+    }
+
+    setServo(state)
+    {
+        var that = this;
+        
+        if (that.process)
+        {
+            that.logger.info("disabling servo");
+            that.process.kill();
+            that.process = null;
         }
-    };
-};
 
-function setServo(state)
-{
-    if (process)
-    {
-        logger.info("disabling servo");
-        process.kill();
-        process = null;
+        if (state === false)
+        {
+            return;
+        }
+
+        that.logger.info("enabling servo");
+        that.process = spawn(config.baseBath + '/actors/servo', [that.options.pin]);
+        that.process.stdout.setEncoding('utf8');
+
+        that.process.stderr.on('data', function (data)
+        {
+            that.logger.error("received err: ", data.toString());
+        });
+
+        that.process.stdout.on('data', function (data)
+        {
+            that.logger.info("received data: ", data);
+        });
     }
 
-    if (state === false)
+    on()
     {
-        return;
+        this.setServo(true);
     }
 
-    logger.info("enabling servo");
-
-    process = spawn(config.baseBath + '/actors/servo',  []);
-    process.stdout.setEncoding('utf8');
-
-    process.stderr.on('data', function (data)
+    off()
     {
-        logger.error("received err: ", data.toString());
-    });
-
-    process.stdout.on('data', function (data)
-    {
-        logger.info("received data: ", data);
-    });
+        this.setServo(false);
+    }
 }
 
-exports.on = function()
-{
-   setServo(true);
-};
-
-exports.off = function()
-{
-    setServo(false);
-};
+module.exports = servo;

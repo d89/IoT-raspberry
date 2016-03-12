@@ -1,84 +1,98 @@
-var logger = require('../logger');
+"use strict";
+
+var baseActor = require("./baseActor");
 var config = require('../config');
+var spawn = require('child_process').spawn;
 
-exports.exposed = function()
+// ######################################################
+
+class switchrc extends baseActor
 {
-    return {
-        switch1on: {
-            method: exports.switch1on,
-            params: []
-        },
-        switch2on: {
-            method: exports.switch2on,
-            params: []
-        },
-        switch3on: {
-            method: exports.switch3on,
-            params: []
-        },
+    constructor(options)
+    {
+        super("switchrc", options);
+    }
 
-        switch1off: {
-            method: exports.switch1off,
-            params: []
-        },
-        switch2off: {
-            method: exports.switch2off,
-            params: []
-        },
-        switch3off: {
-            method: exports.switch3off,
-            params: []
-        }
+    exposed()
+    {
+        return {
+            switch1on: {
+                method: this.switch1on.bind(this),
+                params: []
+            },
+            switch2on: {
+                method: this.switch2on.bind(this),
+                params: []
+            },
+            switch3on: {
+                method: this.switch3on.bind(this),
+                params: []
+            },
+            switch1off: {
+                method: this.switch1off.bind(this),
+                params: []
+            },
+            switch2off: {
+                method: this.switch2off.bind(this),
+                params: []
+            },
+            switch3off: {
+                method: this.switch3off.bind(this),
+                params: []
+            }
+        };
+    }
+
+    // ---------------------------------------------------
+
+    switch1on()
+    {
+        this.turnSwitch(1, 1, 1);
+    }
+
+    switch1off()
+    {
+        this.turnSwitch(1, 1, 0);
+    }
+
+    switch2on()
+    {
+        this.turnSwitch(1, 2, 1);
+    }
+
+    switch2off()
+    {
+        this.turnSwitch(1, 2, 0);
+    }
+
+    switch3on()
+    {
+        this.turnSwitch(1, 3, 1);
+    }
+
+    switch3off()
+    {
+        this.turnSwitch(1, 3, 0);
+    }
+
+    turnSwitch(channel, device, state)
+    {
+        var that = this;
+
+        that.logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
+        var prc = spawn(config.baseBath + '/actors/switchrc', [channel, device, state]);
+        prc.stdout.setEncoding('utf8');
+
+        prc.stderr.on('data', function (data)
+        {
+            that.logger.error("received err: ", data.toString());
+        });
+
+        prc.stdout.on('data', function (data)
+        {
+            that.logger.info("received data: ", data);
+        });
     };
-};
+}
 
-exports.switch1on = function()
-{
-    exports.turnSwitch(1, 1, 1);
-};
-
-exports.switch1off = function()
-{
-    exports.turnSwitch(1, 1, 0);
-};
-
-exports.switch2on = function()
-{
-    exports.turnSwitch(1, 2, 1);
-};
-
-exports.switch2off = function()
-{
-    exports.turnSwitch(1, 2, 0);
-};
-
-exports.switch3on = function()
-{
-    exports.turnSwitch(1, 3, 1);
-};
-
-exports.switch3off = function()
-{
-    exports.turnSwitch(1, 3, 0);
-};
-
-
-exports.turnSwitch = function(channel, device, state)
-{
-    logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
-    var spawn = require('child_process').spawn;
-    var prc = spawn(config.baseBath + '/actors/switchrc', [channel, device, state]);
-    prc.stdout.setEncoding('utf8');
-
-    prc.stderr.on('data', function (data)
-    {
-        logger.error("received err: ", data.toString());
-    });
-
-    prc.stdout.on('data', function (data)
-    {
-        logger.info("received data: ", data);
-    });
-};
-
-//exports.switch(1, 1, 0);
+module.exports = switchrc;

@@ -1,249 +1,266 @@
-var fs = require('fs');
-var logger = require('../logger');
+"use strict";
+
+var baseActor = require("./baseActor");
 var config = require('../config');
-var soundmanager = require('../soundmanager');
 var spawn = require('child_process').spawn;
+var fs = require('fs');
+var soundmanager = require('../soundmanager');
 var LPD8806 = require('lpd8806');
 var LED_COUNT = config.ledStripLedCount;
 
-exports.spawned = null;
+// ######################################################
 
-exports.lightshowStarter = config.baseBath + '/actors/startlightshow';
-
-exports.exposed = function()
+class ledstrip extends baseActor
 {
-    return {
-        colorParty: {
-            method: exports.colorParty,
-            params: []
-        },
-        allOff: {
-            method: exports.allOff,
-            params: []
-        },
-        randomColor: {
-            method: exports.randomColor,
-            params: []
-        },
-        synchronize: {
-            method: exports.synchronize,
-            params: []
-        },
-        lightshow: {
-            method: exports.lightshow,
-            params: [{
-                name: "title",
-                isOptional: false,
-                dataType: "string",
-                notes: "name of the song that should be played as lightshow"
-            }]
-        },
-        singleColor: {
-            method: exports.singleColor,
-            params: [{
-                name: "red",
-                isOptional: true,
-                dataType: "integer",
-                notes: "value between 0 and 255"
-            },{
-                name: "green",
-                isOptional: true,
-                dataType: "integer",
-                notes: "value between 0 and 255"
-            },{
-                name: "blue",
-                isOptional: true,
-                dataType: "integer",
-                notes: "value between 0 and 255"
-            }]
-        }
-    };
-};
-
-exports.allOff = function()
-{
-    logger.info("disabling ledstrip");
-
-    if (exports.spawned)
+    constructor(options)
     {
-        try
-        {
-            if (exports.spawned.type === "colorparty")
-            {
-                logger.info("killing colorparty");
-                exports.spawned.process.kill();
+        super("ledstrip", options);
+
+        this.spawned = null;
+        this.lightshowStarter = config.baseBath + '/actors/startlightshow';
+    }
+
+    exposed()
+    {
+        return {
+            colorParty: {
+                method: this.colorParty.bind(this),
+                params: []
+            },
+            allOff: {
+                method: this.allOff.bind(this),
+                params: []
+            },
+            randomColor: {
+                method: this.randomColor.bind(this),
+                params: []
+            },
+            synchronize: {
+                method: this.synchronize.bind(this),
+                params: []
+            },
+            lightshow: {
+                method: this.lightshow.bind(this),
+                params: [{
+                    name: "title",
+                    isOptional: false,
+                    dataType: "string",
+                    notes: "name of the song that should be played as lightshow"
+                }]
+            },
+            singleColor: {
+                method: this.singleColor.bind(this),
+                params: [{
+                    name: "red",
+                    isOptional: true,
+                    dataType: "integer",
+                    notes: "value between 0 and 255"
+                }, {
+                    name: "green",
+                    isOptional: true,
+                    dataType: "integer",
+                    notes: "value between 0 and 255"
+                }, {
+                    name: "blue",
+                    isOptional: true,
+                    dataType: "integer",
+                    notes: "value between 0 and 255"
+                }]
             }
-            else if (exports.spawned.type === "lightshow")
+        };
+    }
+
+    allOff()
+    {
+        var that = this;
+        that.logger.info("disabling ledstrip");
+
+        if (that.spawned)
+        {
+            try
             {
-                logger.info("killing lightshow");
-
-                if (exports.spawned.process.pid)
+                if (that.spawned.type === "colorparty")
                 {
-                    var params = ["stop", exports.spawned.process.pid];
-                    var killer = spawn(exports.lightshowStarter, params);
+                    that.logger.info("killing colorparty");
+                    that.spawned.process.kill();
+                }
+                else if (that.spawned.type === "lightshow")
+                {
+                    that.logger.info("killing lightshow");
 
-                    killer.stderr.on('data', function (data)
+                    if (that.spawned.process.pid)
                     {
-                        logger.error("received killer err: ", data.toString());
-                    });
+                        var params = ["stop", that.spawned.process.pid];
+                        var killer = spawn(that.lightshowStarter, params);
 
-                    killer.stdout.on('data', function (data)
+                        killer.stderr.on('data', function(data)
+                        {
+                            that.logger.error("received killer err: ", data.toString());
+                        });
+
+                        killer.stdout.on('data', function(data)
+                        {
+                            that.logger.info("received killer data: ", data.toString());
+                        });
+                    }
+                    else
                     {
-                        logger.info("received killer data: ", data.toString());
-                    });
+                        that.logger.error("No pid known of lightshow to be stopped");
+                    }
+
+                    that.logger.info("killed led strip group!");
                 }
                 else
                 {
-                    logger.error("No pid known of lightshow to be stopped");
+                    that.logger.error("nothing to kill!");
                 }
-
-                logger.info("killed led strip group!");
             }
-            else
+            catch (err)
             {
-                logger.error("nothing to kill!");
+                that.logger.error("could not kill process", err);
             }
+
+            that.spawned = null;
         }
-        catch (err)
+
+        //music would interfere with the lightshow aswell
+        soundmanager.stop();
+
+        that.singleColor(0, 0, 0, true);
+    }
+
+    colorParty()
+    {
+        var that = this;
+        that.allOff();
+        that.logger.info("enabling color party");
+
+        that.spawned = {
+            process: spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT]),
+            type: "colorparty"
+        };
+
+        that.spawned.process.stdout.setEncoding('utf8');
+
+        that.spawned.process.stderr.on('data', function(data)
         {
-            logger.error("could not kill process", err);
+            that.logger.error("received err: ", data.toString());
+        });
+
+        that.spawned.process.stdout.on('data', function(data)
+        {
+            that.logger.info("received data: ", data);
+        });
+    }
+
+    randomColor()
+    {
+        var randomColor = function()
+        {
+            var min = 0;
+            var max = 255;
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        };
+
+        this.singleColor(randomColor(), randomColor(), randomColor());
+    }
+
+    synchronize()
+    {
+        this.allOff();
+        
+        var that = this;
+        var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
+        var volume = config.volume;
+        var params = ["line-in", ledLibLocation, config.soundCardInput, LED_COUNT];
+
+        that.logger.info("calling " + that.lightshowStarter + " " + params.join(" "));
+
+        that.spawned = {
+            process: spawn(that.lightshowStarter, params, {detached: true}),
+            type: "lightshow"
+        };
+
+        that.spawned.process.stdout.setEncoding('utf8');
+
+        that.spawned.process.stderr.on('data', function(data)
+        {
+            that.logger.error("received err: ", data.toString());
+        });
+
+        that.spawned.process.stdout.on('data', function(data)
+        {
+            //console.log(data.toString());
+        });
+
+        that.spawned.process.on("close", function(returnCode)
+        {
+            that.logger.info("lightshow finished with " + returnCode);
+        });
+    }
+
+    lightshow(title)
+    {
+        var that = this;
+        
+        title = title || "song.mp3";
+        title = title.replace("..", "");
+        title = config.mediaBasePath + "/" + title;
+
+        if (!fs.existsSync(title))
+        {
+            that.logger.error("file does not exist");
+            return "file does not exist";
         }
 
-        exports.spawned = null;
+        that.allOff();
+
+        var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
+        var params = ["start-music", ledLibLocation, title, LED_COUNT];
+
+        that.logger.info("calling " + that.lightshowStarter + " " + params.join(" "));
+
+        that.spawned = {
+            process: spawn(that.lightshowStarter, params, {detached: true}),
+            type: "lightshow"
+        };
+
+        that.spawned.process.stdout.setEncoding('utf8');
+
+        that.spawned.process.stderr.on('data', function(data)
+        {
+            that.logger.error("received err: ", data.toString());
+        });
+
+        that.spawned.process.stdout.on('data', function(data)
+        {
+            //console.log(data.toString());
+        });
+
+        that.spawned.process.on("close", function(returnCode)
+        {
+            that.logger.info("lightshow finished with " + returnCode);
+        });
     }
 
-    //music would interfere with the lightshow aswell
-    soundmanager.stop();
-
-    exports.singleColor(0, 0, 0, true);
-};
-
-exports.colorParty = function()
-{
-    exports.allOff();
-
-    logger.info("enabling color party");
-
-    exports.spawned = {
-        process: spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT]),
-        type: "colorparty"
-    };
-
-    exports.spawned.process.stdout.setEncoding('utf8');
-
-    exports.spawned.process.stderr.on('data', function (data)
+    singleColor(red, green, blue, skipReset)
     {
-        logger.error("received err: ", data.toString());
-    });
+        if (!skipReset)
+            this.allOff();
 
-    exports.spawned.process.stdout.on('data', function (data)
-    {
-        logger.info("received data: ", data);
-    });
-};
+        this.logger.info("setting led color to " + red + " / " + green + " / " + blue);
 
-exports.randomColor = function()
-{
-    var randomColor = function()
-    {
-        var min = 0;
-        var max = 255;
-        return Math.floor(Math.random()*(max-min+1)+min);
-    };
+        red = parseInt(red, 10);
+        green = parseInt(green, 10);
+        blue = parseInt(blue, 10);
 
-    exports.singleColor(randomColor(), randomColor(), randomColor());
-};
+        if (isNaN(red)) red = 255;
+        if (isNaN(green)) green = 0;
+        if (isNaN(blue)) blue = 255;
 
-exports.synchronize = function()
-{
-    exports.allOff();
-
-    var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
-    var volume = config.volume;
-    var params = ["line-in", ledLibLocation, config.soundCardInput, LED_COUNT];
-
-    logger.info("calling " + exports.lightshowStarter + " " + params.join(" "));
-
-    exports.spawned = {
-        process: spawn(exports.lightshowStarter, params, { detached: true }),
-        type: "lightshow"
-    };
-
-    exports.spawned.process.stdout.setEncoding('utf8');
-
-    exports.spawned.process.stderr.on('data', function (data)
-    {
-        logger.error("received err: ", data.toString());
-    });
-
-    exports.spawned.process.stdout.on('data', function (data)
-    {
-        //console.log(data.toString());
-    });
-
-    exports.spawned.process.on("close", function(returnCode)
-    {
-        logger.info("lightshow finished with " + returnCode);
-    });
-};
-
-exports.lightshow = function(title)
-{
-    title = title || "song.mp3";
-    title = title.replace("..", "");
-    title = config.mediaBasePath + "/" + title;
-
-    if (!fs.existsSync(title))
-    {
-        logger.error("file does not exist");
-        return "file does not exist";
+        var ledband = new LPD8806(LED_COUNT, '/dev/spidev0.0');
+        ledband.fillRGB(red, blue, green);
     }
+}
 
-    exports.allOff();
-
-    var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
-    var params = ["start-music", ledLibLocation, title, LED_COUNT];
-
-    logger.info("calling " + exports.lightshowStarter + " " + params.join(" "));
-
-    exports.spawned = {
-        process: spawn(exports.lightshowStarter, params, { detached: true }),
-        type: "lightshow"
-    };
-
-    exports.spawned.process.stdout.setEncoding('utf8');
-
-    exports.spawned.process.stderr.on('data', function (data)
-    {
-        logger.error("received err: ", data.toString());
-    });
-
-    exports.spawned.process.stdout.on('data', function (data)
-    {
-        //console.log(data.toString());
-    });
-
-    exports.spawned.process.on("close", function(returnCode)
-    {
-        logger.info("lightshow finished with " + returnCode);
-    });
-};
-
-exports.singleColor = function(red, green, blue, skipReset)
-{
-    if (!skipReset)
-        exports.allOff();
-
-    logger.info("setting led color to " + red + " / " + green + " / " + blue);
-
-    red = parseInt(red, 10);
-    green = parseInt(green, 10);
-    blue = parseInt(blue, 10);
-
-    if (isNaN(red)) red = 255;
-    if (isNaN(green)) green = 0;
-    if (isNaN(blue)) blue = 255;
-
-    var ledband = new LPD8806(LED_COUNT, '/dev/spidev0.0');
-    ledband.fillRGB(red, blue, green);
-};
+module.exports = ledstrip;

@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
 var fhem = require("../fhemmanagement");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,7 +11,7 @@ class desired_temperature_zwave extends baseSensor
 {
     constructor(options)
     {
-        super("desired_temperature_zwave", options);
+        super("desired_temperature_zwave", "Desired Temp (Z-Wave)", options);
         this.read();
 
         this.refreshCounter = 0;
@@ -22,11 +21,7 @@ class desired_temperature_zwave extends baseSensor
     {
         var shouldTrigger = (this.refreshCounter % 10 === 0)
         this.refreshCounter++;
-
-        if (!shouldTrigger)
-        {
-            return;
-        }
+        if (!shouldTrigger) return;
 
         var t = this.options.thermostatName;
         var refreshattribute = "setpoint";
@@ -62,7 +57,6 @@ class desired_temperature_zwave extends baseSensor
                 if (isNaN(temp)) {
                     logger.error("fhem zwave get measured temperature could not parse " + body);
                 } else {
-                    //console.log("temp", temp);
                     that.senddata(temp, that);
                 }
             }
@@ -70,19 +64,9 @@ class desired_temperature_zwave extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 }
-
-/*
-var t = new desired_temperature_zwave({
-    thermostatName: "ZWave_THERMOSTAT_11",
-    onData: function(data, val)
-    {
-        console.log(data, val);
-    }
-});
-*/
 
 module.exports = desired_temperature_zwave;

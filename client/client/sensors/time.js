@@ -9,14 +9,14 @@ class time extends baseSensor
 {
     constructor(options)
     {
-        super("time", options);
+        super("time", false, options);
 
         var that = this;
 
         setInterval(function()
         {
             that.read();
-        }, 1000);
+        }, that.options.interval * 1000);
     }
 
     exposed(val)

@@ -3,7 +3,6 @@
 var fs = require("fs");
 var baseSensor = require("./baseSensor");
 var exec = require("child_process").exec;
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -11,7 +10,7 @@ class outside_temp extends baseSensor
 {
     constructor(options)
     {
-        super("outside_temp", options);
+        super("outside_temp", "Outside Temperature (°C)", options);
         this.read();
     }
 
@@ -21,19 +20,16 @@ class outside_temp extends baseSensor
 
         this.readTemp(function(err, temp)
         {
-            if (!err)
-            {
+            if (!err) {
                 that.senddata(temp, that);
-            }
-            else
-            {
+            } else {
                 that.logger.error(err);
             }
 
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 

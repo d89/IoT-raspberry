@@ -8,7 +8,7 @@ class poti extends baseSensor
 {
     constructor(options)
     {
-        super("poti", options);
+        super("poti", "Potentiometer", options);
         this.read();
     }
 
@@ -16,7 +16,7 @@ class poti extends baseSensor
     {
         var that = this;
 
-        that.spawn('pcf8591', [], function ondata(data)
+        that.spawn('pcf8591', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {

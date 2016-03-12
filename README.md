@@ -82,9 +82,13 @@ GPIO Mapping Raspberry 2: http://www.element14.com/community/servlet/JiveServlet
  
 ---
 
-###dht11 Library kompilieren
+###dht11 Library
 
-gcc -o dht11 dht11.c -L/usr/local/lib -lwiringPi
+```
+git clone https://github.com/adafruit/Adafruit_Python_DHT.git /opt/dht11
+cd /opt/dht11
+sudo python setup.py install
+```
 
 ---
 

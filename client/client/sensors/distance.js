@@ -8,7 +8,7 @@ class distance extends baseSensor
 {
     constructor(options)
     {
-        super("distance", options);
+        super("distance", "Distance (cm)", options);
         this.read();
     }
 
@@ -16,7 +16,7 @@ class distance extends baseSensor
     {
         var that = this;
 
-        that.spawn('hcsr04', [], function ondata(data)
+        that.spawn('hcsr04', [that.options.pin_trigger, that.options.pin_echo, that.options.interval], function ondata(data)
         {
             try
             {

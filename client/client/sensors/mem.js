@@ -4,7 +4,6 @@ var fs = require("fs");
 var baseSensor = require("./baseSensor");
 var spawn = require("child_process").spawn;
 var os = require("os");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,7 +11,7 @@ class mem extends baseSensor
 {
     constructor(options)
     {
-        super("mem", options);
+        super("mem", "Memory Usage (percent)", options);
         this.read();
     }
 
@@ -34,7 +33,7 @@ class mem extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 

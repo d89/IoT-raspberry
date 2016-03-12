@@ -2,8 +2,9 @@
 
 import RPi.GPIO as GPIO
 import time
+import sys
 
-servoPIN = 32
+servoPIN = int(sys.argv[1])
 sleepTime = 0.05
 intervals = 0.1
 cycleStart = 2

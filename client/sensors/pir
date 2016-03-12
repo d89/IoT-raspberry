@@ -10,6 +10,7 @@ import sys
 from subprocess import call
 
 PIR = int(sys.argv[1])
+INTERVAL = int(sys.argv[2])
 val = False
 lastState = False
 json_template = { 'state': 0, 'time': str(datetime.datetime.now().time()) }
@@ -35,6 +36,6 @@ try:
 
 		print json.dumps(json_template)
 		sys.stdout.flush()
-		time.sleep(2)
+		time.sleep(INTERVAL)
 finally:                   # run on exit
     GPIO.cleanup()         # clean up

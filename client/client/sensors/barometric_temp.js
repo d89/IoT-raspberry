@@ -8,7 +8,7 @@ class barometric_temp extends baseSensor
 {
     constructor(options)
     {
-        super("barometric_temp", options);
+        super("barometric_temp", "Temperature (Barometric)", options);
         this.read();
     }
 
@@ -16,12 +16,11 @@ class barometric_temp extends baseSensor
     {
         var that = this;
 
-        that.spawn('barometric', [], function ondata(data)
+        that.spawn('barometric', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {
                 data = JSON.parse(data.toString()).temp;
-                //console.log("barometric_temp", data);
                 that.senddata(data, that);
             }
             catch (err)

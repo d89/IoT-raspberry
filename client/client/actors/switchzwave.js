@@ -1,56 +1,73 @@
-var logger = require('../logger');
+"use strict";
+
+var baseActor = require("./baseActor");
 var config = require('../config');
+var spawn = require('child_process').spawn;
 var fhem = require("../fhemmanagement");
 
-exports.exposed = function()
+// ######################################################
+
+class switchzwave extends baseActor
 {
-    return {
-        on: {
-            method: exports.on,
-            params: []
-        },
-        off: {
-            method: exports.off,
-            params: []
-        }
-    };
-};
-
-exports.turnSwitch = function(state, switchName)
-{
-    var requestObject = {
-        "detail": switchName
-    };
-
-    requestObject["dev.get" + switchName] = switchName;
-    requestObject["cmd.get" + switchName] = "set";
-    requestObject["arg.get" + switchName] = (state ? "on" : "off");
-    requestObject["val.get" + switchName] = "";
-    requestObject["XHR"] = "1";
-
-    fhem.post("fhem", requestObject, function(err, msg)
+    constructor(options)
     {
-        if (err)
-        {
-            logger.error(err);
-        }
-        else
-        {
-            logger.info("zwave switch set to " + state);
-        }
-    });
-};
+        super("switchzwave", options);
+    }
 
-exports.on = function(switchName)
-{
-    switchName = switchName || "ZWave_SWITCH_BINARY_17";
-    logger.info("enabling zwave switch " + switchName);
-    exports.turnSwitch(true, switchName);
-};
+    exposed()
+    {
+        return {
+            on: {
+                method: this.on.bind(this),
+                params: []
+            },
+            off: {
+                method: this.off.bind(this),
+                params: []
+            }
+        };
+    }
 
-exports.off = function(switchName)
-{
-    switchName = switchName || "ZWave_SWITCH_BINARY_17";
-    logger.info("disabling zwave switch " + switchName);
-    exports.turnSwitch(false, switchName);
-};
+    turnSwitch(state, switchName)
+    {
+        var that = this;
+        
+        var requestObject = {
+            "detail": switchName
+        };
+
+        requestObject["dev.get" + switchName] = switchName;
+        requestObject["cmd.get" + switchName] = "set";
+        requestObject["arg.get" + switchName] = (state ? "on" : "off");
+        requestObject["val.get" + switchName] = "";
+        requestObject["XHR"] = "1";
+
+        fhem.post("fhem", requestObject, function(err, msg)
+        {
+            if (err)
+            {
+                that.logger.error(err);
+            }
+            else
+            {
+                that.logger.info("zwave switch set to " + state);
+            }
+        });
+    }
+
+    on(switchName)
+    {
+        switchName = switchName || "ZWave_SWITCH_BINARY_17";
+        this.logger.info("enabling zwave switch " + switchName);
+        this.turnSwitch(true, switchName);
+    }
+
+    off(switchName)
+    {
+        switchName = switchName || "ZWave_SWITCH_BINARY_17";
+        this.logger.info("disabling zwave switch " + switchName);
+        this.turnSwitch(false, switchName);
+    }
+}
+
+module.exports = switchzwave;

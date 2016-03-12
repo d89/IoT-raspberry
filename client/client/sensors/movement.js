@@ -9,7 +9,7 @@ class movement extends baseSensor
 {
     constructor(options)
     {
-        super("movement" + options.suffix, options);
+        super("movement" + options.suffix, "Movement (Sensor " + options.suffix + ")", options);
         this.read();
     }
 
@@ -17,7 +17,7 @@ class movement extends baseSensor
     {
         var that = this;
 
-        that.spawn('pir', [ this.options.pin ], function ondata(data)
+        that.spawn('pir', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {

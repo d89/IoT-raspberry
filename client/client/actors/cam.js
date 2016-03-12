@@ -1,30 +1,42 @@
+"use strict";
+
+var baseActor = require("./baseActor");
+var config = require('../config');
+var spawn = require('child_process').spawn;
 var fs = require('fs');
 var path = require('path');
 var async = require('async');
-var spawn = require('child_process').spawn;
 var crypto = require('crypto');
 var moment = require('moment');
 var request = require('request');
-var logger = require('../logger');
-var config = require('../config');
-var recorder = require('./recorder');
-var receiveLine = function(str) {
-    return ("" + str).replace(/(\r\n|\n|\r)/gm,"");
-};
+var actormanagement = require('../actormanagement');
 
-var Cam = {
-    streamInterval: null,
-    streamProcess: null,
-    cameraBusyStreaming: false,
-    cameraBusyRecording: false,
-    streamImage: "/tmp/stream.jpg",
-    socket: null,
+// ######################################################
 
-    exposed: function()
+class cam extends baseActor
+{
+    constructor(options)
+    {
+        super("cam", options);
+
+        this.streamInterval = null;
+        this.streamProcess = null;
+        this.cameraBusyStreaming = false;
+        this.cameraBusyRecording = false;
+        this.streamImage = "/tmp/stream.jpg";
+        this.socket = null;
+    }
+
+    receiveLine(str)
+    {
+        return ("" + str).replace(/(\r\n|\n|\r)/gm,"");
+    }
+
+    exposed()
     {
         return {
             record: {
-                method: Cam.record,
+                method: this.record.bind(this),
                 params: [{
                     name: "duration",
                     isOptional: true,
@@ -33,48 +45,62 @@ var Cam = {
                 }]
             }
         };
-    },
+    }
 
-    startStreaming: function(s) {
-        logger.info('Starting stream.');
-        Cam.socket = s;
-        Cam.cameraBusyStreaming = true;
-        Cam.streamInterval = setInterval(Cam.takeImage, 2000);
-    },
+    startStreaming(s)
+    {
+        var that = this;
+        that.logger.info('Starting stream.');
+        that.socket = s;
+        that.cameraBusyStreaming = true;
+        that.streamInterval = setInterval(function()
+        {
+            that.takeImage.apply(that);
+        }, 2000);
+    }
 
-    stopStreaming: function() {
-        logger.info('Stopping stream.');
-        Cam.cameraBusyStreaming = false;
-        if (Cam.streamProcess) {
-            Cam.streamProcess.kill();
+    stopStreaming()
+    {
+        this.logger.info('Stopping stream.');
+        this.cameraBusyStreaming = false;
+        if (this.streamProcess) {
+            this.streamProcess.kill();
         }
-        clearInterval(Cam.streamInterval);
-        Cam.socket = null;
-    },
+        clearInterval(this.streamInterval);
+        this.socket = null;
+    }
 
-    takeImage: function() {
+    takeImage()
+    {
+        var that = this;
+
         //logger.info('taking image');
         var args = [
             '-w', 640,   // width
             '-h', 480,  // height
             '-t', 1,  // how long should taking the picture take?
-            '-o', Cam.streamImage   // path + name
+            '-o', this.streamImage   // path + name
         ];
-        Cam.streamProcess = spawn('raspistill', args);
-        Cam.streamProcess.on('exit', Cam.sendImage);
-    },
 
-    record: function(duration, cb)
+        that.streamProcess = spawn('raspistill', args);
+        that.streamProcess.on('exit', function(exitCode)
+        {
+            that.sendImage();
+        });
+    }
+
+    record(duration, cb)
     {
+        var that = this;
         cb = cb || function() {};
 
-        if (Cam.cameraBusyRecording || Cam.cameraBusyStreaming)
+        if (that.cameraBusyRecording || that.cameraBusyStreaming)
         {
-            logger.error("camera is busy, can not start video");
+            that.logger.error("camera is busy, can not start video");
             return cb("camera is busy");
         }
 
-        Cam.cameraBusyRecording = true;
+        that.cameraBusyRecording = true;
 
         if (!duration || isNaN(duration))
         {
@@ -83,10 +109,10 @@ var Cam = {
 
         duration *= 1000;
 
-        logger.info("starting to record for " + duration + "ms");
+        that.logger.info("starting to record for " + duration + "ms");
         var date = moment().format("YYYYMMDD-HHmmss");
         var videoPath = "/tmp/video-" + date + ".h264";
-        logger.info("... to file", videoPath);
+        that.logger.info("... to file", videoPath);
 
         var callbacks = [];
 
@@ -94,7 +120,7 @@ var Cam = {
 
         callbacks.push(function(recordingDone)
         {
-            recorder.record(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
+            actormanagement.registeredActors["recorder"].record(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
             {
                 if (err)
                     return recordingDone(err);
@@ -110,16 +136,16 @@ var Cam = {
         {
             raspivid.on("close", function()
             {
-                Cam.cameraBusyRecording = false;
+                that.cameraBusyRecording = false;
 
                 if (!fs.existsSync(videoPath))
                 {
                     var msg = "video " + videoPath + " did not exist";
-                    logger.error(msg);
+                    that.logger.error(msg);
                     return videoDone(msg);
                 }
 
-                logger.info("wrote video to " + videoPath);
+                that.logger.info("wrote video to " + videoPath);
 
                 return videoDone(null, videoPath);
             });
@@ -135,15 +161,14 @@ var Cam = {
                 return cb(err);
             }
 
-            Cam.convert(data[0], data[1], cb);
+            that.convert(data[0], data[1], cb);
         });
+    }
 
-        //-----------------------------------------------------------------------------------
-    },
-
-    convert: function(audioFile, videoFile, cb)
+    convert(audioFile, videoFile, cb)
     {
-        logger.info("merging audio " + audioFile + " with video " + videoFile);
+        var that = this;
+        that.logger.info("merging audio " + audioFile + " with video " + videoFile);
 
         if (!fs.existsSync(audioFile) || !fs.existsSync(videoFile))
         {
@@ -159,40 +184,42 @@ var Cam = {
 
         converter.stdout.on("data", function(data)
         {
-            logger.info("conversion output: ", receiveLine(data.toString()));
+            that.logger.info("conversion output: ", that.receiveLine(data.toString()));
         });
 
         converter.stderr.on("data", function(data)
         {
             //likes putting out stuff on stderr that is not an error
-            logger.info("conversion data: ", receiveLine(data.toString()));
+            that.logger.info("conversion data: ", that.receiveLine(data.toString()));
         });
 
         converter.on("close", function(exitCode)
         {
-            logger.info("converting " + videoFile + " ended with " + exitCode);
+            that.logger.info("converting " + videoFile + " ended with " + exitCode);
 
             fs.unlink(audioFile, function(err) {
-                err && logger.error("audio file " + audioFile + " could not be deleted: " + err);
+                err && that.logger.error("audio file " + audioFile + " could not be deleted: " + err);
             });
 
             fs.unlink(videoFile, function(err) {
-                err && logger.error("video file " + videoFile + " could not be deleted: " + err);
+                err && that.logger.error("video file " + videoFile + " could not be deleted: " + err);
             });
 
             if (exitCode === 0 && fs.existsSync(finalFileName))
             {
-                Cam.uploadVideo(finalFileName, cb);
+                that.uploadVideo(finalFileName, cb);
             }
             else
             {
                 cb("could not convert file");
             }
         });
-    },
+    }
 
-    uploadVideo: function(videoPath, cb)
+    uploadVideo(videoPath, cb)
     {
+        var that = this;
+        
         //upload video
         var req = request.post(config.serverUrl + "/putvideo", function(err, resp, body)
         {
@@ -202,11 +229,11 @@ var Cam = {
 
             if (err || resp.statusCode != 200) {
                 err = err || body;
-                logger.error(msg, err);
+                that.logger.error(msg, err);
                 cb(msg);
             } else {
                 msg = "Successfully uploaded video";
-                logger.info(msg + ": " + body);
+                that.logger.info(msg + ": " + body);
                 cb(null, msg);
             }
         });
@@ -215,29 +242,31 @@ var Cam = {
         form.append('vid', fs.createReadStream(videoPath));
         form.append('password', crypto.createHash('sha512').update(config.password).digest('hex'));
         form.append('client', config.clientName);
-    },
+    }
 
-    sendImage: function()
+    sendImage()
     {
-        if (!Cam.cameraBusyStreaming || !fs.existsSync(Cam.streamImage))
+        var that = this;
+        
+        if (!that.cameraBusyStreaming || !fs.existsSync(that.streamImage))
         {
-            logger.info('sending no image, stream is stopped');
+            that.logger.info('sending no image, stream is stopped');
             return;
         }
 
-        var fileModDate = fs.statSync(Cam.streamImage).mtime;
+        var fileModDate = fs.statSync(that.streamImage).mtime;
 
-        logger.info('sending image @ ' + fileModDate, Cam.streamImage);
+        that.logger.info('sending image @ ' + fileModDate, that.streamImage);
 
-        fs.readFile(Cam.streamImage, function(err, buffer)
+        fs.readFile(that.streamImage, function(err, buffer)
         {
             if (!buffer)
             {
-                logger.error("invalid cam response");
-                return Cam.stopStreaming();
+                that.logger.error("invalid cam response");
+                return that.stopStreaming();
             }
 
-            Cam.socket.emit('client:live-stream', {
+            that.socket.emit('client:live-stream', {
                 now: (new Date).getTime(),
                 date: fileModDate.getTime(),
                 image: buffer.toString('base64')
@@ -245,26 +274,16 @@ var Cam = {
             {
                 if (!response || !response.received)
                 {
-                    logger.error("no cam stream response from server - stopping streaming");
-                    Cam.stopStreaming();
+                    that.logger.error("no cam stream response from server - stopping streaming");
+                    that.stopStreaming();
                 }
                 else
                 {
-                    logger.info("cam stream confirmed by server: ", response);
+                    that.logger.info("cam stream confirmed by server: ", response);
                 }
             });
         });
     }
-};
+}
 
-/*
-Cam.record(5, function(err, data)
-{
-    if (err)
-        logger.error("-> final err", err);
-    else
-        logger.info("-> final resp", data);
-});
-*/
-
-module.exports = Cam;
+module.exports = cam;

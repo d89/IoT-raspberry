@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
 var fhem = require("../fhemmanagement");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,7 +11,7 @@ class battery_motionsensor_zwave extends baseSensor
 {
     constructor(options)
     {
-        super("battery_motionsensor_zwave", options);
+        super("battery_motionsensor_zwave", "Battery Motion Sensor (Z-Wave)", options);
         this.read();
         this.refreshCounter = 0;
     }
@@ -21,15 +20,9 @@ class battery_motionsensor_zwave extends baseSensor
     {
         var shouldTrigger = (this.refreshCounter % 10 === 0)
         this.refreshCounter++;
-
-        if (!shouldTrigger)
-        {
-            return;
-        }
-
+        if (!shouldTrigger) return;
         var t = this.options.motionSensorName;
         var refreshattribute = "battery";
-
         var url = `fhem?detail=${t}&dev.get${t}=${t}&cmd.get${t}=get&arg.get${t}=${refreshattribute}&val.get${t}=&XHR=1`;
 
         fhem.get(url, function(err, body)
@@ -68,19 +61,9 @@ class battery_motionsensor_zwave extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 }
-
-/*
-var t = new battery_motionsensor_zwave({
-    motionSensorName: "ZWave_SENSOR_BINARY_18",
-    onData: function(data, val)
-    {
-        console.log(data, val);
-    }
-});
-*/
 
 module.exports = battery_motionsensor_zwave;

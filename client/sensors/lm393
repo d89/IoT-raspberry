@@ -5,7 +5,8 @@ import json
 import sys
 import datetime
 
-board_pin = 15
+board_pin = int(sys.argv[1])
+delay = int(sys.argv[2])
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(board_pin, GPIO.IN)
@@ -13,9 +14,7 @@ GPIO.setup(board_pin, GPIO.HIGH)
 
 duration = 0.0005
 json_template = { 'louds': 0, 'silents': 0, 'state': 0, 'time': str(datetime.datetime.now().time()) }
-
 next_permitted_send = time.time()
-send_min_delay = 3
 
 louds = 0
 silents = 0
@@ -42,7 +41,7 @@ try:
 			print json.dumps(json_template)
 			sys.stdout.flush()
 
-			next_permitted_send = time.time() + send_min_delay
+			next_permitted_send = time.time() + delay
 			last_send_louds = louds
 			last_send_silents = silents
 finally:                   # run on exit

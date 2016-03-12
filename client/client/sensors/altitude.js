@@ -8,7 +8,7 @@ class altitude extends baseSensor
 {
     constructor(options)
     {
-        super("altitude", options);
+        super("altitude", "Altitude (Meter)", options);
         this.read();
     }
 
@@ -16,12 +16,11 @@ class altitude extends baseSensor
     {
         var that = this;
 
-        that.spawn('barometric', [], function ondata(data)
+        that.spawn('barometric', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {
                 data = JSON.parse(data.toString()).altitude;
-                //console.log("altitude", data);
                 that.senddata(data, that);
             }
             catch (err)

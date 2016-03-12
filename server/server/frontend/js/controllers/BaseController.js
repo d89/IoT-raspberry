@@ -115,13 +115,15 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         console.log("GOT the capabilities of the client", capabilities);
 
         var chartTypes = [];
-        var trans = constant.get("chartTypeTranslations");
 
-        capabilities.forEach(function(c)
+        capabilities.sensors.forEach(function(c)
         {
+            var name = c.name;
+            var description = c.description;
+
             chartTypes.push({
-                id: c,
-                label: trans[c] || c
+                id: name,
+                label: description
             });
         });
 

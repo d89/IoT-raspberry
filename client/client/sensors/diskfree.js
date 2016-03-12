@@ -3,7 +3,6 @@
 var fs = require("fs");
 var baseSensor = require("./baseSensor");
 var exec = require("child_process").exec;
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -11,7 +10,7 @@ class diskfree extends baseSensor
 {
     constructor(options)
     {
-        super("diskfree", options);
+        super("diskfree", "Free Disk (MB)", options);
         this.read();
     }
 
@@ -33,7 +32,7 @@ class diskfree extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 

@@ -4,11 +4,14 @@ import RPi.GPIO as GPIO
 import time
 import json
 import sys
-sensor = BMP085.BMP085()
-#sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
+
+pin_i2c = int(sys.argv[1])
+send_delay = int(sys.argv[2])
+
+sensor = BMP085.BMP085(address=pin_i2c)
+#sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES, address=pin_i2c)
 
 json_template = { 'temp': 0, 'pressure': 0, 'altitude': 0, 'sealevel': 0 }
-send_delay = 3
 
 try:
     while 1:

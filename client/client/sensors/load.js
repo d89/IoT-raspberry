@@ -2,7 +2,6 @@
 
 var fs = require("fs");
 var baseSensor = require("./baseSensor");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -10,7 +9,7 @@ class load extends baseSensor
 {
     constructor(options)
     {
-        super("load", options);
+        super("load", "CPU Load", options);
         this.read();
     }
 
@@ -32,7 +31,7 @@ class load extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 

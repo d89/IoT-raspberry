@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
 var fhem = require("../fhemmanagement");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,14 +11,13 @@ class movement_temperature extends baseSensor
 {
     constructor(options)
     {
-        super("movement_temperature", options);
+        super("movement_temperature", "Temperature Movement Sensor", options);
         this.read();
     }
 
     read()
     {
         var that = this;
-
         var motionSensorName = this.options.motionSensorName;
         var requestObject = '{ReadingsVal("' + motionSensorName + '","temperature","")}';
         var url = "fhem?cmd=" + requestObject + "&XHR=1";
@@ -41,7 +39,7 @@ class movement_temperature extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 }

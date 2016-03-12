@@ -211,10 +211,17 @@ exports.dateDiff = function(from, to)
     return diffToStart;
 };
 
-exports.aggregation = function(start, end, interval, types, client_id, skipCache, progressCb, cb)
+exports.aggregation = function(start, end, interval, capabilities, client_id, skipCache, progressCb, cb)
 {
     exports.setProgressNotifier(progressCb);
     var dataPointsTemplate = {};
+
+    var types = [];
+
+    capabilities.forEach(function(cap)
+    {
+        types.push(cap.name);
+    });
 
     types.forEach(function(type)
     {

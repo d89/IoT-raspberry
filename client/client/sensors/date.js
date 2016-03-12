@@ -9,7 +9,7 @@ class date extends baseSensor
 {
     constructor(options)
     {
-        super("date", options);
+        super("date", false, options);
 
         var that = this;
 
@@ -22,7 +22,7 @@ class date extends baseSensor
         setInterval(function()
         {
             that.read();
-        }, 60000);
+        }, that.options.interval * 1000);
     }
 
     exposed(val)

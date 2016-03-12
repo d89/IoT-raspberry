@@ -1,51 +1,65 @@
-var logger = require('../logger');
+"use strict";
+
+var baseActor = require("./baseActor");
 var config = require('../config');
 var soundmanager = require('../soundmanager');
-var ledstrip = require('./ledstrip');
+var actormanagement = require('../actormanagement');
 var fs = require('fs');
+var spawn = require('child_process').spawn;
 
-exports.exposed = function()
+// ######################################################
+
+class music extends baseActor
 {
-    return {
-        play: {
-            method: exports.play,
-            params: [{
-                name: "title",
-                isOptional: true,
-                dataType: "string",
-                notes: "filename of .mp3 file to be played"
-            }]
-        },
-        stop: {
-            method: exports.stop,
-            params: []
-        }
-    };
-};
-
-exports.stop = function()
-{
-    logger.info("stopping music");
-
-    ledstrip.allOff();
-    soundmanager.stop();
-};
-
-exports.play = function(title)
-{
-    logger.info("playing music " + title);
-
-    title = title || "siren.mp3";
-    title = title.replace("..", "");
-    title = config.mediaBasePath + "/" + title;
-
-    if (!fs.existsSync(title))
+    constructor(options)
     {
-        logger.error("file " + title + " does not exist");
-        return "file does not exist";
+        super("music", options);
     }
 
-    exports.stop();
+    exposed()
+    {
+        return {
+            play: {
+                method: this.play.bind(this),
+                params: [{
+                    name: "title",
+                    isOptional: true,
+                    dataType: "string",
+                    notes: "filename of .mp3 file to be played"
+                }]
+            },
+            stop: {
+                method: this.stop.bind(this),
+                params: []
+            }
+        };
+    }
 
-    soundmanager.play(title);
-};
+    stop()
+    {
+        this.logger.info("stopping music");
+        actormanagement.registeredActors["ledstrip"].allOff();
+        soundmanager.stop();
+    }
+
+    play(title)
+    {
+        this.logger.info("playing music " + title);
+
+        title = title || "siren.mp3";
+        title = title.replace("..", "");
+        title = config.mediaBasePath + "/" + title;
+
+        if (!fs.existsSync(title))
+        {
+            this.logger.error("file " + title + " does not exist");
+            return "file does not exist";
+        }
+
+        this.stop();
+
+        soundmanager.play(title);
+    }
+}
+
+module.exports = music;

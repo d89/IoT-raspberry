@@ -8,7 +8,7 @@ class pressure extends baseSensor
 {
     constructor(options)
     {
-        super("pressure", options);
+        super("pressure", "Pressure (Pa)", options);
         this.read();
     }
 
@@ -16,12 +16,11 @@ class pressure extends baseSensor
     {
         var that = this;
 
-        that.spawn('barometric', [], function ondata(data)
+        that.spawn('barometric', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {
                 data = JSON.parse(data.toString()).pressure;
-                //console.log("pressure", data);
                 that.senddata(data, that);
             }
             catch (err)

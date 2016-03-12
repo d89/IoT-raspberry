@@ -77,6 +77,13 @@ IoT.controller('IoTVideoCtrl', function ($scope, $rootScope, $timeout, $compile,
         $scope.videoParams = "?client=" + SocketFactory.clientName + "&password=" + constant.get("password");
     };
 
+    $scope.stopVideoPlaying = function()
+    {
+        $scope.playingVideo = false;
+
+        $("video").get(0).pause();
+    };
+
     $scope.getVideos = function(cb)
     {
         $scope.loading = true;

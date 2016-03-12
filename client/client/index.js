@@ -1,488 +1,106 @@
-//---------------------------------------------------------------------------
-
-var io = require('socket.io-client');
 var config = require('./config');
-var spawn = require('child_process').spawn;
+var exec = require('child_process').exec;
 var fs = require('fs');
-var path = require('path');
 var logger = require('./logger');
+var socketmanager = require('./socketmanager');
 var sensormanagement = require('./sensormanagement');
 var actormanagement = require('./actormanagement');
 var conditionparser = require('./conditionparser');
-var socketmanager = require('./socket');
-var audio = require('./audio');
-var youtube = require('./youtube');
+//---------------------------------------------------------------------------
 
-var socket = socketmanager.getConnectionHandle();
-
-logger.info(`client ${socketmanager.clientName} connecting to ${socketmanager.serverUrl}`);
-
-socketmanager.socket.on('connect', function()
+exports.displayUpdate = function(memUsage)
 {
-    if (!socketmanager.socket.connected)
-    {
-        return;
-    }
+    if (!("display" in actormanagement.registeredActors)) return;
 
-    logger.info(`connected to ${socketmanager.serverUrl}`);
-
-    sensormanagement.init(function(data)
+    exec("ps aux | grep python | wc -l", function(err, out1, stderr)
     {
+        exec("ps aux | grep node | wc -l", function(err, out2, stderr)
+        {
+            actormanagement.registeredActors.display.print([
+                "python-proc: " + parseInt(out1, 10),
+                "node-proc: " + parseInt(out2, 10),
+                "mem-usage " + memUsage.toFixed(2) + "%",
+                "load: " + fs.readFileSync("/proc/loadavg").toString().split(" ").splice(0, 3).join(" ")
+            ]);
+        });
+    });
+};
+
+exports.start = function()
+{
+    var isFirstConnection = socketmanager.socket === null;
+
+    var sensorUpdateCallback = function(type, data)
+    {
+        //console.log("received " + data + " for " + type);
+
         //logger.info("new sensor data: ", data);
-        socketmanager.socket.emit("client:data", data);
+        socketmanager.socket.emit("client:data", {
+            type: type,
+            data: data
+        });
+
+        conditionparser.process(type, data);
+
+        if (type == "mem")
+        {
+            exports.displayUpdate(data);
+        }
+    };
+
+    logger.info("------------------------------------------------------");
+    logger.info("BINDING ACTORS");
+
+    actormanagement.init();
+
+    logger.info("------------------------------------------------------");
+    logger.info("BINDING SENSORS");
+
+    sensormanagement.init({
+        onData: sensorUpdateCallback
     });
-});
 
-socketmanager.socket.on('actionrequest', function(msg, resp)
-{
-    /*
-    known messages:
-         { type: 'switchrc', data: { switchNumber: '1', onoff: '0' } }
-         { type: 'led', data: { ledType: 'red' } }
-     */
+    logger.info("------------------------------------------------------");
 
-    if (!msg.type)
+    var sensorsForServer = [];
+
+    for (var sensorName in sensormanagement.registeredSensors)
     {
-        logger.info("malformatted actionrequest");
-        return;
-    }
+        var sensor = sensormanagement.registeredSensors[sensorName];
 
-    //RC SWITCH  -----------------------------------------------------------------------
-    if (msg.type === "switchrc")
-    {
-        var switchNumber = msg.data.switchNumber;
-        var onoff = msg.data.onoff;
-
-        logger.info(`actionrequest for rc switch ${switchNumber} to status ${onoff}`);
-
-        actormanagement.registeredActors["switchrc"].turnSwitch(1, switchNumber, onoff);
-    }
-
-    //RC SWITCH  -----------------------------------------------------------------------
-    if (msg.type === "switchzwave")
-    {
-        var switchName = msg.data.switchName;
-        var onoff = msg.data.onoff;
-
-        logger.info(`actionrequest for zwave switch ${switchName} to status ${onoff}`);
-
-        if (onoff)
-            actormanagement.registeredActors["switchzwave"].on(switchName);
-        else
-            actormanagement.registeredActors["switchzwave"].off(switchName);
-    }
-
-    //Servo Engine  ---------------------------------------------------------------------
-    if (msg.type === "servo")
-    {
-        var onoff = msg.data.onoff;
-
-        logger.info(`actionrequest for servo to status ${onoff}`);
-
-        if (onoff)
-            actormanagement.registeredActors["servo"].on();
-        else
-            actormanagement.registeredActors["servo"].off();
-    }
-
-    //Stepper Engine  -------------------------------------------------------------------
-    if (msg.type === "stepper")
-    {
-        var onoff = msg.data.onoff;
-
-        logger.info(`actionrequest for stepper to status ${onoff}`);
-
-        if (onoff)
-            actormanagement.registeredActors["stepper"].on();
-        else
-            actormanagement.registeredActors["stepper"].off();
-    }
-
-    //LED ------------------------------------------------------------------------------
-    if (msg.type === "led")
-    {
-        logger.info(`actionrequest for LED ${msg.data.ledType}`);
-
-        if (msg.data.ledType === "red")
+        if (sensor.sendToServer)
         {
-            actormanagement.registeredActors["led"].red();
-        }
-        else if (msg.data.ledType === "green")
-        {
-            actormanagement.registeredActors["led"].green();
-        }
-    }
-
-    //Voice ------------------------------------------------------------------------------
-    if (msg.type === "voice")
-    {
-        logger.info(`actionrequest for Voice with text ${msg.data}`);
-
-        actormanagement.registeredActors["voice"].speak(msg.data);
-    }
-
-    //Music ------------------------------------------------------------------------------
-    if (msg.type === "music")
-    {
-        var turnOff = msg.data === false;
-
-        if (turnOff) {
-            logger.info("turning music off");
-            actormanagement.registeredActors["music"].stop();
-        } else {
-            logger.info(`actionrequest for music with title ${msg.data}`);
-            actormanagement.registeredActors["music"].play(msg.data);
-        }
-    }
-
-    //Recording ---------------------------------------------------------------------------
-    if (msg.type === "record")
-    {
-        var start = msg.data.mode === "start";
-
-        if (start) {
-            logger.info("start recording");
-            actormanagement.registeredActors["recorder"].record(false, msg.data.maxLength, config.mediaBasePath, function(err, fileName)
-            {
-                if (err)
-                    return resp(err);
-
-                //the full path is returned, we only want the raw file name
-                if (fileName)
-                    return resp(null, path.basename(fileName));
+            sensorsForServer.push({
+                name: sensor.name,
+                description: sensor.description
             });
         }
     }
 
-    //Volume ---------------------------------------------------------------------------
-    if (msg.type === "volume")
+    //------------------------------------------------------
+
+    var actorsForServer = [];
+
+    for (var actorName in actormanagement.registeredActors)
     {
-        var volume = parseFloat(msg.data, 10);
+        var actor = actormanagement.registeredActors[actorName];
 
-        if (isNaN(volume) || volume < 0 || volume > 100)
-        {
-            logger.error("invalid volume - setting to default");
-            volume = config.volume;
-        }
-
-        //Volume ranges from 0 to 100%
-        logger.info("setting volume to ", volume);
-        spawn("amixer", ["set", "PCM", "--", volume + "%"]);
-        config.volume = volume;
-    }
-
-    //Temperature -------------------------------------------------------------------------
-    if (msg.type === "settemperature")
-    {
-        var data = msg.data;
-        logger.info(`actionrequest for temperature with data`, data);
-
-        if (!("type" in data && "temp" in data && "thermostat" in data))
-        {
-            return logger.error("invalid set temperature request (1)", data);
-        }
-
-        var type = data.type;
-        var temp = data.temp;
-        var thermostat = data.thermostat;
-
-        if (type === "zwave")
-        {
-            actormanagement.registeredActors["set_temperature_zwave"].settemp(temp, thermostat);
-        }
-        else if (type === "homematic")
-        {
-            actormanagement.registeredActors["set_temperature_homematic"].settemp(temp, thermostat);
-        }
-        else
-        {
-            logger.error("invalid set temperature request (2)", msg.data);
-        }
-    }
-
-    //LED Strip --------------------------------------------------------------------------
-    if (msg.type === "ledstrip")
-    {
-        logger.info("actionrequest for ledstrip with data", msg.data);
-
-        var mode = msg.data.mode;
-
-        if (mode === "singleColor")
-        {
-            actormanagement.registeredActors["ledstrip"].singleColor(msg.data.colors.red, msg.data.colors.green, msg.data.colors.blue);
-        }
-        else if (mode === "colorParty")
-        {
-            actormanagement.registeredActors["ledstrip"].colorParty(true);
-        }
-        else if (mode === "allOff")
-        {
-            actormanagement.registeredActors["ledstrip"].allOff();
-        }
-        else if (mode === "randomColor")
-        {
-            actormanagement.registeredActors["ledstrip"].randomColor();
-        }
-        else if (mode === "lightshow")
-        {
-            var style = msg.data.style;
-
-            if (style === "music")
-            {
-                var file = msg.data.file;
-                actormanagement.registeredActors["ledstrip"].lightshow(file);
-            }
-            else if (style === "linein")
-            {
-                actormanagement.registeredActors["ledstrip"].synchronize();
-            }
-        }
-        else
-        {
-            logger.error("invalid led strip command type");
-        }
-    }
-
-    //YT Download --------------------------------------------------------------------------
-    if (msg.type === "youtube")
-    {
-        youtube.download(msg.data, function onout(text)
-        {
-            logger.info(text);
-            socketmanager.socket.emit("client:youtube-download", {
-                output: text
-            });
-        },
-        function onclose(code, fileName)
-        {
-            logger.info("Done with response code: " + code + " and file " + fileName);
-
-            var resp = { success: true };
-
-            if (code === 0 && fileName)
-            {
-                resp.file = fileName;
-            }
-            else
-            {
-                resp.success = false;
-            }
-
-            socketmanager.socket.emit("client:youtube-download", resp);
-        });
-    }
-});
-
-socketmanager.socket.on('audio', function(msg, resp)
-{
-    if (msg.mode === "list")
-    {
-        audio.list(function(err, audios)
-        {
-            if (err)
-            {
-                logger.error("audio listing: ", err);
-                return resp(err);
-            }
-
-            //logger.info("audio listing: got", audios);
-
-            resp(null, audios);
-        });
-    }
-    else if (msg.mode === "delete")
-    {
-        audio.delete(msg.file, function(err, msg)
-        {
-            if (err)
-            {
-                logger.error("audio deleting: ", err);
-                return resp(err);
-            }
-
-            logger.info("audio deleting: got", msg);
-
-            resp(null, msg);
-        });
-    }
-});
-
-socketmanager.socket.on('ifttt', function(msg, resp)
-{
-    //conditionlist  --------------------------------------------------------------------
-    if (msg.mode === "conditionlist")
-    {
-        logger.info("ifttt request for conditionslist");
-
-        conditionparser.loadConditions(function(err, conds)
-        {
-            try
-            {
-                var parsedConditions = JSON.parse(conds);
-
-                //send initial state
-                conditionparser.sendStatusUpdateToServer();
-            }
-            catch (err)
-            {
-                logger.error("could not load ifttt conditions", err, conds);
-                return resp("parsing error");
-            }
-
-            return resp(err, parsedConditions);
+        actorsForServer.push({
+            name: actor.name,
+            options: []
         });
     }
 
-    //availableoptions  -----------------------------------------------------------------
-    if (msg.mode === "availableoptions")
-    {
-        logger.info("ifttt request for availableoptions");
+    logger.info(`client ${socketmanager.clientName} connecting to ${socketmanager.serverUrl}`);
 
-        conditionparser.loadAvailableOptions(function(err, availableOptions)
-        {
-            return resp(err, availableOptions);
-        });
+    socketmanager.socket = socketmanager.getConnectionHandle(sensorsForServer, actorsForServer);
+
+    if (isFirstConnection)
+    {
+        socketmanager.bindCallbacks();
     }
+};
 
-    //saveconditions  -------------------------------------------------------------------
-    if (msg.mode === "saveconditions")
-    {
-        logger.info("ifttt request for saveconditions");
+//---------------------------------------------------------------------------
 
-        try
-        {
-            var conditions = JSON.stringify(msg.conditions);
-        }
-        catch (err)
-        {
-            logger.error("could not parse ifttt conditions", err, msg.conditions);
-            return resp("parsing error");
-        }
-
-        conditionparser.saveConditions(conditions, function(err, conds)
-        {
-            return resp(err, conds);
-        });
-    }
-
-    //parseconditions  -------------------------------------------------------------------
-    if (msg.mode === "testconditions")
-    {
-        logger.info("ifttt request for testconditions");
-
-        conditionparser.testConditions(msg.testconditions, function(err, data)
-        {
-            return resp(err, data);
-        });
-    }
-});
-
-//request from server client (passed by ui)
-socketmanager.socket.on('start-stop-stream', function(msg, resp)
-{
-    var start = !!msg.start;
-
-    if (start)
-    {
-        logger.info("Received stream start request");
-
-        if (actormanagement.registeredActors["cam"].cameraBusyRecording)
-        {
-            var msg = "Camera is already recording, can not start stream";
-            if (resp) resp(msg);
-            logger.error(msg);
-            return;
-        }
-
-        if (resp) resp(null, "starting");
-
-        if (!actormanagement.registeredActors["cam"].cameraBusyStreaming) {
-            actormanagement.registeredActors["cam"].startStreaming(socket);
-        } else {
-            actormanagement.registeredActors["cam"].sendImage();
-        }
-    }
-    else
-    {
-        logger.info("Received stream stop request");
-        actormanagement.registeredActors["cam"].stopStreaming();
-        if (resp) resp(null, "stopping");
-    }
-});
-
-socketmanager.socket.on('start-video', function(msg, cb)
-{
-    logger.info("Received video recording request for " + msg.duration + "s");
-
-    actormanagement.registeredActors["cam"].record(msg.duration, function(err, data)
-    {
-        cb(err, data);
-    });
-});
-
-socketmanager.socket.on('maintenance', function(msg, cb)
-{
-    logger.info("received maintenance request", msg);
-
-    if (msg.mode === "shutdown")
-    {
-        spawn("/sbin/shutdown", ["now"]);
-    }
-    else if (msg.mode === "restart")
-    {
-        spawn("/sbin/reboot", ["now"]);
-    }
-    else //log
-    {
-        fs.readFile(config.logFile, "utf8", function(err, logfileRaw)
-        {
-            var logfile = [];
-
-            if (err) {
-                err = "" + err;
-            }
-            else {
-                var logfileRaw = logfileRaw.toString().split("\n").reverse();
-
-                var max = Math.min(logfileRaw.length, 30);
-
-                for (var i = 0; i < max; i++)
-                {
-                    if (!logfileRaw[i].length) continue;
-
-                    try {
-                        logfile.push(JSON.parse(logfileRaw[i]));
-                    } catch (err) {
-                        logger.info("JSON parse error for " + logfileRaw[i]);
-                    }
-                }
-            }
-
-            if (!logfile.length || (err && err.indexOf("no such file or directory") !== -1))
-            {
-                err = null;
-
-                logfile.push({
-                    level: "error",
-                    message: "log file " + config.logFile + " missing",
-                    timestamp: new Date()
-                });
-            }
-
-            return cb(err, logfile);
-        });
-    }
-});
-
-socketmanager.socket.on('disconnect', function()
-{
-	logger.info(`disconnected from ${socketmanager.serverUrl}`);
-    actormanagement.registeredActors["cam"].stopStreaming();
-
-    //if we receive a real "disconnect" event, the reconnection is not automatically being established again
-    setTimeout(function()
-    {
-        logger.info(`establishing reconnection`);
-        socketmanager.socket = socketmanager.getConnectionHandle();
-    }, 2000);
-});
+exports.start();

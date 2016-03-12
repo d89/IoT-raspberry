@@ -2,7 +2,7 @@ var fs = require("fs");
 var logger = require("./logger");
 var sensormanagement = require("./sensormanagement");
 var actormanagement = require("./actormanagement");
-var socketmanager = require("./socket");
+var socketmanager = require("./socketmanager");
 
 const DEBUG = false;
 
@@ -478,7 +478,7 @@ exports.validateParameterPresence = function(methodName, expectedParameters, rec
     expectedParameters.forEach(function(exp, i)
     {
         //ensured to be a string
-        if (typeof receivedParameters[i] == "undefined" || !receivedParameters[i].length)
+        if (exp.isOptional === false && (typeof receivedParameters[i] == "undefined" || !receivedParameters[i].length))
         {
            throw "missing required parameter " + (i + 1) + " for " + methodName;
         }

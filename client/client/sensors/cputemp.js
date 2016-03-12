@@ -2,7 +2,6 @@
 
 var fs = require("fs");
 var baseSensor = require("./baseSensor");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -10,7 +9,7 @@ class cputemp extends baseSensor
 {
     constructor(options)
     {
-        super("cputemp", options);
+        super("cputemp", "CPU Temperature (°C)", options);
         this.read();
     }
 
@@ -32,7 +31,7 @@ class cputemp extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 

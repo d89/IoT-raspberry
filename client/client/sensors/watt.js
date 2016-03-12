@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var config = require("../config");
 var logger = require("../logger");
 var fhem = require("../fhemmanagement");
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,28 +11,19 @@ class watt extends baseSensor
 {
     constructor(options)
     {
-        super("watt", options);
+        super("watt", "Power consumption (Watt)", options);
         this.read();
     }
 
     read()
     {
         var that = this;
-
         var switchName = that.options.switchName;
-        switchName = switchName || "ZWave_SWITCH_BINARY_17";
+        var t = switchName || "ZWave_SWITCH_BINARY_17";
+        var refreshattribute = "smStatus";
+        var url = `fhem?detail=${t}&dev.get${t}=${t}&cmd.get${t}=get&arg.get${t}=${refreshattribute}&val.get${t}=&XHR=1`;
 
-        var requestObject = {
-            "detail": switchName
-        };
-
-        requestObject["dev.get" + switchName] = switchName;
-        requestObject["cmd.get" + switchName] = "get";
-        requestObject["arg.get" + switchName] = "smStatus";
-        requestObject["val.get" + switchName] = "";
-        requestObject["XHR"] = "1";
-
-        fhem.post("fhem", requestObject, function(err, msg)
+        fhem.get(url, function(err, msg)
         {
             if (err) {
                 logger.error(err);
@@ -42,14 +32,15 @@ class watt extends baseSensor
                 if (!watt || watt.length !== 1 || isNaN(parseFloat(watt[0], 10))) {
                     logger.error("fhem zwave get measured watt could not parse " + msg);
                 } else {
-                    that.senddata(watt[0], that);
+                    var w = watt[0];
+                    that.senddata(w, that);
                 }
             }
 
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
+            }, that.options.interval * 1000);
         });
     }
 }

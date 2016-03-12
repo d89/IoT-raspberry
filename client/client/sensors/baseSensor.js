@@ -8,7 +8,7 @@ var config = require("../config");
 
 class baseSensor
 {
-    constructor(name, options)
+    constructor(name, description, options)
     {
         this.logger = logger;
         this.options = options;
@@ -17,6 +17,11 @@ class baseSensor
             is: null
         };
         this.name = name;
+        this.description = description;
+        //if no description is given, we don't want to send & store this datapoint on the server
+        //examples contain sensor values that should just locally (time, date) for condition parsing,
+        //but are of no relevance for the server
+        this.sendToServer = this.description !== false;
         this.logger.info(`watching ${this.name}`);
     }
 

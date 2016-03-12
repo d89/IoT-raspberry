@@ -8,64 +8,55 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 
 # Define GPIO signals to use
-StepPins = [8,10,12,18]
+StepPins = [int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4])]
 
 # Set all pins as output
 for pin in StepPins:
-  GPIO.setup(pin,GPIO.OUT)
-  GPIO.output(pin, False)
+    GPIO.setup(pin,GPIO.OUT)
+    GPIO.output(pin, False)
 
-
-turnOff = len(sys.argv) == 2 and sys.argv[1] == "off"
+turnOff = len(sys.argv) == 6 and sys.argv[5] == "off"
 
 if turnOff:
-  for pin in range(0, 4):
-    xpin = StepPins[pin]
-    GPIO.output(xpin, False)
-  print "motor turned off. exiting"
-  sys.exit()
-
-# Define advanced sequence
-# as shown in manufacturers datasheet
-Seq = [[1,0,0,1],
-       [1,0,0,0],
-       [1,1,0,0],
-       [0,1,0,0],
-       [0,1,1,0],
-       [0,0,1,0],
-       [0,0,1,1],
-       [0,0,0,1]]
-       
-StepCount = len(Seq)
-StepDir = 1 # Set to 1 or 2 for clockwise
-            # Set to -1 or -2 for anti-clockwise
-
-# Read wait time from command line
-if len(sys.argv)>1:
-  WaitTime = int(sys.argv[1])/float(1000)
+    for pin in range(0, 4):
+        xpin = StepPins[pin]
+        GPIO.output(xpin, False)
+    print "motor turned off. exiting"
 else:
-  WaitTime = 10/float(1000)
+    # Define advanced sequence
+    # as shown in manufacturers datasheet
+    Seq = [[1,0,0,1],[1,0,0,0],[1,1,0,0],[0,1,0,0],[0,1,1,0],[0,0,1,0],[0,0,1,1],[0,0,0,1]]
 
-# Initialise variables
-StepCounter = 0
+    StepCount = len(Seq)
+    StepDir = 1 # Set to 1 or 2 for clockwise
+                            # Set to -1 or -2 for anti-clockwise
 
-# Start main loop
-while True:
-  for pin in range(0, 4):
-    xpin = StepPins[pin]
-    if Seq[StepCounter][pin]!=0:
-      GPIO.output(xpin, True)
+    # Read wait time from command line
+    if len(sys.argv)>1:
+        WaitTime = int(sys.argv[1])/float(1000)
     else:
-      GPIO.output(xpin, False)
+        WaitTime = 10/float(1000)
 
-  StepCounter += StepDir
-
-  # If we reach the end of the sequence
-  # start again
-  if (StepCounter>=StepCount):
+    # Initialise variables
     StepCounter = 0
-  if (StepCounter<0):
-    StepCounter = StepCount+StepDir
 
-  # Wait before moving on
-  time.sleep(WaitTime)
+    # Start main loop
+    while True:
+        for pin in range(0, 4):
+            xpin = StepPins[pin]
+            if Seq[StepCounter][pin]!=0:
+                GPIO.output(xpin, True)
+            else:
+                GPIO.output(xpin, False)
+
+        StepCounter += StepDir
+
+        # If we reach the end of the sequence
+        # start again
+        if (StepCounter>=StepCount):
+            StepCounter = 0
+        if (StepCounter<0):
+            StepCounter = StepCount+StepDir
+
+        # Wait before moving on
+        time.sleep(WaitTime)

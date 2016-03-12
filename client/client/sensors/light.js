@@ -8,7 +8,7 @@ class light extends baseSensor
 {
     constructor(options)
     {
-        super("light", options);
+        super("light", "Light State", options);
         this.read();
     }
 
@@ -16,7 +16,7 @@ class light extends baseSensor
     {
         var that = this;
 
-        that.spawn('light', [], function ondata(data)
+        that.spawn('light', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {

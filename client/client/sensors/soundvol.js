@@ -8,7 +8,7 @@ class soundvol extends baseSensor
 {
     constructor(options)
     {
-        super("soundvol", options);
+        super("soundvol", "Sound Volume", options);
         this.read();
     }
 
@@ -16,7 +16,7 @@ class soundvol extends baseSensor
     {
         var that = this;
 
-        that.spawn('sound', [], function ondata(data)
+        that.spawn('soundvol', [that.options.pin, that.options.interval], function ondata(data)
         {
             try
             {

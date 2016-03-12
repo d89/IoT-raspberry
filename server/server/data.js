@@ -564,10 +564,10 @@ io.on('connection', function(socket)
             'ui:get-socket-info': function (clientSocket, msg, resp) {
                 logger.info("getting client socket info");
 
-                var caps = JSON.parse(clientSocket.handshake.query.capabilities) || [];
+                var capabilities = JSON.parse(clientSocket.handshake.query.capabilities) || [];
 
                 resp(null, {
-                    capabilities: caps,
+                    capabilities: capabilities,
                     client_name: clientSocket.handshake.query.client_name,
                     connected_at: clientSocket.handshake.query.connected_at
                 });
@@ -681,7 +681,7 @@ io.on('connection', function(socket)
 
                 var client_capabilities = JSON.parse(clientSocket.handshake.query.capabilities) || [];
 
-                storage.aggregation(start, end, interval, client_capabilities, client_id, skipcache, progressFunc(socket), function (err, dps) {
+                storage.aggregation(start, end, interval, client_capabilities.sensors, client_id, skipcache, progressFunc(socket), function (err, dps) {
                     //logger.info("responding to last hour request", dps);
                     resp(null, dps);
                 });
@@ -832,7 +832,7 @@ io.on('connection', function(socket)
             {
                 msg.client_id = getClientName(socket);
 
-                var caps = JSON.parse(socket.handshake.query.capabilities)
+                var capabilities = JSON.parse(socket.handshake.query.capabilities)
                 var type = msg.type;
 
                 var sendToUi = function(socket, msg)
@@ -856,7 +856,18 @@ io.on('connection', function(socket)
 
                 //only persist data that is also shown in charts. So don't store the current time
                 //for example, that is only there for the ifttt "current value" info
-                if (caps.indexOf(type) === -1)
+
+                var isContained = false;
+
+                capabilities.sensors.forEach(function(cap)
+                {
+                    if (cap.name === type)
+                    {
+                        isContained = true;
+                    }
+                });
+
+                if (!isContained)
                 {
                     //console.log("did not store " + type);
                     return sendToUi(socket, msg);

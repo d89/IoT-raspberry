@@ -4,7 +4,6 @@ var baseSensor = require("./baseSensor");
 var logger = require("../logger");
 var config = require("../config");
 var spawn = require('child_process').spawn;
-const INTERVAL = 5000;
 
 // ######################################################
 
@@ -12,19 +11,19 @@ class reachability extends baseSensor
 {
     constructor(options)
     {
-        super("reachability", options);
+        super("reachability", "Smartphone Reachability", options);
         this.read();
     }
 
     read()
     {
         var that = this;
-
-        this.isReachable(function(err, isReachable)
+        var cb = function(err, isReachable)
         {
             if (!err)
             {
-                that.senddata(isReachable ? 1 : 0, that);
+                var r = isReachable ? 1 : 0;
+                that.senddata(r, that);
             }
             else
             {
@@ -34,24 +33,25 @@ class reachability extends baseSensor
             setTimeout(function()
             {
                 that.read();
-            }, INTERVAL);
-        });
+            }, that.options.interval * 1000);
+        };
+
+        that.isReachable.apply(this, [that.options.ip, cb]);
     }
 
     // ----------------------------------------------
 
-    isReachable(cb)
+    isReachable(ip, cb)
     {
         var numberOfPackagesToSend = 3;
         var waitingTimePerPackage = 1;
-
-        var ping = spawn("ping", ["-c", numberOfPackagesToSend, "-W", waitingTimePerPackage, this.options.ip]);
+        var ping = spawn("ping", ["-c", numberOfPackagesToSend, "-W", waitingTimePerPackage, ip]);
 
         ping.on("close", function(returnCode)
         {
             //console.log("ping response", returnCode);
 
-            //returncode is 0 if one of the packages is successfull       {
+            //returncode is 0 if one of the packages is successfull
             if (returnCode === 0 || returnCode === 1)
             {
                 var wasSuccessfull = returnCode === 0;
@@ -61,7 +61,6 @@ class reachability extends baseSensor
             {
                 cb("Received ping error: " + returnCode);
             }
-
         });
     }
 }

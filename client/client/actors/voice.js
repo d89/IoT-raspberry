@@ -1,95 +1,111 @@
-var logger = require('../logger');
+"use strict";
+
+var baseActor = require("./baseActor");
 var config = require('../config');
+var spawn = require('child_process').spawn;
 var request = require('request');
 var fs = require('fs');
 var crypto = require('crypto');
-var spawn = require('child_process').spawn;
 var glob = require('glob');
 var path = require('path');
-var music = require('./music');
+var actormanagement = require('../actormanagement');
 const MAX_KEEP_FILES = 5;
 
-exports.exposed = function()
+// ######################################################
+
+class voice extends baseActor
 {
-    return {
-        speak: {
-            method: exports.speak,
-            params: [{
-                name: "text",
-                isOptional: false,
-                dataType: "string",
-                notes: "text that should be spoken."
-            }]
-        }
-    };
-};
-
-exports.deleteOldFiles = function()
-{
-    glob(config.mediaBasePath + "/voice-*.mp3", {}, function(err, files)
+    constructor(options)
     {
-        if (err)
-        {
-            return logger.error("error grepping: " + err);
-        }
-
-        var sortedFiles = files.sort(function(a, b)
-        {
-            return fs.statSync(a).mtime.getTime() - fs.statSync(b).mtime.getTime();
-        });
-
-        var filesToDelete = sortedFiles.length - MAX_KEEP_FILES;
-
-        if (filesToDelete > 0)
-        {
-            for (var i = 0; i < filesToDelete; i++)
-            {
-                fs.unlink(sortedFiles[i], function(err)
-                {
-                    if (err)
-                    {
-                        logger.error("could not delete file " + sortedFiles[i] + " - " + err);
-                    }
-                });
-            }
-        }
-    });
-};
-
-exports.speak = function(text)
-{
-    logger.info("voice acting");
-
-    exports.deleteOldFiles();
-
-    var play = function(fileName)
-    {
-        music.play(path.basename(fileName));
-    };
-
-    var ttsApiKey = config.ttsApiKey;
-    text = text || "no text given";
-    var speakerLanguage = "en-us";
-    var speed = 0; //-10 = slowest, 10 = fastest
-    var url = "https://api.voicerss.org/?key=" + ttsApiKey + "&src=" + text + "&hl=" + speakerLanguage + "&r=" + speed + "&f=44khz_16bit_stereo";
-    var fileName = "voice-" + crypto.createHash('md5').update(url).digest('hex') + ".mp3";
-    fileName = config.mediaBasePath + "/" + fileName;
-
-    if (fs.existsSync(fileName))
-    {
-        logger.info("voice actor from cache");
-        play(fileName);
-        return;
+        super("voice", options);
     }
 
-    request(url).on("error", function(err)
+    exposed()
     {
-        logger.error("voice rec error " + err);
-    })
-    .pipe(fs.createWriteStream(fileName))
-    .on("finish", function()
+        return {
+            speak: {
+                method: this.speak.bind(this),
+                params: [{
+                    name: "text",
+                    isOptional: false,
+                    dataType: "string",
+                    notes: "text that should be spoken."
+                }]
+            }
+        };
+    }
+
+    deleteOldFiles()
     {
-        logger.info("voice live rec finished");
-        play(fileName);
-    });
-};
+        var that = this;
+        
+        glob(config.mediaBasePath + "/voice-*.mp3", {}, function(err, files)
+        {
+            if (err)
+            {
+                return that.logger.error("error grepping: " + err);
+            }
+
+            var sortedFiles = files.sort(function(a, b)
+            {
+                return fs.statSync(a).mtime.getTime() - fs.statSync(b).mtime.getTime();
+            });
+
+            var filesToDelete = sortedFiles.length - MAX_KEEP_FILES;
+
+            if (filesToDelete > 0)
+            {
+                for (var i = 0; i < filesToDelete; i++)
+                {
+                    fs.unlink(sortedFiles[i], function(err)
+                    {
+                        if (err)
+                        {
+                            that.logger.error("could not delete file " + sortedFiles[i] + " - " + err);
+                        }
+                    });
+                }
+            }
+        });
+    };
+
+    speak(text)
+    {
+        var that = this;
+        that.logger.info("voice acting");
+        that.deleteOldFiles();
+
+        var play = function(fileName)
+        {
+            actormanagement.registeredActors["music"].play(path.basename(fileName));
+        };
+
+        var ttsApiKey = config.ttsApiKey;
+        text = text || "no text given";
+        var speakerLanguage = "en-us";
+        var speed = 0; //-10 = slowest, 10 = fastest
+        var url = "https://api.voicerss.org/?key=" + ttsApiKey + "&src=" + text + "&hl=" + speakerLanguage + "&r=" + speed + "&f=44khz_16bit_stereo";
+        var fileName = "voice-" + crypto.createHash('md5').update(url).digest('hex') + ".mp3";
+        fileName = config.mediaBasePath + "/" + fileName;
+
+        if (fs.existsSync(fileName))
+        {
+            that.logger.info("voice actor from cache");
+            play(fileName);
+            return;
+        }
+
+        request(url).on("error", function(err)
+        {
+            that.logger.error("voice rec error " + err);
+        })
+        .pipe(fs.createWriteStream(fileName))
+        .on("finish", function()
+        {
+            that.logger.info("voice live rec finished");
+            play(fileName);
+        });
+    };
+}
+
+module.exports = voice;
