@@ -32,7 +32,7 @@ exports.persistDataPoint = function(type, data, client_id, created, cb)
     var dp = {
         type: type,
         data: parseFloat(data, 10),
-        created: created,
+        created: new Date(created),
         client_id: client_id
     };
 
