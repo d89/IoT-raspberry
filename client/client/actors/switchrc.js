@@ -45,39 +45,44 @@ class switchrc extends baseActor
 
     // ---------------------------------------------------
 
-    switch1on()
+    switch1on(cb)
     {
-        this.turnSwitch(1, 1, 1);
+        this.turnSwitch(1, 1, 1, cb);
     }
 
-    switch1off()
+    switch1off(cb)
     {
-        this.turnSwitch(1, 1, 0);
+        this.turnSwitch(1, 1, 0, cb);
     }
 
-    switch2on()
+    switch2on(cb)
     {
-        this.turnSwitch(1, 2, 1);
+        this.turnSwitch(1, 2, 1, cb);
     }
 
-    switch2off()
+    switch2off(cb)
     {
-        this.turnSwitch(1, 2, 0);
+        this.turnSwitch(1, 2, 0, cb);
     }
 
-    switch3on()
+    switch3on(cb)
     {
-        this.turnSwitch(1, 3, 1);
+        this.turnSwitch(1, 3, 1, cb);
     }
 
-    switch3off()
+    switch3off(cb)
     {
-        this.turnSwitch(1, 3, 0);
+        this.turnSwitch(1, 3, 0, cb);
     }
 
-    turnSwitch(channel, device, state)
+    turnSwitch(channel, device, state, cb)
     {
         var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
 
         that.logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
         var prc = spawn(config.baseBath + '/actors/switchrc', [channel, device, state]);
@@ -85,12 +90,12 @@ class switchrc extends baseActor
 
         prc.stderr.on('data', function (data)
         {
-            that.logger.error("received err: ", data.toString());
+            cb(data.toString());
         });
 
         prc.stdout.on('data', function (data)
         {
-            that.logger.info("received data: ", data);
+            cb(null, data.toString());
         });
     };
 }

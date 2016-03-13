@@ -29,8 +29,15 @@ class stepper extends baseActor
         };
     }
 
-    setStepper(state)
+    setStepper(state, cb)
     {
+        var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         if (this.process)
         {
             this.process.kill();
@@ -44,7 +51,6 @@ class stepper extends baseActor
             this.options.pin4
         ];
 
-        var that = this;
         var params = pins;
 
         if (state === false)
@@ -64,18 +70,20 @@ class stepper extends baseActor
         {
             that.logger.info("received data: ", data);
         });
+
+        cb(null, state === false ? "stepper stopped" : "stepper started");
     }
 
-    off()
+    off(cb)
     {
         this.logger.info("disabling stepper");
-        this.setStepper(false);
+        this.setStepper(false, cb);
     };
 
-    on()
+    on(cb)
     {
         this.logger.info("enabling stepper");
-        this.setStepper(true);
+        this.setStepper(true, cb);
     }
 }
 

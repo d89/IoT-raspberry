@@ -19,11 +19,9 @@ class measured_temperature_homematic extends baseSensor
     {
         var that = this;
 
-        var thermostatName = that.options.thermostatName;
-        var requestObject = '{ReadingsVal("' + thermostatName + '_Clima","measured-temp","")}';
-        var url = "fhem?cmd=" + requestObject + "&XHR=1";
+        var thermostatName = that.options.thermostatName + '_Clima';
 
-        fhem.get(url, function(err, body)
+        fhem.readValue(thermostatName, "measured-temp", function(err, body)
         {
             if (err) {
                 logger.error(err);

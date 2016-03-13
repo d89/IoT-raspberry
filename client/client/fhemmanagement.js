@@ -1,6 +1,7 @@
 var config = require("./config");
 var logger = require("./logger");
 var request = require("request");
+var querystring = require("querystring");
 
 exports.get = function(urlPath, cb)
 {
@@ -54,4 +55,39 @@ exports.post = function(urlPath, requestObject, cb)
             cb(null, body);
         }
     });
+};
+
+exports.setValue = function(deviceName, attribute, value, cb)
+{
+    var attrs = {};
+    attrs["detail"] = deviceName;
+    attrs["dev.set" + deviceName] = deviceName;
+    attrs["cmd.set" + deviceName] = "set";
+    attrs["arg.set" + deviceName] = attribute;
+    attrs["val.set" + deviceName] = value;
+    attrs["XHR"] = "1";
+
+    return exports.post("fhem", attrs, cb);
+};
+
+exports.readValue = function(deviceName, attribute, cb)
+{
+    var requestObject = '{ReadingsVal("' + deviceName + '","' + attribute + '","")}';
+    var url = "fhem?cmd=" + requestObject + "&XHR=1";
+    return exports.get(url, cb);
+};
+
+exports.refreshAttribute = function(deviceName, refreshattribute, cb)
+{
+    var attrs = {};
+    attrs["detail"] = deviceName;
+    attrs["dev.get" + deviceName] = deviceName;
+    attrs["cmd.get" + deviceName] = "get";
+    attrs["arg.get" + deviceName] = refreshattribute;
+    attrs["val.get" + deviceName] = "";
+    attrs["XHR"] = "1";
+
+    var url = "fhem?" + querystring.stringify(attrs);
+
+    return exports.get(url, cb);
 };

@@ -28,8 +28,15 @@ class display extends baseActor
         };
     }
 
-    print(displaycontent)
+    print(displaycontent, cb)
     {
+        var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            //that.logger.info("actor result", err, resp);
+        };
+
         //make array
         if (!displaycontent.splice)
         {
@@ -38,6 +45,8 @@ class display extends baseActor
 
         var prc = spawn(config.baseBath + '/actors/display', displaycontent);
         prc.stdout.setEncoding('utf8');
+
+        cb(null, "printed to display");
     }
 }
 

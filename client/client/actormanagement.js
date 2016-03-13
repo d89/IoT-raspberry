@@ -1,5 +1,5 @@
 var config = require('./config');
-var config = require('./logger');
+var logger = require('./logger');
 
 exports.registeredActors = {};
 

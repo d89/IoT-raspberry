@@ -119,6 +119,24 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         SocketFactory.send("ui:action", options);
     };
 
+    $scope.volumemicrophone = function()
+    {
+        var volumeSetting = localStorage.getItem("volumemicrophone") || 100;
+
+        var volume = window.prompt("Please enter sound volume between 0 (silent) and 100 (loudest).", volumeSetting);
+
+        if (!volume) return;
+
+        localStorage.setItem("volumemicrophone", volume);
+
+        var options = {
+            type: "volumemicrophone",
+            data: volume
+        };
+
+        SocketFactory.send("ui:action", options);
+    };
+
     $scope.servo = function(onoff)
     {
         onoff = !!onoff;

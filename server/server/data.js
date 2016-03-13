@@ -104,14 +104,14 @@ function persistClientData(msg, cb)
 {
 	//logger.info("got from client", msg);
 	
-	if (!("type" in msg) || !("data" in msg) || !("client_id" in msg))
+	if (!("type" in msg) || !("data" in msg) || !("client_id" in msg) || !("created" in msg))
 	{
 		return cb("malformatted message", msg);
 	}
 		
 	var data = msg.data;
 
-    storage.persistDataPoint(msg.type, data, msg.client_id, function(err, msg)
+    storage.persistDataPoint(msg.type, data, msg.client_id, msg.created, function(err, msg)
     {
         if (err)
             return cb(err);
@@ -846,8 +846,6 @@ io.on('connection', function(socket)
                         //logger.info(`no waiting ui client for client data`);
                         return;
                     }
-
-                    msg.created = (new Date).getTime();
 
                     //logger.info("data update for ui", msg);
 

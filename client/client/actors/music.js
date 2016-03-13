@@ -35,15 +35,30 @@ class music extends baseActor
         };
     }
 
-    stop()
+    stop(cb)
     {
+        var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         this.logger.info("stopping music");
         actormanagement.registeredActors["ledstrip"].allOff();
         soundmanager.stop();
+        cb(null, "stopped music");
     }
 
-    play(title)
+    play(title, cb)
     {
+        var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         this.logger.info("playing music " + title);
 
         title = title || "siren.mp3";
@@ -52,13 +67,13 @@ class music extends baseActor
 
         if (!fs.existsSync(title))
         {
-            this.logger.error("file " + title + " does not exist");
-            return "file does not exist";
+            return cb("file " + title + " does not exist");
         }
 
         this.stop();
 
         soundmanager.play(title);
+        cb(null, "played " + title);
     }
 }
 

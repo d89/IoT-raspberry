@@ -27,19 +27,25 @@ class led extends baseActor
         };
     }
 
-    red()
+    red(cb)
     {
-        this.blink(this.options.pin_red);
+        this.blink(this.options.pin_red, cb);
     }
 
-    green()
+    green(cb)
     {
-        this.blink(this.options.pin_green);
+        this.blink(this.options.pin_green, cb);
     }
 
-    blink(pin)
+    blink(pin, cb)
     {
         var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         that.logger.info("blinking LED PIN " + pin);
 
         var prc = spawn(config.baseBath + '/actors/led', [ pin ]);
@@ -54,6 +60,8 @@ class led extends baseActor
         {
             that.logger.info("received data: ", data);
         });
+
+        cb(null, "blink done");
     }
 }
 

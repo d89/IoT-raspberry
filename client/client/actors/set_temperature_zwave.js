@@ -26,39 +26,32 @@ class set_temperature_zwave extends baseActor
                     notes: "temperature that should be set"
                 }, {
                     name: "thermostatName",
-                    isOptional: true,
+                    isOptional: false,
                     dataType: "string",
-                    notes: "ID of the fhem thermostat. Defaults to ZWave_THERMOSTAT_9"
+                    notes: "ID of the fhem thermostat."
                 }]
             }
         };
     }
 
-    settemp(temp, thermostatName)
+    settemp(temp, thermostatName, cb)
     {
         var that = this;
-        thermostatName = thermostatName || "ZWave_THERMOSTAT_9";
 
-        var requestObject = {
-            "detail": thermostatName
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
         };
 
-        temp = parseFloat(temp, 10);
-
-        requestObject["dev.set" + thermostatName] = thermostatName;
-        requestObject["cmd.set" + thermostatName] = "set";
-        requestObject["arg.set" + thermostatName] = "setpointHeating";
-        requestObject["val.set" + thermostatName] = ("" + parseInt(temp, 10)); //only full numbers allowed
-
-        fhem.post("fhem", requestObject, function(err, msg)
+        fhem.setValue(thermostatName, "setpointHeating", ("" + parseInt(temp, 10)), function(err, msg)
         {
             if (err)
             {
-                that.logger.error(err);
+                cb(err);
             }
             else
             {
-                that.logger.info(msg);
+                cb(null, msg);
             }
         });
     }

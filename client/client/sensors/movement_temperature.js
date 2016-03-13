@@ -15,14 +15,14 @@ class movement_temperature extends baseSensor
         this.read();
     }
 
+    //no refresh necessary, because we added the raspberry as association and will receive the
+    //measured values in a fixed time frame without needing to ask for them
     read()
     {
         var that = this;
         var motionSensorName = this.options.motionSensorName;
-        var requestObject = '{ReadingsVal("' + motionSensorName + '","temperature","")}';
-        var url = "fhem?cmd=" + requestObject + "&XHR=1";
 
-        fhem.get(url, function(err, body)
+        fhem.readValue(motionSensorName, "temperature", function(err, body)
         {
             if (err) {
                 logger.error(err);

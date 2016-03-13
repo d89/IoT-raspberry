@@ -55,22 +55,40 @@ exports.saveTestCallResult = function(status, text)
 
 exports.sendStatusUpdateToServer = function()
 {
+    console.log("sending to server", exports.statements);
+
     socketmanager.socket.emit("client:iftttupdate", exports.statements);
 };
 
-exports.testConditions = function(testconditions, cb)
+exports.testConditions = function(allconditions, cb)
 {
     var sensors = sensormanagement.registeredSensors;
     var actors = actormanagement.registeredActors;
+    var testconditions = [];
+    var testResponse = {};
+
+    var checkFinished = function()
+    {
+        console.log(testconditions.length, "vs", Object.keys(testResponse).length);
+
+        if (testconditions.length === Object.keys(testResponse).length)
+        {
+            return cb(null, testResponse);
+        }
+    };
+
+    allconditions.forEach(function(statementObject)
+    {
+        if (statementObject.isActive)
+        {
+            testconditions.push(statementObject);
+        }
+    });
 
     console.log("Testing conditions", testconditions);
 
-    var testResponse = {};
-
     testconditions.forEach(function(statementObject)
     {
-        if (!statementObject.isActive) return;
-
         var statement = statementObject.conditiontext;
 
         try
@@ -79,17 +97,19 @@ exports.testConditions = function(testconditions, cb)
             var ifClause = clauses.if;
             var thenClause = clauses.then;
             var condition = exports.processIfClause(ifClause, sensors);
-            var callResults = exports.processThenClause(thenClause, actors, true);
-
-            testResponse[statement] = exports.saveTestCallResult(true, callResults);
+            exports.processThenClause(thenClause, actors, true, function(isSuccess, msg)
+            {
+                console.log("TEST MESSAGE", msg);
+                testResponse[statement] = exports.saveTestCallResult(isSuccess, msg);
+                checkFinished();
+            });
         }
         catch (err)
         {
             testResponse[statement] = exports.saveTestCallResult(false, "" + err);
+            checkFinished();
         }
     });
-
-    cb(null, testResponse);
 };
 
 exports.loadAvailableOptions = function(cb)
@@ -285,10 +305,13 @@ exports.process = function(type, data)
 
                 if (condition.executed === true)
                 {
-                    var callResults = exports.processThenClause(thenClause, actors);
-                    DEBUG && console.log("successfully executed clause with return values", callResults);
+                    exports.processThenClause(thenClause, actors, false, function(isSuccess, msg)
+                    {
+                        exports.saveCallResult(isSuccess, msg, statement);
+                    });
 
-                    exports.saveCallResult(true, callResults, statement);
+                    DEBUG && console.log("successfully executed clause with return values");
+                    exports.saveCallResult(true, "Executed, results pending.", statement);
                 }
                 else
                 {
@@ -377,7 +400,7 @@ exports.processIfClause = function(ifClause, sensors)
 
         methods.push(exposedMethods[methodName]);
 
-        exports.validateParameterPresence(methodName, exposedMethods[methodName].params, parameters);
+        parameters = exports.validateParameterPresence(methodName, exposedMethods[methodName].params, parameters);
 
         return exposedMethods[methodName].method.apply(this, parameters);
     });
@@ -482,10 +505,20 @@ exports.validateParameterPresence = function(methodName, expectedParameters, rec
         {
            throw "missing required parameter " + (i + 1) + " for " + methodName;
         }
+
+        //normalize parameters
+        if (exp.isOptional === true && (typeof receivedParameters[i] == "undefined" || !receivedParameters[i].length))
+        {
+            //fill with false, if the parameter was optional and not set
+            //this is necessary, because the callback is added to the end
+            receivedParameters[i] = false;
+        }
     });
+
+    return receivedParameters;
 };
 
-exports.processThenClause = function(thenClause, actors, simulateCall)
+exports.processThenClause = function(thenClause, actors, simulateCall, cb)
 {
     console.log("###");
     console.log("processing thenClause", thenClause);
@@ -568,39 +601,89 @@ exports.processThenClause = function(thenClause, actors, simulateCall)
 
         try
         {
-            var result = "";
-            var errorMessage = false;
+            parameters = exports.validateParameterPresence(methodName, exposedMethods[methodName].params, parameters);
 
-            exports.validateParameterPresence(methodName, exposedMethods[methodName].params, parameters);
-
-            if (!simulateCall)
+            if (simulateCall)
             {
-                errorMessage = exposedMethods[methodName].method.apply(this, parameters);
-            }
+                callResults.push({
+                    success: true,
+                    call: rawCall,
+                    result: "Successfully simulated"
+                });
 
-            var isSuccessfull = !errorMessage;
-
-            if (isSuccessfull)
-            {
-                result = simulateCall ? "Simulation succeeded." : "successfully executed";
+                if (callResults.length === extractedActorCalls.length)
+                {
+                    return cb(true, exports.callResultsToString(callResults));
+                }
             }
             else
             {
-                throw new Error(errorMessage);
+                //add callback
+                parameters.push(function(err, msg)
+                {
+                    var isSuccess = true;
+                    var result = null;
+
+                    if (err) {
+                        result = err;
+                        isSuccess = false;
+                    } else {
+                        result = msg;
+                    }
+
+                    callResults.push({
+                        success: isSuccess,
+                        call: rawCall,
+                        result: result
+                    });
+
+                    if (callResults.length === extractedActorCalls.length)
+                    {
+                        var allSuccess = true;
+
+                        callResults.forEach(function(c)
+                        {
+                            if (c.success === false)
+                            {
+                                allSuccess = false;
+                            }
+                        });
+
+                        //ensure that the result is always later than the "Executed, results pending."
+                        setTimeout(function()
+                        {
+                            cb(allSuccess, exports.callResultsToString(callResults));
+                        }, 500);
+                    }
+                });
+
+                exposedMethods[methodName].method.apply(this, parameters);
+
+                //check, if all the functions have executed successfully
+                setTimeout(function()
+                {
+                    if (callResults.length < extractedActorCalls.length)
+                    {
+                        callResults.push({
+                            success: false,
+                            call: rawCall,
+                            result: "No response within timeframe."
+                        });
+
+                        return cb(false, exports.callResultsToString(callResults));
+                    }
+                    else
+                    {
+                        console.log("all finished after delay. Check succeeded");
+                    }
+                }, 12000);
             }
         }
         catch (callErr)
         {
             throw new Error("Error calling " + rawCall + ": " + callErr);
         }
-
-        callResults.push({
-            call: rawCall,
-            result: result
-        });
     });
-
-    return exports.callResultsToString(callResults);
 };
 
 exports.callResultsToString = function(callResults)
@@ -609,7 +692,7 @@ exports.callResultsToString = function(callResults)
 
     callResults.forEach(function(c)
     {
-        returnValues.push(c.call + " -> " + c.result);
+        returnValues.push(c.call + " -> " + (c.result || "no message"));
     });
 
     return returnValues.join(",");

@@ -92,7 +92,11 @@ class cam extends baseActor
     record(duration, cb)
     {
         var that = this;
-        cb = cb || function() {};
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
 
         if (that.cameraBusyRecording || that.cameraBusyStreaming)
         {
@@ -120,7 +124,7 @@ class cam extends baseActor
 
         callbacks.push(function(recordingDone)
         {
-            actormanagement.registeredActors["recorder"].record(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
+            actormanagement.registeredActors["recorder"].doRecord(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
             {
                 if (err)
                     return recordingDone(err);

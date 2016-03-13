@@ -21,11 +21,10 @@ class battery_motionsensor_zwave extends baseSensor
         var shouldTrigger = (this.refreshCounter % 10 === 0)
         this.refreshCounter++;
         if (!shouldTrigger) return;
-        var t = this.options.motionSensorName;
-        var refreshattribute = "battery";
-        var url = `fhem?detail=${t}&dev.get${t}=${t}&cmd.get${t}=get&arg.get${t}=${refreshattribute}&val.get${t}=&XHR=1`;
 
-        fhem.get(url, function(err, body)
+        var deviceName = this.options.motionSensorName;
+        var refreshAttribute = "battery";
+        fhem.refreshAttribute(deviceName, refreshAttribute, function(err, body)
         {
             if (err) {
                 logger.error("zwave battery motion sensor refresh: ", err);
@@ -41,10 +40,7 @@ class battery_motionsensor_zwave extends baseSensor
         this.refresh();
 
         var motionSensorName = this.options.motionSensorName;
-        var requestObject = '{ReadingsVal("' + motionSensorName + '","battery","")}';
-        var url = "fhem?cmd=" + requestObject + "&XHR=1";
-
-        fhem.get(url, function(err, body)
+        fhem.readValue(motionSensorName, "battery", function(err, body)
         {
             if (err) {
                 logger.error(err);

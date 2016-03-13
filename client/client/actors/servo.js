@@ -28,10 +28,15 @@ class servo extends baseActor
         };
     }
 
-    setServo(state)
+    setServo(state, cb)
     {
         var that = this;
-        
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         if (that.process)
         {
             that.logger.info("disabling servo");
@@ -41,7 +46,7 @@ class servo extends baseActor
 
         if (state === false)
         {
-            return;
+            return cb(null, "stopped servo");
         }
 
         that.logger.info("enabling servo");
@@ -57,16 +62,18 @@ class servo extends baseActor
         {
             that.logger.info("received data: ", data);
         });
+
+        cb(null, "started servo");
     }
 
-    on()
+    on(cb)
     {
-        this.setServo(true);
+        this.setServo(true, cb);
     }
 
-    off()
+    off(cb)
     {
-        this.setServo(false);
+        this.setServo(false, cb);
     }
 }
 

@@ -37,7 +37,8 @@ exports.start = function()
         //logger.info("new sensor data: ", data);
         socketmanager.socket.emit("client:data", {
             type: type,
-            data: data
+            data: data,
+            created: (new Date).getTime()
         });
 
         conditionparser.process(type, data);

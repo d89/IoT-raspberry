@@ -19,54 +19,59 @@ class switchzwave extends baseActor
         return {
             on: {
                 method: this.on.bind(this),
-                params: []
+                params: [{
+                    name: "switchName",
+                    isOptional: false,
+                    dataType: "string",
+                    notes: "fhem name of the switch to be turned on"
+                }]
             },
             off: {
                 method: this.off.bind(this),
-                params: []
+                params: [{
+                    name: "switchName",
+                    isOptional: false,
+                    dataType: "string",
+                    notes: "fhem name of the switch to be turned off"
+                }]
             }
         };
     }
 
-    turnSwitch(state, switchName)
+    turnSwitch(state, switchName, cb)
     {
         var that = this;
-        
-        var requestObject = {
-            "detail": switchName
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
         };
 
-        requestObject["dev.get" + switchName] = switchName;
-        requestObject["cmd.get" + switchName] = "set";
-        requestObject["arg.get" + switchName] = (state ? "on" : "off");
-        requestObject["val.get" + switchName] = "";
-        requestObject["XHR"] = "1";
-
-        fhem.post("fhem", requestObject, function(err, msg)
+        fhem.setValue(switchName, (state ? "on" : "off"), "", function(err, msg)
         {
             if (err)
             {
-                that.logger.error(err);
+                cb(err);
             }
             else
             {
-                that.logger.info("zwave switch set to " + state);
+                cb(null, "zwave switch set to " + state);
             }
         });
     }
 
-    on(switchName)
+    on(switchName, cb)
     {
         switchName = switchName || "ZWave_SWITCH_BINARY_17";
         this.logger.info("enabling zwave switch " + switchName);
-        this.turnSwitch(true, switchName);
+        this.turnSwitch(true, switchName, cb);
     }
 
-    off(switchName)
+    off(switchName, cb)
     {
         switchName = switchName || "ZWave_SWITCH_BINARY_17";
         this.logger.info("disabling zwave switch " + switchName);
-        this.turnSwitch(false, switchName);
+        this.turnSwitch(false, switchName, cb);
     }
 }
 

@@ -109,7 +109,12 @@ class recorder extends baseActor
         });
     }
 
-    record(title, maxLength, basePath, recordCb)
+    record(title, maxLength, cb)
+    {
+        this.doRecord(title, maxLength, false, cb);
+    }
+
+    doRecord(title, maxLength, basePath, cb)
     {
         var that = this;
         title = title || "recording-" + (new Date).getTime() + ".wav";
@@ -153,7 +158,7 @@ class recorder extends baseActor
         that.process.process.on("close", function(exitCode)
         {
             that.logger.info("recording " + title + " ended with " + exitCode);
-            that.convert(title, recordCb);
+            that.convert(title, cb);
         });
     }
 }

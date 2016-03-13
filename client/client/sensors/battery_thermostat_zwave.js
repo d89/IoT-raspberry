@@ -29,9 +29,7 @@ class battery_thermostat_zwave extends baseSensor
         var t = this.options.thermostatName;
         var refreshattribute = "battery";
 
-        var url = `fhem?detail=${t}&dev.get${t}=${t}&cmd.get${t}=get&arg.get${t}=${refreshattribute}&val.get${t}=&XHR=1`;
-
-        fhem.get(url, function(err, body)
+        fhem.refreshAttribute(t, refreshattribute, function(err, body)
         {
             if (err) {
                 logger.error("zwave thermostat battery refresh: ", err);
@@ -47,10 +45,8 @@ class battery_thermostat_zwave extends baseSensor
         this.refresh();
 
         var thermostatName = that.options.thermostatName;
-        var requestObject = '{ReadingsVal("' + thermostatName + '","battery","")}';
-        var url = "fhem?cmd=" + requestObject + "&XHR=1";
 
-        fhem.get(url, function(err, body)
+        fhem.readValue(thermostatName, "battery", function(err, body)
         {
             if (err) {
                 logger.error(err);

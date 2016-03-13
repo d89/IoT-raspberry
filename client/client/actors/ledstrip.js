@@ -70,10 +70,18 @@ class ledstrip extends baseActor
         };
     }
 
-    allOff()
+    allOff(cb)
     {
         var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         that.logger.info("disabling ledstrip");
+        var logtext = [];
+        var isError = false;
 
         if (that.spawned)
         {
@@ -81,12 +89,12 @@ class ledstrip extends baseActor
             {
                 if (that.spawned.type === "colorparty")
                 {
-                    that.logger.info("killing colorparty");
+                    logtext.push("killing colorparty");
                     that.spawned.process.kill();
                 }
                 else if (that.spawned.type === "lightshow")
                 {
-                    that.logger.info("killing lightshow");
+                    logtext.push("killing lightshow");
 
                     if (that.spawned.process.pid)
                     {
@@ -102,36 +110,58 @@ class ledstrip extends baseActor
                         {
                             that.logger.info("received killer data: ", data.toString());
                         });
+
+                        logtext.push("killed lightshow");
                     }
                     else
                     {
-                        that.logger.error("No pid known of lightshow to be stopped");
+                        logtext.push("No pid known of lightshow to be stopped");
                     }
 
                     that.logger.info("killed led strip group!");
                 }
                 else
                 {
-                    that.logger.error("nothing to kill!");
+                    logtext.push("nothing to kill!");
                 }
             }
             catch (err)
             {
-                that.logger.error("could not kill process", err);
+                isError = true;
+                logtext.push("could not kill process: " + err);
             }
 
             that.spawned = null;
+        }
+        else
+        {
+            logtext.push("no lightshow active");
         }
 
         //music would interfere with the lightshow aswell
         soundmanager.stop();
 
-        that.singleColor(0, 0, 0, true);
+        that.setSingleColor(0, 0, 0, true);
+
+        if (isError)
+        {
+            cb(logtext.join(", "));
+        }
+        else
+        {
+            cb(null, logtext.join(", "));
+        }
     }
 
-    colorParty()
+    colorParty(cb)
     {
         var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         that.allOff();
         that.logger.info("enabling color party");
 
@@ -151,25 +181,33 @@ class ledstrip extends baseActor
         {
             that.logger.info("received data: ", data);
         });
+
+        cb(null, "started color party");
     }
 
-    randomColor()
+    randomColor(cb)
     {
-        var randomColor = function()
+        var rnd = function()
         {
             var min = 0;
             var max = 255;
             return Math.floor(Math.random() * (max - min + 1) + min);
         };
 
-        this.singleColor(randomColor(), randomColor(), randomColor());
+        this.setSingleColor(rnd(), rnd(), rnd(), false, cb);
     }
 
-    synchronize()
+    synchronize(cb)
     {
-        this.allOff();
-        
         var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
+        this.allOff();
+
         var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
         var volume = config.volume;
         var params = ["line-in", ledLibLocation, config.soundCardInput, LED_COUNT];
@@ -197,11 +235,18 @@ class ledstrip extends baseActor
         {
             that.logger.info("lightshow finished with " + returnCode);
         });
+
+        cb(null, "started synchronized lightshow");
     }
 
-    lightshow(title)
+    lightshow(title, cb)
     {
         var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
         
         title = title || "song.mp3";
         title = title.replace("..", "");
@@ -209,8 +254,7 @@ class ledstrip extends baseActor
 
         if (!fs.existsSync(title))
         {
-            that.logger.error("file does not exist");
-            return "file does not exist";
+            return cb("file does not exist");
         }
 
         that.allOff();
@@ -241,10 +285,20 @@ class ledstrip extends baseActor
         {
             that.logger.info("lightshow finished with " + returnCode);
         });
+
+        cb(null, "started lightshow for " + title);
     }
 
-    singleColor(red, green, blue, skipReset)
+    setSingleColor(red, green, blue, skipReset, cb)
     {
+        var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
+        //if called from allOff, we don't want to cycle
         if (!skipReset)
             this.allOff();
 
@@ -260,6 +314,13 @@ class ledstrip extends baseActor
 
         var ledband = new LPD8806(LED_COUNT, '/dev/spidev0.0');
         ledband.fillRGB(red, blue, green);
+
+        cb(null, "set ledstrip color");
+    }
+
+    singleColor(red, green, blue, cb)
+    {
+        this.setSingleColor(red, green, blue, false, cb)
     }
 }
 

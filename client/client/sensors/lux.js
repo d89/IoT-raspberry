@@ -19,10 +19,8 @@ class lux extends baseSensor
     {
         var that = this;
         var motionSensorName = this.options.motionSensorName;
-        var requestObject = '{ReadingsVal("' + motionSensorName + '","luminance","")}';
-        var url = "fhem?cmd=" + requestObject + "&XHR=1";
 
-        fhem.get(url, function(err, body)
+        fhem.readValue(motionSensorName, "luminance", function(err, body)
         {
             if (err) {
                 logger.error(err);

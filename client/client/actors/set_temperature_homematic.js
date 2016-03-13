@@ -16,7 +16,7 @@ class set_temperature_homematic extends baseActor
     exposed()
     {
         return {
-            act: {
+            settemp: {
                 method: this.settemp.bind(this),
                 params: [{
                     name: "temp",
@@ -33,43 +33,36 @@ class set_temperature_homematic extends baseActor
         };
     }
 
-    settemp(temp, thermostatName)
+    settemp(temp, thermostatName, cb)
     {
         var that = this;
 
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         thermostatName = thermostatName || "HM_37F678";
         thermostatName += "_Clima";
-        var requestObject = {};
         temp = parseFloat(temp, 10);
 
-        var url = `fhem?cmd=set ${thermostatName} desired-temp ${temp}&XHR=1`;
-
-        fhem.post(url, requestObject, function(err, msg)
+        fhem.setValue(thermostatName, "desired-temp", temp, function(err, msg)
         {
             if (err)
             {
-                that.logger.error(err);
+                cb(err);
             }
             else
             {
                 that.logger.info(msg);
                 that.logger.info("sending burst for " + thermostatName);
 
-                var requestObject = {
-                    "detail": thermostatName
-                };
-
-                requestObject["dev.set" + thermostatName] = thermostatName;
-                requestObject["cmd.set" + thermostatName] = "set";
-                requestObject["arg.set" + thermostatName] = "burstXmit";
-                requestObject["val.set" + thermostatName] = "";
-
-                fhem.post("fhem", requestObject, function(err, msg)
+                fhem.setValue(thermostatName, "burstXmit", "", function(err, msg)
                 {
                     if (err) {
-                        that.logger.error(err);
+                        cb(err);
                     } else {
-                        that.logger.info(msg);
+                        cb(null, msg);
                     }
                 });
             }

@@ -20,10 +20,8 @@ class watt extends baseSensor
         var that = this;
         var switchName = that.options.switchName;
         var t = switchName || "ZWave_SWITCH_BINARY_17";
-        var refreshattribute = "smStatus";
-        var url = `fhem?detail=${t}&dev.get${t}=${t}&cmd.get${t}=get&arg.get${t}=${refreshattribute}&val.get${t}=&XHR=1`;
 
-        fhem.get(url, function(err, msg)
+        fhem.readValue(t, "power", function(err, msg)
         {
             if (err) {
                 logger.error(err);

@@ -27,12 +27,12 @@ exports.sendProgress = function(data)
         progressNotifier(data);
 };
 
-exports.persistDataPoint = function(type, data, client_id, cb)
+exports.persistDataPoint = function(type, data, client_id, created, cb)
 {
     var dp = {
         type: type,
         data: parseFloat(data, 10),
-        created: (new Date),
+        created: created,
         client_id: client_id
     };
 

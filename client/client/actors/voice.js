@@ -69,9 +69,15 @@ class voice extends baseActor
         });
     };
 
-    speak(text)
+    speak(text, cb)
     {
         var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("actor result", err, resp);
+        };
+
         that.logger.info("voice acting");
         that.deleteOldFiles();
 
@@ -90,19 +96,19 @@ class voice extends baseActor
 
         if (fs.existsSync(fileName))
         {
-            that.logger.info("voice actor from cache");
+            cb(null, "voice from cache");
             play(fileName);
             return;
         }
 
         request(url).on("error", function(err)
         {
-            that.logger.error("voice rec error " + err);
+            return cb("voice rec error: " + err);
         })
         .pipe(fs.createWriteStream(fileName))
         .on("finish", function()
         {
-            that.logger.info("voice live rec finished");
+            cb(null, "voice live rec");
             play(fileName);
         });
     };

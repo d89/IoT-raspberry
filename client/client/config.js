@@ -14,6 +14,7 @@ module.exports = {
         port: 8083
     },
     volume: 70, //in percent from 0 to 100
+    volumemicrophone: 100, //in percent from 0 to 100
     soundCardInput: 1, //alsamixer -> F6 -> number of interface
     soundCardOutput: 0, //alsamixer -> F6 -> number of interface
     ttsApiKey: "*** snip ***", //voicerss.org

@@ -48,13 +48,13 @@ class http extends baseActor
         };
     }
 
-    get(url, paramstring)
+    get(url, paramstring, cb)
     {
         var that = this;
 
-        var cb = cb || function(err, resp)
+        cb = cb || function(err, resp)
         {
-            that.logger.info("got for get", err, resp);
+            that.logger.info("actor result", err, resp);
         };
 
         if (paramstring)
@@ -79,13 +79,13 @@ class http extends baseActor
         });
     }
 
-    post(url, paramstring)
+    post(url, paramstring, cb)
     {
         var that = this;
 
-        var cb = cb || function(err, resp)
+        cb = cb || function(err, resp)
         {
-            that.logger.info("got for get", err, resp);
+            that.logger.info("actor result", err, resp);
         };
 
         request.post({

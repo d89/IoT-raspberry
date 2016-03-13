@@ -6,6 +6,7 @@ var fs = require('fs');
 var config = require('./config');
 var logger = require('./logger');
 var spawn = require('child_process').spawn;
+var exec = require('child_process').exec;
 var path = require('path');
 var audio = require('./audio');
 var youtube = require('./youtube');
@@ -159,7 +160,7 @@ exports.bindCallbacks = function()
 
             if (start) {
                 logger.info("start recording");
-                actormanagement.registeredActors["recorder"].record(false, msg.data.maxLength, config.mediaBasePath, function(err, fileName)
+                actormanagement.registeredActors["recorder"].doRecord(false, msg.data.maxLength, config.mediaBasePath, function(err, fileName)
                 {
                     if (err)
                         return resp(err);
@@ -171,7 +172,7 @@ exports.bindCallbacks = function()
             }
         }
 
-        //Volume ---------------------------------------------------------------------------
+        //Volume Out ------------------------------------------------------------------------
         if (msg.type === "volume")
         {
             var volume = parseFloat(msg.data, 10);
@@ -183,9 +184,30 @@ exports.bindCallbacks = function()
             }
 
             //Volume ranges from 0 to 100%
-            logger.info("setting volume to ", volume);
-            spawn("amixer", ["set", "PCM", "--", volume + "%"]);
+            logger.info("setting audio volume to ", volume);
+
+            exec("amixer -c " + config.soundCardOutput + " sset PCM,0 " + volume + "%");
+
             config.volume = volume;
+        }
+
+        //Volume In -------------------------------------------------------------------------
+        if (msg.type === "volumemicrophone")
+        {
+            var volume = parseFloat(msg.data, 10);
+
+            if (isNaN(volume) || volume < 0 || volume > 100)
+            {
+                logger.error("invalid volume - setting to default");
+                volume = config.volumemicrophone;
+            }
+
+            //Volume ranges from 0 to 100%
+            logger.info("setting mic volume to ", volume);
+
+            //unmute mic and set default: https://wiki.ubuntuusers.de/amixer/
+            exec("amixer -c " + config.soundCardInput + " sset Mic,0 " + volume + "% unmute cap");
+            config.volumemicrophone = volume;
         }
 
         //Temperature -------------------------------------------------------------------------
