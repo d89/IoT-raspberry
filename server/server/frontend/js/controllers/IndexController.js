@@ -67,16 +67,19 @@ IoT.controller('IoTIndexCtrl', function($scope, $rootScope, $timeout, $compile, 
     $scope.loadDashboard = function(id)
     {
         var pw = localStorage.getItem(id);
+        var box = $scope.loginBox(id);
 
         if (!pw)
         {
-            var box = $scope.loginBox(id);
             box.find(".login-mask").show();
             box.find(".password-input").select();
             return;
         }
 
         $routeParams.client_id = id;
+        console.log("connecting to " + id);
+
+        box.addClass("block-opt-refresh");
 
         $scope.connect(true, function()
         {

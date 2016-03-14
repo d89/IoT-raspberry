@@ -120,20 +120,19 @@ function persistClientData(msg, cb)
     });
 }
 
-function getUiSocketByClientSocket(clientSocket)
+function getUiSocketsByClientSocket(clientSocket)
 {
-    var responseUiSocket = null;
+    var responseUiSockets = [];
 
     io.sockets.sockets.forEach(function(s)
     {
         if (getSocketType(s) === "ui" && getClientId(s) === getClientName(clientSocket))
         {
-            responseUiSocket = s;
-            return;
+            responseUiSockets.push(s);
         }
     });
 
-    return responseUiSocket;
+    return responseUiSockets;
 }
 
 function getClientSocketByUiSocket(uiSocket, dataReceived)
@@ -793,18 +792,11 @@ io.on('connection', function(socket)
     //disconnect can not be caught by the "catch all" handler
     socketType === "client" && socket.on("disconnect", function(msg, resp)
     {
-        var uiSocket = getUiSocketByClientSocket(socket);
-
-        logger.error("client disconnected");
-
-        if (!uiSocket)
+        getUiSocketsByClientSocket(socket).forEach(function(uiSocket)
         {
-            //logger.info(`no waiting ui client for client data`);
-            return;
-        }
-
-        uiSocket.emit("client-disconnected", {
-            id: socket.id
+            uiSocket.emit("client-disconnected", {
+                id: socket.id
+            });
         });
 
         logger.info(`socket ${socket.id} disconnected: ${msg}`);
@@ -818,15 +810,10 @@ io.on('connection', function(socket)
             {
                 msg.client_id = getClientName(socket);
 
-                var uiSocket = getUiSocketByClientSocket(socket);
-
-                if (!uiSocket)
+                getUiSocketsByClientSocket(socket).forEach(function(uiSocket)
                 {
-                    //logger.info(`no waiting ui client for client data`);
-                    return;
-                }
-
-                uiSocket.emit("iftttupdate", msg);
+                    uiSocket.emit("iftttupdate", msg);
+                });
             },
             'client:data': function(msg, resp)
             {
@@ -837,19 +824,12 @@ io.on('connection', function(socket)
 
                 var sendToUi = function(socket, msg)
                 {
-                    //logger.info("PERSISTING: ", err, resp);
-
-                    var uiSocket = getUiSocketByClientSocket(socket);
-
-                    if (!uiSocket)
+                    getUiSocketsByClientSocket(socket).forEach(function(uiSocket)
                     {
-                        //logger.info(`no waiting ui client for client data`);
-                        return;
-                    }
+                        uiSocket.emit("dataupdate", msg);
+                    });
 
                     //logger.info("data update for ui", msg);
-
-                    uiSocket.emit("dataupdate", msg);
                 };
 
                 //only persist data that is also shown in charts. So don't store the current time
@@ -885,15 +865,10 @@ io.on('connection', function(socket)
             //-------------------------------------------------------------------------------------
             'client:youtube-download': function(msg, resp)
             {
-                var uiSocket = getUiSocketByClientSocket(socket);
-
-                if (!uiSocket)
+                getUiSocketsByClientSocket(socket).forEach(function(uiSocket)
                 {
-                    //logger.info(`no waiting ui client for client data`);
-                    return;
-                }
-
-                uiSocket.emit("youtube-download", msg);
+                    uiSocket.emit("youtube-download", msg);
+                });
             },
             //-------------------------------------------------------------------------------------
             'client:live-stream': function(msg, resp)
@@ -901,9 +876,9 @@ io.on('connection', function(socket)
                 logger.info("got image from client @ " + msg.date);
                 //pipe stream to waiting ui
 
-                var uiSocket = getUiSocketByClientSocket(socket);
+                var uiSockets = getUiSocketsByClientSocket(socket);
 
-                if (!uiSocket)
+                if (uiSockets.length === 0)
                 {
                     resp({
                         received: false
@@ -918,10 +893,13 @@ io.on('connection', function(socket)
                     received: true
                 });
 
-                uiSocket.emit('cam-stream', {
-                    date: msg.date,
-                    now: msg.now,
-                    image: msg.image
+                uiSockets.forEach(function(uiSocket)
+                {
+                    uiSocket.emit('cam-stream', {
+                        date: msg.date,
+                        now: msg.now,
+                        image: msg.image
+                    });
                 });
             }
         };

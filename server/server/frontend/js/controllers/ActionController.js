@@ -526,6 +526,22 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         });
     };
 
+    $scope.relais = function(onoff)
+    {
+        onoff = !!onoff;
+
+        console.log("acting with relais ", onoff);
+
+        var relais = {
+            type: "relais",
+            data: {
+                onoff: onoff
+            }
+        };
+
+        SocketFactory.send("ui:action", relais);
+    };
+
     //-----------------------------------------------------
 
     $scope.init();

@@ -1,0 +1,20 @@
+#!/usr/bin/python
+import RPi.GPIO as GPIO
+import sys
+import time
+pin = int(sys.argv[1])
+turn_on = sys.argv[2] == "on"
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setwarnings(False)
+GPIO.setup(pin, GPIO.OUT)
+
+#gpio pin low  = relais on  = current flows from MIDDLE (in) to RIGHT (out)
+#gpio pin high = relais off = current flows from MIDDLE (in) to LEFT (out)
+
+if turn_on:
+    print "relais on"
+    GPIO.output(pin,GPIO.LOW)
+else:
+    print "relais off"
+    GPIO.output(pin,GPIO.HIGH)

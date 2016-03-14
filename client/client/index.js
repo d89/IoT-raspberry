@@ -54,6 +54,18 @@ exports.start = function()
 
     actormanagement.init();
 
+    if (isFirstConnection)
+    {
+        //turn stepper engine off on first connection. It's possible that the led pins
+        //are initialized in a way that one (or more) of the 4 control pins are high so
+        //the stepper engine can not completely turn off
+        actormanagement.registeredActors["stepper"].off();
+
+        //toggle the relais. I connected my display to the relais output which shows
+        //gibberish after boot so the display needs a power cycle
+        actormanagement.registeredActors["relais"].toggle();
+    }
+
     logger.info("------------------------------------------------------");
     logger.info("BINDING SENSORS");
 

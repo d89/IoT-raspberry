@@ -101,12 +101,17 @@ IoT.factory('SocketFactory', function(constant)
 
     SocketFactory.getCount = function(cb)
     {
-        console.log("requesting count");
+        console.log("requesting count!");
 
         SocketFactory.count = "Loading count";
 
-        SocketFactory.send('ui:data-count', {}, function(err, resp)
+        var hasTriggered = false;
+
+        var getCount = function(err, resp)
         {
+            console.log("got count!");
+            hasTriggered = true;
+
             if (err)
             {
                 return cb(err);
@@ -115,7 +120,17 @@ IoT.factory('SocketFactory', function(constant)
             SocketFactory.count = resp;
 
             return cb(null, SocketFactory.count);
-        });
+        };
+
+        setTimeout(function()
+        {
+            if (!hasTriggered)
+            {
+                return cb("Connection timeout");
+            }
+        }, 4000);
+
+        SocketFactory.send('ui:data-count', {}, getCount);
     };
 
     SocketFactory.isConnected = function()

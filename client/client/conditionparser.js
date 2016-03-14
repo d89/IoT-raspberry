@@ -371,19 +371,20 @@ exports.processIfClause = function(ifClause, sensors)
     var methods = [];
 
     //evaluate method calls
-    var evaluated = ifClause.replace(reg, function(match, contents, offset, s)
+    var evaluated = ifClause.replace(reg, function(match, sensorcall, offset, s)
     {
-        contents = contents.split(".");
+        //sensorcall = httplistener.contains("https://d-mueller.de/test/test.php", "hello!")
 
-        if (contents.length !== 2)
+        var contents = sensorcall.match(/(\w+)\.(\w+)\((.*?)\)/);
+
+        if (contents.length !== 4)
         {
-            throw new Error("Invalid method call: " + contents.join("."));
+            throw new Error("Invalid method call: " + sensorcall);
         }
 
-        var sensorType = contents[0];
-        var method = contents[1].split(/[\(\)]/g);
-        var methodName = method[0];
-        var parameters = exports.processParamInput(method[1]);
+        var sensorType = contents[1];
+        var methodName = contents[2];
+        var parameters = exports.processParamInput(contents[3]);
 
         if (!sensorType || !(sensorType in sensors))
         {
@@ -674,7 +675,7 @@ exports.processThenClause = function(thenClause, actors, simulateCall, cb)
                     }
                     else
                     {
-                        console.log("all finished after delay. Check succeeded");
+                        //console.log("all finished after delay. Check succeeded");
                     }
                 }, 12000);
             }

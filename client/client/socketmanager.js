@@ -103,6 +103,19 @@ exports.bindCallbacks = function()
                 actormanagement.registeredActors["servo"].off();
         }
 
+        //Relais -----------------------------------------------------------------------------
+        if (msg.type === "relais")
+        {
+            var onoff = msg.data.onoff;
+
+            logger.info(`actionrequest for relais to status ${onoff}`);
+
+            if (onoff)
+                actormanagement.registeredActors["relais"].on();
+            else
+                actormanagement.registeredActors["relais"].off();
+        }
+
         //Stepper Engine  -------------------------------------------------------------------
         if (msg.type === "stepper")
         {

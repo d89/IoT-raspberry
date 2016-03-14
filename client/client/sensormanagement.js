@@ -315,5 +315,13 @@ exports.init = function(options)
 
     // ----------------------------------------------------
 
+    var httplistener = require('./sensors/httplistener');
+    exports.registeredSensors["httplistener"] = new httplistener({
+        onData: onData,
+        interval: 5
+    });
+
+    // ----------------------------------------------------
+
     return exports.registeredSensors;
 };

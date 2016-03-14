@@ -84,6 +84,12 @@ exports.init = function(options)
 
     // ----------------------------------------------------
 
+    var relais = require('./actors/relais');
+    exports.registeredActors["relais"] = new relais({
+        pin: 16
+    });
+
+    // ----------------------------------------------------
 
     var stepper = require('./actors/stepper');
     exports.registeredActors["stepper"] = new stepper({
@@ -92,7 +98,6 @@ exports.init = function(options)
         pin3: 12,
         pin4: 18
     });
-    exports.registeredActors["stepper"].off();
 
     // ----------------------------------------------------
 

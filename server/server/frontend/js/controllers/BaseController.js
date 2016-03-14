@@ -177,6 +177,8 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
 
     $scope.getCount = function(cb)
     {
+        console.log("getting count");
+
         SocketFactory.getCount(function(err, count)
         {
             if (err)
@@ -266,8 +268,12 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
                     {
                         connectCallback();
                     }
+                    else
+                    {
+                        console.log("got count error", err);
+                        SocketFactory.callLifecycleCallback("functional_error", "Could not connect: " + err);
+                    }
                 });
-
             }
         });
     };
