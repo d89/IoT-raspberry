@@ -34,10 +34,16 @@ exports.start = function()
     {
         //console.log("received " + data + " for " + type);
 
+        //overly long strings should not be sent to the frontend. As we receive numbers from the
+        //sensors anyway, this will mostly affect things like the httplistener module that requests
+        //full webpages. They are not stored or displayed on the server frontend/backend anyway, so
+        //it's safe to truncate them
+        var sendData = (data.toString().length > 30) ? data.toString().substr(0, 30) + "..." : data;
+
         //logger.info("new sensor data: ", data);
         socketmanager.socket.emit("client:data", {
             type: type,
-            data: data,
+            data: sendData,
             created: (new Date).getTime()
         });
 
@@ -59,11 +65,11 @@ exports.start = function()
         //turn stepper engine off on first connection. It's possible that the led pins
         //are initialized in a way that one (or more) of the 4 control pins are high so
         //the stepper engine can not completely turn off
-        actormanagement.registeredActors["stepper"].off();
+        "stepper" in actormanagement.registeredActors && actormanagement.registeredActors["stepper"].off();
 
         //toggle the relais. I connected my display to the relais output which shows
         //gibberish after boot so the display needs a power cycle
-        actormanagement.registeredActors["relais"].toggle();
+        "relais" in actormanagement.registeredActors && actormanagement.registeredActors["relais"].toggle();
     }
 
     logger.info("------------------------------------------------------");
