@@ -48,22 +48,34 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
     $scope.addCondition = function()
     {
+        var guid = function()
+        {
+            //http://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                    .toString(16)
+                    .substring(1);
+            }
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
+        };
+
         $scope.conditions.unshift({
             conditiontext: "if ($) { }",
             isActive: true,
-            isNew: true
+            isNew: true, //used for frontend to focus cursor
+            id: guid()
         });
     };
 
     $scope.removeCondition = function(cond)
     {
-        console.log("removing condition", cond);
-
         for (var i = 0; i < $scope.conditions.length; i++)
         {
-            if ($scope.conditions[i] === cond)
+            if ($scope.conditions[i].id === cond.id)
             {
                 $scope.conditions.splice(i, 1);
+                return;
             }
         }
     };
@@ -74,7 +86,7 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
 
         for (var i = 0; i < $scope.conditions.length; i++)
         {
-            if ($scope.conditions[i] === cond)
+            if ($scope.conditions[i].id === cond.id)
             {
                 $scope.conditions[i].isActive = !$scope.conditions[i].isActive;
             }
@@ -201,55 +213,55 @@ IoT.controller('IoTIftttCtrl', function ($scope, $rootScope, $timeout, $compile,
     {
         console.log("got statement update", statementResultUpdate);
 
-        for (var statement in statementResultUpdate)
+        for (var id in statementResultUpdate)
         {
-            var lastSuccessTime = statementResultUpdate[statement].lastSuccessTime;
+            var lastSuccessTime = statementResultUpdate[id].lastSuccessTime;
 
             if (lastSuccessTime)
             {
                 if (!isNaN(lastSuccessTime))
                 {
-                    statementResultUpdate[statement].lastSuccessTime = "Last success: " + moment(lastSuccessTime).format("HH:mm:ss (DD.MM.)");
+                    statementResultUpdate[id].lastSuccessTime = "Last success: " + moment(lastSuccessTime).format("HH:mm:ss (DD.MM.)");
                 }
             }
             else
             {
-                statementResultUpdate[statement].lastSuccessTime = false;
+                statementResultUpdate[id].lastSuccessTime = false;
             }
 
-            var lastErrorTime = statementResultUpdate[statement].lastErrorTime;
+            var lastErrorTime = statementResultUpdate[id].lastErrorTime;
 
             if (lastErrorTime)
             {
                 if (!isNaN(lastSuccessTime))
                 {
-                    statementResultUpdate[statement].lastErrorTime = "Last Error: " + moment(lastErrorTime).format("HH:mm:ss (DD.MM.)");
+                    statementResultUpdate[id].lastErrorTime = "Last Error: " + moment(lastErrorTime).format("HH:mm:ss (DD.MM.)");
                 }
             }
             else
             {
-                statementResultUpdate[statement].lastErrorTime = false;
+                statementResultUpdate[id].lastErrorTime = false;
             }
 
             //class
-            var state = statementResultUpdate[statement].lastState;
+            var state = statementResultUpdate[id].lastState;
 
             if (state === null)
             {
-                statementResultUpdate[statement].lastState = "info";
+                statementResultUpdate[id].lastState = "info";
             }
             else if (state === false)
             {
-                statementResultUpdate[statement].lastState = "danger";
+                statementResultUpdate[id].lastState = "danger";
             }
             else
             {
-                statementResultUpdate[statement].lastState = "success";
+                statementResultUpdate[id].lastState = "success";
             }
 
-            if (!statementResultUpdate[statement].lastMessage)
+            if (!statementResultUpdate[id].lastMessage)
             {
-                statementResultUpdate[statement].lastMessage = "No message received yet";
+                statementResultUpdate[id].lastMessage = "No message received yet";
             }
         }
 

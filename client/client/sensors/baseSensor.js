@@ -70,7 +70,11 @@ class baseSensor
                 method: function(val)
                 {
                     if (!that.validateDataPresence()) return false;
-                    var triggered = (that.sensordata.is == val);
+
+                    val = parseFloat(val, 10);
+                    var sensordata = parseFloat(that.sensordata.is, 10);
+
+                    var triggered = (sensordata == val);
                     return that.processCondition("is_equal", val, triggered);
                 },
                 params: [{
@@ -86,7 +90,11 @@ class baseSensor
                 method: function(val)
                 {
                     if (!that.validateDataPresence()) return false;
-                    var triggered = (that.sensordata.is < val);
+
+                    val = parseFloat(val, 10);
+                    var sensordata = parseFloat(that.sensordata.is, 10);
+
+                    var triggered = (sensordata < val);
                     return that.processCondition("is_lt", val, triggered);
                 },
                 params: [{
@@ -102,7 +110,11 @@ class baseSensor
                 method: function(val)
                 {
                     if (!that.validateDataPresence()) return false;
-                    var triggered = (that.sensordata.is > val);
+
+                    val = parseFloat(val, 10);
+                    var sensordata = parseFloat(that.sensordata.is, 10);
+
+                    var triggered = (sensordata > val);
                     return that.processCondition("is_gt", val, triggered);
                 },
                 params: [{

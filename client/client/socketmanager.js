@@ -404,6 +404,7 @@ exports.bindCallbacks = function()
             try
             {
                 var conditions = JSON.stringify(msg.conditions);
+                console.log("saving conditions", msg.conditions);
             }
             catch (err)
             {

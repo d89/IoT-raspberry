@@ -737,7 +737,8 @@ io.on('connection', function(socket)
                     {
                         conds.push({
                             isActive: c.isActive,
-                            conditiontext: c.conditiontext
+                            conditiontext: c.conditiontext,
+                            id: c.id
                         });
                     });
 
@@ -752,7 +753,7 @@ io.on('connection', function(socket)
 
                 clientSocket.emit("ifttt", request, function(err, data)
                 {
-                    logger.info("got ifttt answer", err, data);
+                    //logger.info("got ifttt answer", err, data);
                     resp(err, data);
                 });
             }

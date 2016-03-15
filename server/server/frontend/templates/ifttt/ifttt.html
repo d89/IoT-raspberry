@@ -38,12 +38,12 @@
                                     </span>
                                 </div>
                                 <div class="parameterhelp alert"></div>
-                                <div class="conditionstate" ng-show="conditionState[condition.conditiontext]">
-                                    <div class="alert alert-{{ conditionState[condition.conditiontext].lastState }}">
+                                <div class="conditionstate" ng-show="conditionState[condition.id]">
+                                    <div class="alert alert-{{ conditionState[condition.id].lastState }}">
                                         <p>
-                                            <span ng-show="conditionState[condition.conditiontext].lastSuccessTime" class="label label-success"><i class="fa fa-check"></i> {{ conditionState[condition.conditiontext].lastSuccessTime }}</span>
-                                            <span ng-show="conditionState[condition.conditiontext].lastErrorTime" class="label label-danger"><i class="fa fa-times-circle"></i> {{ conditionState[condition.conditiontext].lastErrorTime }}</span>
-                                            <b>Message:</b> {{ conditionState[condition.conditiontext].lastMessage }}
+                                            <span ng-show="conditionState[condition.id].lastSuccessTime" class="label label-success"><i class="fa fa-check"></i> {{ conditionState[condition.id].lastSuccessTime }}</span>
+                                            <span ng-show="conditionState[condition.id].lastErrorTime" class="label label-danger"><i class="fa fa-times-circle"></i> {{ conditionState[condition.id].lastErrorTime }}</span>
+                                            <b>Message:</b> {{ conditionState[condition.id].lastMessage }}
                                         </p>
                                     </div>
                                 </div>

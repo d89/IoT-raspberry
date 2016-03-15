@@ -10,23 +10,23 @@ const DEBUG = false;
 
 exports.statements = [];
 
-exports.saveCallResult = function(status, text, executedStatement)
+exports.saveCallResult = function(status, text, id)
 {
-    if (!(executedStatement in exports.statements))
+    if (!(id in exports.statements))
     {
-        return logger.error("unknown statement " + executedStatement);
+        return logger.error("unknown statement id " + id);
     }
 
-    exports.statements[executedStatement].lastMessage = text;
-    exports.statements[executedStatement].lastState = status;
+    exports.statements[id].lastMessage = text;
+    exports.statements[id].lastState = status;
 
     if (status !== true)
     {
-        exports.statements[executedStatement].lastErrorTime = (new Date).getTime();
+        exports.statements[id].lastErrorTime = (new Date).getTime();
     }
     else
     {
-        exports.statements[executedStatement].lastSuccessTime = (new Date).getTime();
+        exports.statements[id].lastSuccessTime = (new Date).getTime();
     }
 
     exports.sendStatusUpdateToServer();
@@ -55,8 +55,6 @@ exports.saveTestCallResult = function(status, text)
 
 exports.sendStatusUpdateToServer = function()
 {
-    console.log("sending to server", exports.statements);
-
     socketmanager.socket.emit("client:iftttupdate", exports.statements);
 };
 
@@ -85,30 +83,31 @@ exports.testConditions = function(allconditions, cb)
         }
     });
 
-    console.log("Testing conditions", testconditions);
-
-    testconditions.forEach(function(statementObject)
+    testconditions.forEach(function(so)
     {
-        var statement = statementObject.conditiontext;
+        (function(statementObject)
+        {
+            var statement = statementObject.conditiontext;
 
-        try
-        {
-            var clauses = exports.validateStructure(statement);
-            var ifClause = clauses.if;
-            var thenClause = clauses.then;
-            var condition = exports.processIfClause(ifClause, sensors);
-            exports.processThenClause(thenClause, actors, true, function(isSuccess, msg)
+            try
             {
-                console.log("TEST MESSAGE", msg);
-                testResponse[statement] = exports.saveTestCallResult(isSuccess, msg);
+                var clauses = exports.validateStructure(statement);
+                var ifClause = clauses.if;
+                var thenClause = clauses.then;
+                var condition = exports.processIfClause(ifClause, sensors, statementObject.id);
+
+                exports.processThenClause(thenClause, actors, statementObject.id, true, function(isSuccess, msg, id)
+                {
+                    testResponse[id] = exports.saveTestCallResult(isSuccess, msg);
+                    checkFinished();
+                });
+            }
+            catch (err)
+            {
+                testResponse[statementObject.id] = exports.saveTestCallResult(false, "" + err);
                 checkFinished();
-            });
-        }
-        catch (err)
-        {
-            testResponse[statement] = exports.saveTestCallResult(false, "" + err);
-            checkFinished();
-        }
+            }
+        }(so));
     });
 };
 
@@ -219,11 +218,12 @@ exports.applyConditions = function(cb)
         statementsFromFile.forEach(function(s)
         {
             //in file but not in current array -> add
-            var conditionIsNew = !(s.conditiontext in exports.statements);
+            var conditionIsNew = !(s.id in exports.statements);
 
             if (conditionIsNew && s.isActive)
             {
-                newStatements[s.conditiontext] = {
+                newStatements[s.id] = {
+                    conditiontext: s.conditiontext,
                     lastSuccessTime: false,
                     lastErrorTime: false,
                     lastMessage: false,
@@ -233,8 +233,8 @@ exports.applyConditions = function(cb)
 
             if (!conditionIsNew && s.isActive)
             {
-                var takeOver = exports.statements[s.conditiontext];
-                newStatements[s.conditiontext] = takeOver;
+                var takeOver = exports.statements[s.id];
+                newStatements[s.id] = takeOver;
             }
         });
 
@@ -256,6 +256,10 @@ exports.saveConditions = function(conditions, cb)
             return cb(err);
         }
 
+        //reset after save, so all the conditions trigger again
+        exports.conditionEvaluationMemory = {};
+        exports.statements = [];
+
         return cb(null, "saved conditions");
     });
 };
@@ -276,12 +280,12 @@ exports.process = function(type, data)
 
     exports.applyConditions(function()
     {
-        for (var statement in exports.statements)
+        for (var id in exports.statements)
         {
             try
             {
                 DEBUG && console.log("-----------------------------------")
-
+                var statement = exports.statements[id].conditiontext;
                 var clauses = exports.validateStructure(statement);
 
                 var ifClause = clauses.if;
@@ -291,7 +295,7 @@ exports.process = function(type, data)
                 DEBUG && console.log("thenclause", thenClause);
                 DEBUG && console.log("###");
 
-                var condition = exports.processIfClause(ifClause, sensors);
+                var condition = exports.processIfClause(ifClause, sensors, id);
 
                 condition.method.forEach(function(m)
                 {
@@ -300,18 +304,20 @@ exports.process = function(type, data)
 
                 var exec = condition.executed;
 
+                DEBUG && console.log("statement", statement);
                 DEBUG && console.log("evaluated", condition.evaluated);
                 DEBUG && console.log("executed", condition.executed);
 
                 if (condition.executed === true)
                 {
-                    exports.processThenClause(thenClause, actors, false, function(isSuccess, msg)
+                    exports.processThenClause(thenClause, actors, id, false, function(isSuccess, msg, id)
                     {
-                        exports.saveCallResult(isSuccess, msg, statement);
+                        console.log("saving status " + isSuccess + " for " + id);
+                        exports.saveCallResult(isSuccess, msg, id);
                     });
 
                     DEBUG && console.log("successfully executed clause with return values");
-                    exports.saveCallResult(true, "Executed, results pending.", statement);
+                    exports.saveCallResult(true, "Executed, results pending.", id);
                 }
                 else
                 {
@@ -320,7 +326,7 @@ exports.process = function(type, data)
             }
             catch (err)
             {
-                exports.saveCallResult(false, "" + err, statement);
+                exports.saveCallResult(false, "" + err, id);
                 console.error(`Condition Evaluation error for ${statement}`, err.stack);
             }
 
@@ -363,7 +369,7 @@ exports.validateStructure = function(statement)
 
 exports.conditionEvaluationMemory = {};
 
-exports.processIfClause = function(ifClause, sensors)
+exports.processIfClause = function(ifClause, sensors, id)
 {
     //match everything from $ until the first closing brace -> $foo.bar(1234)
     var reg = /\$([^\)]+\))/g;
@@ -400,9 +406,7 @@ exports.processIfClause = function(ifClause, sensors)
         }
 
         methods.push(exposedMethods[methodName]);
-
         parameters = exports.validateParameterPresence(methodName, exposedMethods[methodName].params, parameters);
-
         return exposedMethods[methodName].method.apply(this, parameters);
     });
 
@@ -433,10 +437,10 @@ exports.processIfClause = function(ifClause, sensors)
 
     try
     {
-        if (!(ifClause in exports.conditionEvaluationMemory))
+        if (!(id in exports.conditionEvaluationMemory))
         {
             DEBUG && console.log("setting ifClause initially");
-            exports.conditionEvaluationMemory[ifClause] = false;
+            exports.conditionEvaluationMemory[id] = false;
         }
 
         DEBUG && console.log("----------------------------------");
@@ -445,7 +449,7 @@ exports.processIfClause = function(ifClause, sensors)
         DEBUG && console.log("evaluated", evaluated);
         DEBUG && console.log("real executed", realExecuted);
 
-        if (exports.conditionEvaluationMemory[ifClause] === false && realExecuted === true)
+        if (exports.conditionEvaluationMemory[id] === false && realExecuted === true)
         {
             DEBUG && console.log("setting condition evaluation to true");
             sentExecuted = true;
@@ -457,7 +461,7 @@ exports.processIfClause = function(ifClause, sensors)
 
         DEBUG && console.log("sent executed", sentExecuted);
 
-        exports.conditionEvaluationMemory[ifClause] = realExecuted;
+        exports.conditionEvaluationMemory[id] = realExecuted;
     }
     catch (evalError)
     {
@@ -519,10 +523,10 @@ exports.validateParameterPresence = function(methodName, expectedParameters, rec
     return receivedParameters;
 };
 
-exports.processThenClause = function(thenClause, actors, simulateCall, cb)
+exports.processThenClause = function(thenClause, actors, id, simulateCall, cb)
 {
-    console.log("###");
-    console.log("processing thenClause", thenClause);
+    DEBUG && console.log("###");
+    DEBUG && console.log("processing thenClause", thenClause);
 
     //structure: $actor1.foo(123); $actor2.bar("asdf");
     // $actorname.methodname(params);
@@ -585,8 +589,6 @@ exports.processThenClause = function(thenClause, actors, simulateCall, cb)
         var methodName = actorCall.method;
         var parameters = actorCall.params;
 
-        console.log("calling -> " + rawCall);
-
         if (!actorType || !(actorType in actors))
         {
             throw new Error("Invalid Actor Type " + actorType);
@@ -614,7 +616,7 @@ exports.processThenClause = function(thenClause, actors, simulateCall, cb)
 
                 if (callResults.length === extractedActorCalls.length)
                 {
-                    return cb(true, exports.callResultsToString(callResults));
+                    return cb(true, exports.callResultsToString(callResults), id);
                 }
             }
             else
@@ -653,7 +655,7 @@ exports.processThenClause = function(thenClause, actors, simulateCall, cb)
                         //ensure that the result is always later than the "Executed, results pending."
                         setTimeout(function()
                         {
-                            cb(allSuccess, exports.callResultsToString(callResults));
+                            cb(allSuccess, exports.callResultsToString(callResults), id);
                         }, 500);
                     }
                 });
@@ -671,7 +673,7 @@ exports.processThenClause = function(thenClause, actors, simulateCall, cb)
                             result: "No response within timeframe."
                         });
 
-                        return cb(false, exports.callResultsToString(callResults));
+                        return cb(false, exports.callResultsToString(callResults), id);
                     }
                     else
                     {
