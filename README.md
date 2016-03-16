@@ -1,5 +1,5 @@
 # IoT-raspberry
-Home control client server unit
+Home control client unit that works together with IoT-server
 
 ## Client-Setup
 
@@ -9,24 +9,6 @@ npm install
 ```
 
 Set actors executable: ```chmod +x actors/*```
-
-## Server-Setup
-
-```
-npm install -g bower gulp forever
-npm install
-bower install
-gulp (default task builds the "dist" folder from the "frontend" folder - this is where the frontend is served from)
-node index.js (or use forever)
-```
-
-* Mongo-DB is required (default port)
-* Config needs to be adjusted (in config.js) - for GCM Push token and SSL certs.
-* Server starts on port 3000
-
-Ganz cool: Google Now Kommandos an Server senden: http://lifehacker.com/how-to-create-custom-voice-commands-with-tasker-and-aut-1282209195
-
-## A little general guide for the CLIENT-part (on the raspberry)
 
 ### SSH aktivieren
 
@@ -614,14 +596,6 @@ Temperatur auslesen dann per:
 ```
 grep "t=" /sys/bus/w1/devices/28-*/w1_slave
 ```
-
----
-
-###Server Installation:
-
-	apt-get install libkrb5-dev
-	npm install -g node-gyp 
-	für npm install mongo
 
 ---
 
