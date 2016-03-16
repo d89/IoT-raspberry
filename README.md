@@ -4,11 +4,72 @@ Home control client unit that works together with IoT-server
 ## Client-Setup
 
 ```
-npm install
-... and probably much more
+sudo su
+apt-get update
+npm install -g forever
+cd /var/www
+git clone https://github.com/d89/IoT-raspberry.git
+chmod +x /var/www/IoT-raspberry/actors/*
+chmod +x /var/www/IoT-raspberry/sensors/*
+cd /var/www/IoT-raspberry/IoT-raspberry/client
+nano config.js
 ```
 
-Set actors executable: ```chmod +x actors/*```
+***Important parts of the configuration***
+* serverUrl: base url of the IoT-server to connect to
+* clientName: how your Raspberry reports itself to the server
+* basePath: where you installed your IoT-raspberry (if you followed this guide, it'll be ```/var/www/IoT-raspberry```)
+* mediaBasePath: Where audio files are stored. Create this folder, if not already existent
+* password: Will be used as login on the server you specified at ```serverUrl```
+* You can ignore ```smartphoneIp```, ```ttsApiKey``` and ```ledStripCount``` for now, they will be moved in the near future.
+
+---
+
+## Launch
+
+for a quick launch, while you are connected via SSH:
+
+```
+node index.js
+```
+
+For a more sophisticated operation, use a launch script.
+
+---
+
+## Launch script
+
+**systemd** style, roll your own for init.d or upstart. Or use pm2.
+
+```
+nano /lib/systemd/system/iot-client.service
+```
+
+with content:
+
+```
+[Unit]
+Description=Job that runs the iot-client daemon
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/IoT-raspberry/client
+ExecStart=/usr/bin/forever index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+register:
+
+```
+systemctl enable iot-client
+systemctl start iot-client
+systemctl status iot-client
+```
+
+---
 
 ### SSH aktivieren
 
