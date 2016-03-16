@@ -3,6 +3,24 @@ var logger = require('./logger');
 
 exports.registeredSensors = {};
 
+exports.has = function(sensor)
+{
+    return (sensor in exports.registeredSensors);
+};
+
+exports.hasOneOf = function(sensorArray)
+{
+    for (var i = 0; i < sensorArray.length; i++)
+    {
+        if (exports.has(sensorArray[i]))
+        {
+            return true;
+        }
+    }
+
+    return false;
+};
+
 exports.init = function(options)
 {
     //do not reregister

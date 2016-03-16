@@ -1,6 +1,15 @@
 # IoT-raspberry
 Home control client server unit
 
+## Client-Setup
+
+```
+npm install
+... and probably much more
+```
+
+Set actors executable: ```chmod +x actors/*```
+
 ## Server-Setup
 
 ```

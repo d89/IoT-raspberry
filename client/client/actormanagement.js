@@ -3,6 +3,24 @@ var logger = require('./logger');
 
 exports.registeredActors = {};
 
+exports.has = function(actor)
+{
+    return (actor in exports.registeredActors);
+};
+
+exports.hasOneOf = function(actorArray)
+{
+    for (var i = 0; i < actorArray.length; i++)
+    {
+        if (exports.has(actorArray[i]))
+        {
+            return true;
+        }
+    }
+
+    return false;
+};
+
 exports.init = function(options)
 {
     //do not reregister

@@ -63,10 +63,6 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     //-----------------------------------------------------
 
-    $scope.supportsActor = {};
-
-    //-----------------------------------------------------
-
     $scope.streamActive = false;
 
     $scope.zwaveSwitch = function(state)
@@ -342,6 +338,11 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
 
     $scope.stopStream = function()
     {
+        if (!("cam" in $scope.supportsActor))
+        {
+            return;
+        }
+
         console.log("stopping stream!");
 
         $scope.streamActive = false;
@@ -508,11 +509,6 @@ IoT.controller('IoTActionCtrl', function ($scope, $rootScope, $timeout, $compile
         $scope.connect(false, function()
         {
             $scope.checkAutoPlay();
-
-            SocketFactory.capabilities.actors.forEach(function(a)
-            {
-                $scope.supportsActor[a.name] = true;
-            });
 
             SocketFactory.receive("cam-stream", function(msg)
             {

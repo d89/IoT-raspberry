@@ -66,7 +66,7 @@ exports.bindCallbacks = function()
         }
 
         //RC SWITCH  -----------------------------------------------------------------------
-        if (msg.type === "switchrc")
+        if (msg.type === "switchrc" && actormanagement.has("switchrc"))
         {
             var switchNumber = msg.data.switchNumber;
             var onoff = msg.data.onoff;
@@ -77,7 +77,7 @@ exports.bindCallbacks = function()
         }
 
         //ZW SWITCH  -----------------------------------------------------------------------
-        if (msg.type === "switchzwave")
+        if (msg.type === "switchzwave" && actormanagement.has("switchzwave"))
         {
             var switchName = msg.data.switchName;
             var onoff = msg.data.onoff;
@@ -91,7 +91,7 @@ exports.bindCallbacks = function()
         }
 
         //Servo Engine  ---------------------------------------------------------------------
-        if (msg.type === "servo")
+        if (msg.type === "servo" && actormanagement.has("servo"))
         {
             var onoff = msg.data.onoff;
 
@@ -104,7 +104,7 @@ exports.bindCallbacks = function()
         }
 
         //Relais -----------------------------------------------------------------------------
-        if (msg.type === "relais")
+        if (msg.type === "relais" && actormanagement.has("relais"))
         {
             var onoff = msg.data.onoff;
 
@@ -117,7 +117,7 @@ exports.bindCallbacks = function()
         }
 
         //Stepper Engine  -------------------------------------------------------------------
-        if (msg.type === "stepper")
+        if (msg.type === "stepper" && actormanagement.has("stepper"))
         {
             var onoff = msg.data.onoff;
 
@@ -130,7 +130,7 @@ exports.bindCallbacks = function()
         }
 
         //LED ------------------------------------------------------------------------------
-        if (msg.type === "led")
+        if (msg.type === "led" && actormanagement.has("led"))
         {
             logger.info(`actionrequest for LED ${msg.data.ledType}`);
 
@@ -145,7 +145,7 @@ exports.bindCallbacks = function()
         }
 
         //Voice ------------------------------------------------------------------------------
-        if (msg.type === "voice")
+        if (msg.type === "voice" && actormanagement.has("voice"))
         {
             logger.info(`actionrequest for Voice with text ${msg.data}`);
 
@@ -153,7 +153,7 @@ exports.bindCallbacks = function()
         }
 
         //Music ------------------------------------------------------------------------------
-        if (msg.type === "music")
+        if (msg.type === "music" && actormanagement.has("music"))
         {
             var turnOff = msg.data === false;
 
@@ -167,7 +167,7 @@ exports.bindCallbacks = function()
         }
 
         //Recording ---------------------------------------------------------------------------
-        if (msg.type === "record")
+        if (msg.type === "record" && actormanagement.has("record"))
         {
             var start = msg.data.mode === "start";
 
@@ -186,7 +186,7 @@ exports.bindCallbacks = function()
         }
 
         //Volume Out ------------------------------------------------------------------------
-        if (msg.type === "volume")
+        if (msg.type === "volume" && actormanagement.has("music"))
         {
             var volume = parseFloat(msg.data, 10);
 
@@ -205,7 +205,7 @@ exports.bindCallbacks = function()
         }
 
         //Volume In -------------------------------------------------------------------------
-        if (msg.type === "volumemicrophone")
+        if (msg.type === "volumemicrophone" && actormanagement.has("recorder"))
         {
             var volume = parseFloat(msg.data, 10);
 
@@ -224,7 +224,7 @@ exports.bindCallbacks = function()
         }
 
         //Temperature -------------------------------------------------------------------------
-        if (msg.type === "settemperature")
+        if (msg.type === "settemperature" && actormanagement.hasOneOf(["set_temperature_zwave", "set_temperature_homematic"]))
         {
             var data = msg.data;
             logger.info(`actionrequest for temperature with data`, data);
@@ -253,7 +253,7 @@ exports.bindCallbacks = function()
         }
 
         //LED Strip --------------------------------------------------------------------------
-        if (msg.type === "ledstrip")
+        if (msg.type === "ledstrip" && actormanagement.has("ledstrip"))
         {
             logger.info("actionrequest for ledstrip with data", msg.data);
 
@@ -296,7 +296,7 @@ exports.bindCallbacks = function()
         }
 
         //YT Download --------------------------------------------------------------------------
-        if (msg.type === "youtube")
+        if (msg.type === "youtube" && actormanagement.has("music"))
         {
             youtube.download(msg.data, function onout(text)
                 {

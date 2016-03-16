@@ -101,6 +101,8 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
         $scope.errorMessageQuery(err);
     };
 
+    $scope.supportsActor = {};
+
     $scope.onSocketInfo = function(err, clientName, connectedAt, capabilities)
     {
         if (err)
@@ -126,6 +128,14 @@ IoT.controller('IoTBaseCtrl', function ($scope, $rootScope, $timeout, $compile, 
                 label: description
             });
         });
+
+        capabilities.actors.forEach(function(c)
+        {
+            var name = c.name;
+            $scope.supportsActor[name] = true;
+        });
+
+        console.log("actor support", $scope.supportsActor);
 
         $scope.chartTypes = chartTypes;
         $scope.clientName = clientName;

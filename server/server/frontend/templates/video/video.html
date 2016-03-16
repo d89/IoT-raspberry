@@ -51,7 +51,7 @@
                             <button ng-click="getVideos()"><i class="fa fa-repeat"></i> Reload</button>
                         </li>
                         <li>
-                            <button ng-show="!videoActive" class="btn btn-xs btn-primary" ng-click="video()"><i class="fa fa-video-camera"></i> Record Video</button>
+                            <button ng-show="!videoActive && supportsActor.cam" class="btn btn-xs btn-primary" ng-click="video()"><i class="fa fa-video-camera"></i> Record Video</button>
                         </li>
                     </ul>
                     <h3 class="block-title">

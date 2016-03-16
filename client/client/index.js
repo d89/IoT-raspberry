@@ -10,7 +10,7 @@ var conditionparser = require('./conditionparser');
 
 exports.displayUpdate = function(memUsage)
 {
-    if (!("display" in actormanagement.registeredActors)) return;
+    if (!actormanagement.has("display")) return;
 
     exec("ps aux | grep python | wc -l", function(err, out1, stderr)
     {
@@ -65,11 +65,11 @@ exports.start = function()
         //turn stepper engine off on first connection. It's possible that the led pins
         //are initialized in a way that one (or more) of the 4 control pins are high so
         //the stepper engine can not completely turn off
-        "stepper" in actormanagement.registeredActors && actormanagement.registeredActors["stepper"].off();
+        if (actormanagement.has("stepper")) actormanagement.registeredActors["stepper"].off();
 
         //toggle the relais. I connected my display to the relais output which shows
         //gibberish after boot so the display needs a power cycle
-        "relais" in actormanagement.registeredActors && actormanagement.registeredActors["relais"].toggle();
+        if (actormanagement.has("relais")) actormanagement.registeredActors["relais"].toggle();
     }
 
     logger.info("------------------------------------------------------");
