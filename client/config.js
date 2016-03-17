@@ -6,8 +6,6 @@ module.exports = {
     baseBath: "/var/www/IoT-raspberry", //no trailing slash
     mediaBasePath: "/home/pi/Music",  //no trailing slash
     restartSensorAfter: 10, //s - if no message for X seconds is received, restart the sensor
-    smartphoneIp: "192.168.0.53",
-    ledStripLedCount: 104,
     fhem: {
         basic_auth_username: "admin",
         basic_auth_password: "admin",
@@ -17,6 +15,5 @@ module.exports = {
     volumemicrophone: 100, //in percent from 0 to 100
     soundCardInput: 1, //alsamixer -> F6 -> number of interface
     soundCardOutput: 0, //alsamixer -> F6 -> number of interface
-    ttsApiKey: "*** snip ***", //voicerss.org
     password: "*** snip ***"
 };

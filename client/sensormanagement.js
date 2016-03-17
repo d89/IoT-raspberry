@@ -193,7 +193,7 @@ exports.init = function(options)
     var reachability = require('./sensors/reachability');
     exports.registeredSensors["reachability"] = new reachability({
         onData: onData,
-        ip: config.smartphoneIp,
+        ip: "192.168.0.53", //the ip your smartphone receives from your router. Should be always the same.
         interval: 5
     });
 

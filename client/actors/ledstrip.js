@@ -6,7 +6,6 @@ var spawn = require('child_process').spawn;
 var fs = require('fs');
 var soundmanager = require('../soundmanager');
 var LPD8806 = require('lpd8806');
-var LED_COUNT = config.ledStripLedCount;
 
 // ######################################################
 
@@ -18,6 +17,7 @@ class ledstrip extends baseActor
 
         this.spawned = null;
         this.lightshowStarter = config.baseBath + '/actors/startlightshow';
+        this.ledCount = this.options.ledCount;
     }
 
     exposed()
@@ -166,7 +166,7 @@ class ledstrip extends baseActor
         that.logger.info("enabling color party");
 
         that.spawned = {
-            process: spawn(config.baseBath + '/actors/ledstrip', [LED_COUNT]),
+            process: spawn(config.baseBath + '/actors/ledstrip', [that.options.ledCount]),
             type: "colorparty"
         };
 
@@ -210,7 +210,7 @@ class ledstrip extends baseActor
 
         var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
         var volume = config.volume;
-        var params = ["line-in", ledLibLocation, config.soundCardInput, LED_COUNT];
+        var params = ["line-in", ledLibLocation, config.soundCardInput, that.options.ledCount];
 
         that.logger.info("calling " + that.lightshowStarter + " " + params.join(" "));
 
@@ -260,7 +260,7 @@ class ledstrip extends baseActor
         that.allOff();
 
         var ledLibLocation = config.baseBath + '/actors/ledstripdriver';
-        var params = ["start-music", ledLibLocation, title, LED_COUNT];
+        var params = ["start-music", ledLibLocation, title, that.options.ledCount];
 
         that.logger.info("calling " + that.lightshowStarter + " " + params.join(" "));
 
@@ -312,7 +312,7 @@ class ledstrip extends baseActor
         if (isNaN(green)) green = 0;
         if (isNaN(blue)) blue = 255;
 
-        var ledband = new LPD8806(LED_COUNT, '/dev/spidev0.0');
+        var ledband = new LPD8806(this.options.ledCount, '/dev/spidev0.0');
         ledband.fillRGB(red, blue, green);
 
         cb(null, "set ledstrip color");

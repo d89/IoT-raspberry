@@ -63,7 +63,9 @@ exports.init = function(options)
     // ----------------------------------------------------
 
     var voice = require('./actors/voice');
-    exports.registeredActors["voice"] = new voice();
+    exports.registeredActors["voice"] = new voice({
+        ttsApiKey: "*** snip ***" //voicerss.org
+    });
 
     // ----------------------------------------------------
 
@@ -83,7 +85,9 @@ exports.init = function(options)
     // ----------------------------------------------------
 
     var ledstrip = require('./actors/ledstrip');
-    exports.registeredActors["ledstrip"] = new ledstrip();
+    exports.registeredActors["ledstrip"] = new ledstrip({
+        ledCount: 104 // how many leds do you have on your lpd8806 led band?
+    });
 
     // ----------------------------------------------------
 

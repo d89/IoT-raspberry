@@ -86,7 +86,7 @@ class voice extends baseActor
             actormanagement.registeredActors["music"].play(path.basename(fileName));
         };
 
-        var ttsApiKey = config.ttsApiKey;
+        var ttsApiKey = that.options.ttsApiKey;
         text = text || "no text given";
         var speakerLanguage = "en-us";
         var speed = 0; //-10 = slowest, 10 = fastest
