@@ -21,7 +21,6 @@ nano config.js
 * basePath: where you installed your IoT-raspberry (if you followed this guide, it'll be ```/var/www/IoT-raspberry```)
 * mediaBasePath: Where audio files are stored. Create this folder, if not already existent
 * password: Will be used as login on the server you specified at ```serverUrl```
-* You can ignore ```smartphoneIp```, ```ttsApiKey``` and ```ledStripCount``` for now, they will be moved in the near future.
 
 ---
 
