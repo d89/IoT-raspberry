@@ -1,17 +1,208 @@
 # IoT-raspberry
 Home control client unit that works together with IoT-server
 
-## Client-Setup
+## Raspi Config
 
 ```
-sudo su
-apt-get update
+raspi-config
+1 -> Expand Filesystem
+5 -> Internationalisation Options -> Change Locale, Change Timezone
+6 -> Enable Camera
+9 -> Advanced Options -> A4: SSH, A5: Device Tree, A6: SPI, A7: I2C
+Finish
+```
+
+## Change keyboard layout
+
+```
+nano /etc/default/keyboard
+```
+
+Change ```XKBLAYOUT``` to whatever country code you need. save & ```reboot```
+
+```
+XKBLAYOUT="de"
+```
+
+## Establish a wifi connection using a static ip
+
+Since debian jessie, most of the guides you will find in the internet are obsolete as ```dhcpcd``` and ```wpa_supplicant``` is used. No more ```/etc/network/interfaces```. Use https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md and http://www.amazon.de/EDIMAX-EW-7811UN-Wireless-Adapter-IEEE802-11b/dp/B003MTTJOY
+
+***wifi connection***
+
+```
+nano /etc/wpa_supplicant/wpa_supplicant.conf
+
+network={
+   ssid="your_ssid"
+   psk="your_password"
+}
+```
+
+***static ip***
+
+```
+nano /etc/dhcpcd.conf
+
+interface wlan0
+   static ip_address=192.168.0.70/24
+   static routers=192.168.0.1
+   static domain_name_servers=192.168.0.1
+```
+
+## Firmware Update
+
+```
+wget https://raw.githubusercontent.com/Hexxeh/rpi-update/master/rpi-update -O /usr/bin/rpi-update
+chmod +x /usr/bin/rpi-update
+rpi-update
+```
+
+## Essentials
+
+Don't skip this! These tools are basically necessary for everything else later on.
+
+```
+apt-get install build-essential git gpac mpg321 omxplayer python-dev libboost-python-dev python-pip python-smbus i2c-tools
+```
+
+## Node 5 (or above)
+
+```
+curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+apt-get install -y nodejs
+```
+
+## Youtube Downloader
+
+```
+wget https://yt-dl.org/latest/youtube-dl -O /usr/local/bin/youtube-dl
+chmod a+x /usr/local/bin/youtube-dl
+hash -r
+```
+
+## Wiring Pi
+
+```
+cd /opt
+git clone git://git.drogon.net/wiringPi
+cd wiringPi
+./build
+```
+
+## Pi-Switch
+
+for switching rc plugs: https://github.com/lexruee/pi-switch-python
+
+```
+pip install pi_switch
+```
+
+## DHT11 temperature sensor
+
+measures temperature and humidty: http://www.amazon.de/DHT-11-Digital-Temperature-Humidity-Sensor/dp/B008AGLXGQ
+
+```
+git clone https://github.com/adafruit/Adafruit_Python_DHT.git /opt/dht11
+cd /opt/dht11
+python setup.py install
+```
+
+## BMP180 / GY-68 barometric sensor
+
+measures temperature and pressure: http://www.amazon.de/BMP180-Digitaler-Luftdrucksensor-Arduino-Raspberry-Pi-Drone/dp/B00R8KKE2E
+
+```
+git clone https://github.com/adafruit/Adafruit_Python_BMP.git /opt/barometric
+cd /opt/barometric
+python setup.py install
+```
+
+##  1 Wire ds18b20
+
+http://www.amazon.de/Digitaler-Edelstahl-Temperatur-Thermometer-wasserdicht/dp/B018M7T7Q0/
+
+Activate 1 wire modules:
+
+```
+modprobe wire
+modprobe w1-gpio pullup=1
+modprobe w1-therm
+```
+
+Check, if activated: ```lsmod```
+
+Load modules after boot:
+
+```
+nano /etc/modules
+wire
+w1-gpio pullup=1
+w1-therm
+```
+
+Activate in device tree (newer raspbian versions):
+
+```
+nano /boot/config.txt 
+dtoverlay=w1-gpio,gpiopin=4,pullup=on
+```
+
+Read temperature via:
+
+```
+grep "t=" /sys/bus/w1/devices/28-*/w1_slave
+```
+
+## activate i2c
+
+for
+* lcd display
+* barometric sensor
+* ad/da 
+
+https://www.auctoritas.ch/bauprojekte/4-ein-sainsmart-lcd-display-am-raspberry-pi-verwenden
+
+in ```nano /etc/modules``` add:
+
+```
+i2c-bcm2708 
+i2c-dev
+```
+
+for: SainSmart IIC/I2C/TWI Serial 2004 Character 20x4 LCD Display Modul: https://www.auctoritas.ch/bauprojekte/4-ein-sainsmart-lcd-display-am-raspberry-pi-verwenden
+
+check with
+
+```
+i2cdetect 1
+or
+i2cdetect -y 1
+```
+
+## put tmpfs onto ram
+
+Well suited for temporary logfiles, so the SD card doesn't wear so fast.
+
+```
+nano /etc/fstab
+tmpfs /tmp tmpfs nodev,nosuid,relatime,size=300M 0 0
+reboot now
+```
+
+## Set up the IoT-raspberry client itself
+
+... finally ... ;-)
+
+```
 npm install -g forever
+mkdir -p /var/www /home/pi/Music
 cd /var/www
 git clone https://github.com/d89/IoT-raspberry.git
 chmod +x /var/www/IoT-raspberry/actors/*
 chmod +x /var/www/IoT-raspberry/sensors/*
-cd /var/www/IoT-raspberry/IoT-raspberry/client
+cd /var/www/IoT-raspberry/client
+npm install
 nano config.js
 ```
 
@@ -21,8 +212,6 @@ nano config.js
 * basePath: where you installed your IoT-raspberry (if you followed this guide, it'll be ```/var/www/IoT-raspberry```)
 * mediaBasePath: Where audio files are stored. Create this folder, if not already existent
 * password: Will be used as login on the server you specified at ```serverUrl```
-
----
 
 ## Launch
 
@@ -68,37 +257,11 @@ systemctl start iot-client
 systemctl status iot-client
 ```
 
----
+## Other stuff follows here
 
-### SSH aktivieren
+### Mappings
 
-sudo rasp-config
-
-SSH dann im Menü einschalten
-Dabei gleich noch GPIO einschalten.
-Und auch eine Repartitionierung ist hier möglich, um die SD Karte maximal zu nutzen.
-
----
-
-### tmpfs auf Ram legen
-
-Gut für temporäre logfiles, die sonst die SD zu sehr schädigen könnten.
-
-```
-sudo nano /etc/fstab
-tmpfs /tmp tmpfs nodev,nosuid,relatime,size=300M 0 0
-sudo reboot now
-```
-
-###Wiring Pi Mapping
-
-Wiring Pi ist ein Utility zum einfachen Setzen und Abfragen von Ports. Es ist
-auf der Kommandozeile per "gpio" Befehl aufrufbar und wird von verschiedenen
-Libraries verwendet. Gerade C++ Scripte müssen häufig gegen Wiring Pi gelinkt
-werden, um lauffähig zu sein. Bei WiringPi kommt ein anderes Port-Mapping
-Schema zum Einsatz:
-
-gpio readall
+Wiring Pi: ```gpio readall```
 
 ```
  +-----+-----+---------+------+---+---Pi 2---+---+------+---------+-----+-----+
@@ -127,59 +290,11 @@ gpio readall
  +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
  | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
  +-----+-----+---------+------+---+---Pi 2---+---+------+---------+-----+-----+
- ```
+```
 
 GPIO Mapping Raspberry 2: http://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-4-309126/GPIO_Pi2.png?01AD=3lnx_cxwfZDoPGf2yt6YEgRzLIZJQi6cxPZlHcksSGF1h-MkIeePk3Q&01RI=38876E403D2DF1C&01NA=
- 
----
 
-###dht11 Library
-
-```
-git clone https://github.com/adafruit/Adafruit_Python_DHT.git /opt/dht11
-cd /opt/dht11
-sudo python setup.py install
-```
-
----
-
-###Funksteckdosen schalten
-
-Ultimative Library dafür: https://github.com/lexruee/pi-switch-python
-
----
-
-###Wireless Stick einrichten
-
-```
-sudo nano /etc/dhcpcd.conf
-
-interface eth0
-   static ip_address=192.168.0.59/24
-   static routers=192.168.0.1
-   static domain_name_servers=192.168.0.1
-```
-
-statt eth0 geht auch wlan0 zusätzlich für den wifi Stick. Die /etc/network/interfaces
-Konfiguration, die landläufig empfohlen wird, geht unter Debian Jessie nicht mehr.
-
----
-
-###Startup-Script einrichten
-
-Siehe Linux Config für systemd
-
----
-
-###raspi-config
-
-* Expand Filesystem
-* Activate Camera
-* Set Timezone
-
----
-
-###USB Soundkarte einrichten
+### Configure USB soundcard
 
 Falls nicht der 3,5" Klinkenstecker verwendet werden soll (zwar bessere Soundqualität, aber anfälliger für System-Crashes):
 
@@ -203,8 +318,7 @@ Die ```1``` ist das USB Soundkarten-Interface aus ```cat /proc/asound/cards``` b
 
 Danach ```reboot``` 
 
-Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei):
-http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
+Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei): http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
 
 ###Sound wiedergeben
 
@@ -244,9 +358,7 @@ omxplayer --vol -2000 /home/pi/Music/siren.mp3
 
 Stellt die Lautstärke ebenso auf -20db.
 
----
-
-###LED Strip
+### LED Strip & Lightshow
 
 Bei ebay: 2m 5V LPD8806 52LED/m White FPCA IP67 Waterproof: http://www.ebay.de/itm/111767798377
 
@@ -263,52 +375,23 @@ Grün = Clock (= Pin 23)
 
 5V Stromversorgung über http://www.ebay.de/itm/281879049132 5V 10A 50W Netzteil mit Connector https://www.google.de/search?q=female+dc+connector
 
-Wichtig: Ground muss mit dem RPI Ground über das Breadboard geteilt werden.
-
-Zur Aktivierung von SPI:
-
-```raspi-config``` und SPI in den advanced options aktivieren, Reboot
-Firmware-Update (wie hier beschrieben: http://neophob.com/2012/08/raspberry-pi-enable-the-spi-device/): 
-```
-sudo wget http://goo.gl/1BOfJ -O /usr/bin/rpi-update
-sudo chmod +x /usr/bin/rpi-update
-sudo rpi-update
-```
-
-Siehe auch: https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md
-
-Zum Test, ob SPI korrekt aktiviert wurde: https://raw.githubusercontent.com/raspberrypi/linux/rpi-3.10.y/Documentation/spi/spidev_test.c (wird hier ganz nett beschrieben: http://www.brianhensley.net/2012/07/getting-spi-working-on-raspberry-pi.html)
-
-Library zum Ansteuern der LEDs: https://bitbucket.org/ricblu/rpi-lpd8806/src bzw. https://www.npmjs.com/package/lpd8806
-
-Wie wird das ganze angeschlossen? https://learn.adafruit.com/raspberry-pi-spectrum-analyzer-display-on-rgb-led-strip/led-strip-and-rgb-led-software
-
-Auch als Video: https://www.youtube.com/watch?v=0uXjyvZ9JGM (Achtung: Betrieb des Raspberry über das gleiche 5V Netzteil ist schwierig, da so alle Schutzmaßnahmen des Raspberry außer Kraft gesetzt werden) 
+* Wichtig: Ground muss mit dem RPI Ground über das Breadboard geteilt werden.
+* Siehe auch: https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md
+* Zum Test, ob SPI korrekt aktiviert wurde: https://raw.githubusercontent.com/raspberrypi/linux/rpi-3.10.y/Documentation/spi/spidev_test.c (wird hier ganz nett beschrieben: http://www.brianhensley.net/2012/07/getting-spi-working-on-raspberry-pi.html)
+* Library zum Ansteuern der LEDs: https://bitbucket.org/ricblu/rpi-lpd8806/src bzw. https://www.npmjs.com/package/lpd8806
+* Wie wird das ganze angeschlossen? https://learn.adafruit.com/raspberry-pi-spectrum-analyzer-display-on-rgb-led-strip/led-strip-and-rgb-led-software
+* Auch als Video: https://www.youtube.com/watch?v=0uXjyvZ9JGM (Achtung: Betrieb des Raspberry über das gleiche 5V Netzteil ist schwierig, da so alle Schutzmaßnahmen des Raspberry außer Kraft gesetzt werden) 
 
 ***Achtung:*** Unbedingt darauf achten, dass das LED Band richtig herum angeschlossen wird (Es gibt einen Eingang und einen Ausgang, die Seite ist also nicht egal), und das Ground mit dem Raspberry geteilt wird.
 
----
-
-###Lightshow
-
-install lightshowpi with git from master
-
 ```
-mkdir /opt/lightshow
-cd /opt/lightshow
-git clone https://togiles@bitbucket.org/togiles/lightshowpi.git
-cd lightshowpi
-git fetch && git checkout master
+git clone https://togiles@bitbucket.org/togiles/lightshowpi.git /opt/lightshow/lightshowpi
+cd /opt/lightshow/lightshowpi
+git fetch && git checkout stable
 ./install.sh
 ```
 
-And now: ```reboot```
-
-Afterwards:
-
-```
-cd /opt/lightshow/lightshowpi
-```
+***Cogigure:***
 
 Disable the "pre show" and set as much zeros as you have rows in the led strip. The number of LEDs will be split by the amount of rows. These are not real "gpio pins", they are just used to separate the rows: ```nano config/overrides.cfg```
 
@@ -326,27 +409,12 @@ Now replace py/synchronized_lights.py with the one from the repo. This is necess
 If anything goes wrong, then the current config and the synchronized_lights.py are not in sync any more. In this case, take the one from  https://togiles@bitbucket.org/togiles/lightshowpi.git and add the sections between ```IOT EDIT START``` and ```IOT EDIT END``` to their respective place in the current version of synchronized_lights.py.
 
 ```
-rm py/synchronized_lights.py
-mv /var/www/IoT-raspberry/actors/lightshowdriver/synchronized_lights.py py/synchronized_lights.py
-chmod +x py/synchronized_lights.py
+mv /opt/lightshow/lightshowpi/py/synchronized_lights.{py,py.bak}
+cp /var/www/IoT-raspberry/actors/lightshowdriver/synchronized_lights.py /opt/lightshow/lightshowpi/py/
+chmod +x /opt/lightshow/lightshowpi/py/synchronized_lights.py
 ```
-
-Execute by hand to test:
-```
-export SYNCHRONIZED_LIGHTS_HOME="/opt/lightshow/lightshowpi"
-export PYTHONPATH=$PYTHONPATH:/var/www/IoT-raspberry/actors/ledstripdriver
-python /opt/lightshow/lightshowpi/py/synchronized_lights.py --file "/home/pi/Music/house.mp3" --ledcount 104
-/var/www/IoT-raspberry/actors/lightshow "/var/www/IoT-raspberry/actors/ledstripdriver" "/home/pi/Music/house.mp3" 104
-```
-
----
 
 ###Camera
-
-MP4Box (required for camera conversion)
-```
-sudo apt-get install gpac
-```
 
 * https://www.raspberrypi.org/documentation/usage/camera/raspicam/raspivid.md
 * https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
@@ -467,6 +535,7 @@ mkdir /opt/fhem
 cd /opt/fhem
 wget http://fhem.de/fhem-5.7.deb 
 dpkg -i fhem-5.7.deb
+useradd fhem
 cd /opt && chmod -R a+w fhem && usermod -a -G tty pi && usermod -a -G tty fhem
 echo -n admin:admin | base64
 ```
@@ -477,6 +546,7 @@ nano /opt/fhem/fhem.cfg
 
 nach ```define WEB FHEMWEB 8083 global``` einfügen: ```attr WEB basicAuth YWRtaW46YWRtaW4=``` (entspricht base64 admin:admin)
 
+* Execute ```update``` in the text box as first thing to do after FHEM started up. Finish when update is down with ```shutdown restart```
 * Auth: ```attr global motd none```
 * Anmeldung: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen) 
 * HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300```
@@ -611,67 +681,4 @@ set ZWAVE1 addNode onNw
 smStatus: Wattzahl
 swbStatus: on/off
 meter: kwh
-```
-
----
-
-###Barometer BMP180
-
-Anschluss an GND, 3V und i2c (siehe Display)
-
-```
-git clone https://github.com/adafruit/Adafruit_Python_BMP.git /opt/barometric
-cd /opt/barometric
-python setup.py install
-```
-
----
-
-###1 Wire ds18b20
-
-Module aktivieren:
-```
-modprobe wire
-modprobe w1-gpio pullup=1
-modprobe w1-therm
-```
-
-Prüfen, ob aktiviert: ```lsmod```
-
-Module auch nach Boot wieder laden:
-```
-nano /etc/modules
-wire
-w1-gpio pullup=1
-w1-therm
-```
-
-Für neuere Raspbians auch noch für den Device-Tree aktivieren:
-```
-nano /boot/config.txt 
-dtoverlay=w1-gpio,gpiopin=4,pullup=on
-```
-
-Temperatur auslesen dann per:
-```
-grep "t=" /sys/bus/w1/devices/28-*/w1_slave
-```
-
----
-
-###Install Guide LCD Display:
-	for: SainSmart IIC/I2C/TWI Serial 2004 Character 20x4 LCD Display Modul 
-	https://www.auctoritas.ch/bauprojekte/4-ein-sainsmart-lcd-display-am-raspberry-pi-verwenden
-	"i2cdetect 1" instead of "i2cdetect -y 1"
-
----
-
-###Youtube Download
-
-Möglichkeit, auch Youtube Videos wiederzugeben. Diese werden auf der SD gecached.
-
-```
-wget https://yt-dl.org/latest/youtube-dl -O /usr/local/bin/youtube-dl
-chmod a+x /usr/local/bin/youtube-dl
-hash -r
 ```
