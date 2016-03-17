@@ -322,10 +322,8 @@ def audio_in():
     sample_rate = cm.lightshow.input_sample_rate
     num_channels = cm.lightshow.input_channels
 
-    print "input sound card"
-    print cm.lightshow.audio_in_card
-
     if cm.lightshow.mode == 'audio-in':
+        print "using sound card " + cm.lightshow.audio_in_card + " for line-in"
         # Open the input stream from default input device
         streaming = aa.PCM(aa.PCM_CAPTURE, aa.PCM_NORMAL, cm.lightshow.audio_in_card)
         streaming.setchannels(num_channels)
@@ -934,8 +932,12 @@ if __name__ == "__main__":
         sys.exit()
 
     if args.file:
+        print "Playing Song"
         play_song()
     elif args.linein:
+        print "Line In"
         cm.lightshow.mode = "audio-in"
         cm.lightshow.audio_in_card = args.linein
         audio_in()
+    elif client:
+        network_client()
