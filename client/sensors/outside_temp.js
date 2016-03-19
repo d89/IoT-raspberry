@@ -37,10 +37,12 @@ class outside_temp extends baseSensor
 
     readTemp(cb)
     {
+        var that = this;
+
         var child = exec('grep "t=" /sys/bus/w1/devices/28-*/w1_slave', function(error, stdout, stderr)
         {
             if (stderr)
-                logger.error(stderr + "");
+                that.logger.error(stderr + "");
 
             if (error !== null)
             {

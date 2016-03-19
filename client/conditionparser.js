@@ -1,5 +1,6 @@
 var fs = require("fs");
 var logger = require("./logger");
+var config = require("./config");
 var sensormanagement = require("./sensormanagement");
 var actormanagement = require("./actormanagement");
 var socketmanager = require("./socketmanager");
@@ -182,7 +183,7 @@ exports.loadAvailableOptions = function(cb)
 
 exports.loadConditions = function(cb)
 {
-    fs.readFile("../conditions.json", function(err, file)
+    fs.readFile(config.baseBath + "/conditions.json", function(err, file)
     {
         if (err)
         {
@@ -247,7 +248,7 @@ exports.applyConditions = function(cb)
 
 exports.saveConditions = function(conditions, cb)
 {
-    fs.writeFile("../conditions.json", conditions, function(err)
+    fs.writeFile(config.baseBath + "/conditions.json", conditions, function(err)
     {
         if (err)
         {

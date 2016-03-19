@@ -56,6 +56,7 @@ interface wlan0
 wget https://raw.githubusercontent.com/Hexxeh/rpi-update/master/rpi-update -O /usr/bin/rpi-update
 chmod +x /usr/bin/rpi-update
 rpi-update
+reboot now
 ```
 
 ## Essentials
@@ -63,6 +64,7 @@ rpi-update
 Don't skip this! These tools are basically necessary for everything else later on.
 
 ```
+apt-get update
 apt-get install build-essential git gpac mpg321 omxplayer python-dev libboost-python-dev python-pip python-smbus i2c-tools
 ```
 
@@ -195,11 +197,10 @@ reboot now
 ... finally ... ;-)
 
 ```
-mkdir -p /var/www && cd /var/www
-git clone https://github.com/d89/IoT-raspberry.git
+git clone https://github.com/d89/IoT-raspberry.git /var/www/IoT-raspberry
 chmod +x /var/www/IoT-raspberry/actors/*
 chmod +x /var/www/IoT-raspberry/sensors/*
-cd client
+cd /var/www/IoT-raspberry
 npm install
 ```
 
