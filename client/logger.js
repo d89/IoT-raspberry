@@ -14,7 +14,7 @@ var logger = new (winston.Logger)
             prettyPrint: true,
             timestamp: function()
             {
-                return moment().add(config.isoOffset, "hour").toISOString();
+                return moment().toISOString();
             }}),
         new (winston.transports.File)
         ({
@@ -24,7 +24,7 @@ var logger = new (winston.Logger)
             maxsize: 200 * 1024 * 1024, //1mb
             timestamp: function()
             {
-                return moment().add(config.isoOffset, "hour").toISOString();
+                return moment().toISOString();
             }
         })
     ],

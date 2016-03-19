@@ -544,12 +544,14 @@ sudo service hmland start
 FHEM wird für die Interaktion mit den Homematic Komponenten benötigt.
 
 ```
+apt-get install perl libdevice-serialport-perl libio-socket-ssl-perl libwww-perl libxml-simple-perl
 mkdir /opt/fhem
 cd /opt/fhem
 wget http://fhem.de/fhem-5.7.deb 
 dpkg -i fhem-5.7.deb
-useradd fhem
-cd /opt && chmod -R a+w fhem && usermod -a -G tty pi && usermod -a -G tty fhem
+chmod -R a+w /opt/fhem 
+usermod -a -G tty pi
+usermod -a -G tty fhem
 echo -n admin:admin | base64
 ```
 Dann:
@@ -558,6 +560,13 @@ nano /opt/fhem/fhem.cfg
 ```
 
 nach ```define WEB FHEMWEB 8083 global``` einfügen: ```attr WEB basicAuth YWRtaW46YWRtaW4=``` (entspricht base64 admin:admin)
+
+Anschließend:
+
+```
+/etc/init.d/fhem stop
+/etc/init.d/fhem start
+```
 
 * Execute ```update``` in the text box as first thing to do after FHEM started up. Finish when update is down with ```shutdown restart```
 * Auth: ```attr global motd none```
@@ -608,34 +617,29 @@ params
 
 ---
 
-###Z-Wave
+### Z-Wave per FHEM
 
 Mittels Z-Wave ZME_UZB1 Me USB Stick (http://www.amazon.de/gp/product/B00QJEY6OC)
 
-* An FHEM anmelden: ```define ZWAVE1 ZWDongle /dev/ttyACM0@115200```
-* Inkludieren per ```set ZWAVE1 addNode on```
-* Stoppen der Inklusion per ```set ZWAVE1 addNode off```
+* An FHEM anmelden, wenn nicht automatisch ohnehin schon passiert (prüfen per http://RASPY_IP:8083/fhem?detail=ZWDongle_0): ```define ZWDongle_0 ZWDongle /dev/ttyACM0@115200```
+* Inkludieren per ```set ZWDongle_0 addNode nwOn```
+* Stoppen der Inklusion per ```set ZWDongle_0 addNode off```
+* Exkludieren per ```set ZWDongle_0 removeNode nwOn```, dann Knopf am Gerät drücken, danach ```set ZWDongle_0 removeNode off```. Anschließend Gerät aus FHEM entfernen: ```delete ZWave_THERMOSTAT_10```
+* Umbenennen von Z-Wave Komponenten: ```rename KomponentenNameZWave GewuenschterNeuerName```
+* Zuweisen von Komponenten zu Räumen: ```attr GewuenschterNeuerName room Wohnzimmer```
+* Home ID abfragen: ```get ZWDongle_0 homeId```
+* Geräteliste des Dongles abrufen: ```get ZWDongle_0 nodeList```
+* Deviceinfos erhalten: ```list ZWave_THERMOSTAT_10```
+* FHEM Referenz zu Z-Wave: http://fhem.de/commandref.html#ZWave
 
-***Achtung*** Das Device Danfoss Z Thermostat 014G0013 braucht 2 Zusatzkommandos, um korrekt zu funktionieren.
+### Danfoss Living Connect Z (014G0013) Thermostat 
+
+http://www.amazon.de/Danfoss-Heizk%C3%B6rperthermostat-Stellantrieb-LC-13-DAN_LC-13/dp/B00IGE38JM
+
+Direkt nach dem Inkludieren den Montagemodus beenden, indem der Hauptknopf (in der Mitte) lange gedrückt wird. Danach braucht das Thermostat 2 Zusatzkommandos, um korrekt zu funktionieren.
 
 * ```set WakeupInterval 100 1``` -> Alle 100 Sekunden aufwachen und an Controller (mit ID 1) reporten.
 * ```define zwtrigger1 at +*00:01 get ZWave_THERMOSTAT_11 battery``` -> Jede Minute bei Thermostat 11 nachfragen (Batterie-Trigger)
-
-* Exkludieren per ```set ZWAVE1 removeNode onNw```, dann Knopf am Gerät drücken, danach ```set ZWAVE1 removeNode off```. Anschließend Gerät aus FHEM entfernen: ```delete ZWave_THERMOSTAT_10```
-* Umbenennen von Z-Wave Komponenten: ```rename KomponentenNameZWave GewuenschterNeuerName```
-* Zuweisen von Komponenten zu Räumen: ```attr GewuenschterNeuerName room Wohnzimmer```
-
-***Sonstige Kommandos***
-
-```
-get ZWAVE1 homeId
-get ZWAVE1 nodeList
-list ZWave_THERMOSTAT_10
-```
-
-Interaktion per REST so wie bei den Homematic Komponenten auch, nur mit anderem Name
-
-FHEM Referenz zu Z-Wave: http://fhem.de/commandref.html#ZWave
 
 ---
 
@@ -648,7 +652,7 @@ Fibaro Motion Sensor: http://www.amazon.de/Z-Wave-FGMS-001-Fibaro-Motionsensor-F
 ***Inkludieren:***
 
 ```
-set ZWAVE1 addNode onNw
+set ZWDongle_0 addNode onNw
 ```
 
 Knopf am Motion Sensor 3mal direkt hintereinander drücken.
@@ -680,7 +684,7 @@ Fibaro Zwischenstecker: http://www.amazon.de/Z-Wave-Fibaro-Zwischenstecker-Schal
 ***Inkludieren:***
 
 ```
-set ZWAVE1 addNode onNw
+set ZWDongle_0 addNode onNw
 ```
 
 ***Config***

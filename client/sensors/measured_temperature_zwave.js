@@ -51,7 +51,7 @@ class measured_temperature_zwave extends baseSensor
                 var temp = parseFloat(body, 10);
 
                 if (isNaN(temp)) {
-                    logger.error("fhem zwave get measured temperature could not parse " + body);
+                    logger.error("fhem zwave get measured thermostat temperature could not parse " + body);
                 } else {
                     that.senddata(temp, that);
                 }

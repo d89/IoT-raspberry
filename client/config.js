@@ -4,7 +4,6 @@ module.exports = {
     serverUrl: 'https://d1303.de:3000',
     clientName: "Davids IoT-Raspberry",
     logFile: "/tmp/logfile.log",
-    isoOffset: 1, //in hours, only for the correction of logger timestamps
     baseBath: "/var/www/IoT-raspberry", //no trailing slash
     mediaBasePath: "/home/pi",  //no trailing slash
     restartSensorAfter: 10, //s - if no message for X seconds is received, restart the sensor
@@ -228,6 +227,7 @@ module.exports = {
             }
         },
         // --------------------------
+        /*
         desired_temperature_homematic: {
             options: {
                 interval: 5,
@@ -241,52 +241,53 @@ module.exports = {
                 thermostatName: "HM_37F678"
             }
         },
+        */
         // --------------------------
         desired_temperature_zwave: {
             options: {
                 interval: 5,
-                thermostatName: "ZWave_THERMOSTAT_11"
+                thermostatName: "ZWave_THERMOSTAT_25"
             }
         },
         // --------------------------
         measured_temperature_zwave: {
             options: {
                 interval: 5,
-                thermostatName: "ZWave_THERMOSTAT_11"
+                thermostatName: "ZWave_THERMOSTAT_25"
             }
         },
         // --------------------------
         battery_thermostat_zwave: {
             options: {
                 interval: 5,
-                thermostatName: "ZWave_THERMOSTAT_11"
+                thermostatName: "ZWave_THERMOSTAT_25"
             }
         },
         // --------------------------
         watt: {
             options: {
                 interval: 5,
-                switchName: "ZWave_SWITCH_BINARY_17"
+                switchName: "ZWave_SWITCH_BINARY_23"
             }
         },
         // --------------------------
         meter: {
             options: {
                 interval: 5,
-                switchName: "ZWave_SWITCH_BINARY_17"
+                switchName: "ZWave_SWITCH_BINARY_23"
             }
         },
         // --------------------------
         lux: {
             options: {
                 interval: 5,
-                motionSensorName: "ZWave_SENSOR_BINARY_18"
+                motionSensorName: "ZWave_SENSOR_BINARY_22"
             }
         },
         // --------------------------
         battery_motionsensor_zwave: {
             options: {
-                motionSensorName: "ZWave_SENSOR_BINARY_18",
+                motionSensorName: "ZWave_SENSOR_BINARY_22",
                 interval: 5
             }
         },
@@ -294,14 +295,14 @@ module.exports = {
         movement_zwave: {
             options: {
                 interval: 5,
-                motionSensorName: "ZWave_SENSOR_BINARY_18"
+                motionSensorName: "ZWave_SENSOR_BINARY_22"
             }
         },
         // --------------------------
         movement_temperature: {
             options: {
                 interval: 5,
-                motionSensorName: "ZWave_SENSOR_BINARY_18"
+                motionSensorName: "ZWave_SENSOR_BINARY_22"
             }
         },
         // --------------------------

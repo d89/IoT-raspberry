@@ -26,8 +26,8 @@ class meter extends baseSensor
             if (err) {
                 logger.error(err);
             } else {
-                var meter = msg.match(/\d+\.\d+/);
-                if (!meter || meter.length !== 1 || isNaN(parseFloat(meter[0], 10))) {
+                var meter = msg.split(" kwH")[0];
+                if (isNaN(parseFloat(meter, 10))) {
                     logger.error("fhem zwave get measured meter could not parse " + msg);
                 } else {
                     var kwh = meter[0];
