@@ -1,0 +1,24 @@
+echo "stopping service iot-client"
+pm2 stop iot-client
+echo "in directory"
+pwd
+echo "cloning new repo"
+
+echo "deleting old staging dir"
+rm -rf staging_dir
+
+echo "cloning current repo"
+git clone https://github.com/d89/IoT-raspberry.git staging_dir
+chmod +x staging_dir/actors/*
+chmod +x staging_dir/sensors/*
+
+echo "installing node modules"
+cd staging_dir/client
+npm install
+cd ..
+
+echo "making live"
+mv * ..
+
+echo "restarting service iot-client"
+pm2 start iot-client
