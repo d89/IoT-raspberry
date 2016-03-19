@@ -1,6 +1,11 @@
 #!/bin/bash -e
 
 echo "---------------------------------------------------"
+echo "remote revision"
+echo "---------------------------------------------------"
+git rev-list origin/develop --count
+
+echo "---------------------------------------------------"
 echo "current revision"
 echo "---------------------------------------------------"
 git rev-list HEAD --count
