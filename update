@@ -2,12 +2,18 @@
 echo "---------------------------------------------------"
 echo "remote changes"
 echo "---------------------------------------------------"
-git fetch origin develop && git log HEAD..origin/develop
+git fetch origin develop
+git log HEAD..origin/develop
 
 echo "---------------------------------------------------"
 echo "current revision"
 echo "---------------------------------------------------"
 git rev-list HEAD --count
+
+echo "---------------------------------------------------"
+echo "head revision"
+echo "---------------------------------------------------"
+git rev-list origin/develop --count
 
 echo "---------------------------------------------------"
 echo "stopping service iot-client"
