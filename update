@@ -1,24 +1,54 @@
-echo "stopping service iot-client"
-pm2 stop iot-client
-echo "in directory"
-pwd
-echo "cloning new repo"
+#!/bin/bash -e
 
+echo "---------------------------------------------------"
+echo "current revision"
+echo "---------------------------------------------------"
+git rev-list HEAD --count
+
+echo "---------------------------------------------------"
+echo "stopping service iot-client"
+echo "---------------------------------------------------"
+pm2 stop iot-client
+
+echo "---------------------------------------------------"
+echo "in directory"
+echo "---------------------------------------------------"
+pwd
+
+echo "---------------------------------------------------"
 echo "deleting old staging dir"
+echo "---------------------------------------------------"
 rm -rf staging_dir
 
+echo "---------------------------------------------------"
 echo "cloning current repo"
+echo "---------------------------------------------------"
 git clone https://github.com/d89/IoT-raspberry.git staging_dir
 chmod +x staging_dir/actors/*
 chmod +x staging_dir/sensors/*
+chmod +x staging_dir/update
 
-echo "installing node modules"
-cd staging_dir/client
-npm install
-cd ..
-
+echo "---------------------------------------------------"
 echo "making live"
-mv * ..
+echo "---------------------------------------------------"
+rsync -Ea staging_dir/ .
 
+echo "---------------------------------------------------"
+echo "installing node modules"
+echo "---------------------------------------------------"
+cd client
+npm install
+
+echo "---------------------------------------------------"
+echo "setting access rights"
+echo "---------------------------------------------------"
+chown -R pi ..
+
+echo "---------------------------------------------------"
 echo "restarting service iot-client"
+echo "---------------------------------------------------"
 pm2 start iot-client
+
+echo "---------------------------------------------------"
+echo "update successfully done"
+echo "---------------------------------------------------"
