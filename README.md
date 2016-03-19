@@ -439,16 +439,14 @@ chmod +x /opt/lightshow/lightshowpi/py/synchronized_lights.py
 
 ###Homematic Heizungssteuerung
 
-Hervorragende Übersicht der Möglichkeiten: http://www.meintechblog.de/2015/02/fhem-welches-gateway-fuer-welches-system/
+* Hervorragende Übersicht der Möglichkeiten: http://www.meintechblog.de/2015/02/fhem-welches-gateway-fuer-welches-system/
+* Thermostat: Homematic 105155 (http://www.amazon.de/gp/product/B00CFF3410/)
+* Konfigurations-Adapter (statt CUL-Stick): Homematic 104134 - http://www.amazon.de/eQ-3-HomeMatic-104134-Homematic-Konfigurations-Adapter/dp/B007VTXP0A/
 
-Thermostat: Homematic 105155 (http://www.amazon.de/gp/product/B00CFF3410/)
-
-Konfigurations-Adapter (statt CUL-Stick): Homematic 104134 - http://www.amazon.de/eQ-3-HomeMatic-104134-Homematic-Konfigurations-Adapter/dp/B007VTXP0A/
-
-Treiber für Konfigurations-Adapter:
+***Treiber für Konfigurations-Adapter:***
 
 ```
-apt-get install libusb-1.0-0-dev build-essential git
+apt-get install libusb-1.0-0-dev
 mkdir /opt/hmlan
 cd /opt/hmlan
 wget https://git.zerfleddert.de/hmcfgusb/releases/hmcfgusb-0.102.tar.gz
@@ -561,15 +559,16 @@ nano /opt/fhem/fhem.cfg
 ```
 
 nach ```define WEB FHEMWEB 8083 global``` einfügen: ```attr WEB basicAuth YWRtaW46YWRtaW4=``` (entspricht base64 admin:admin)
+Die Zeile ```define initialUsbCheck notify global:INITIALIZED usb create``` unbedingt in der Config auskommentieren, sonst lädt sich das Webinterface zu tode.
 
 Anschließend:
 
 ```
 /etc/init.d/fhem stop
 /etc/init.d/fhem start
+update (in FHEM textbox, then shutdown restart)
 ```
 
-* Execute ```update``` in the text box as first thing to do after FHEM started up. Finish when update is down with ```shutdown restart```
 * Auth: ```attr global motd none```
 * Anmeldung: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen) 
 * HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300```

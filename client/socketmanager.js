@@ -18,7 +18,7 @@ exports.serverUrl = config.serverUrl;
 exports.clientName = config.clientName;
 exports.socket = null;
 
-exports.getConnectionHandle = function(sensorsForServer, actorsForServer)
+exports.connect = function(sensorsForServer, actorsForServer)
 {
     var capabilities = {
         sensors: sensorsForServer,
@@ -484,6 +484,20 @@ exports.bindCallbacks = function()
         else if (msg.mode === "restart")
         {
             spawn("/sbin/reboot", ["now"]);
+        }
+        else if (msg.mode === "clearlogs")
+        {
+            logger.info("clearing logs!");
+
+            fs.truncate(config.logFile, 0, function(err)
+            {
+                if (err)
+                {
+                    logger.error("could not delete logfile", err);
+                }
+
+                cb();
+            });
         }
         else //log
         {

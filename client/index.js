@@ -31,9 +31,14 @@ exports.start = function()
     var isFirstConnection = socketmanager.socket === null;
 
     if (isFirstConnection)
+    {
         logger.info("is first connection");
+    }
     else
+    {
         logger.info("is reconnection");
+        return;
+    }
 
     var sensorUpdateCallback = function(type, data)
     {
@@ -65,17 +70,14 @@ exports.start = function()
 
     actormanagement.init();
 
-    if (isFirstConnection)
-    {
-        //turn stepper engine off on first connection. It's possible that the led pins
-        //are initialized in a way that one (or more) of the 4 control pins are high so
-        //the stepper engine can not completely turn off
-        if (actormanagement.has("stepper")) actormanagement.registeredActors["stepper"].off();
+    //turn stepper engine off on first connection. It's possible that the led pins
+    //are initialized in a way that one (or more) of the 4 control pins are high so
+    //the stepper engine can not completely turn off
+    if (actormanagement.has("stepper")) actormanagement.registeredActors["stepper"].off();
 
-        //toggle the relais. I connected my display to the relais output which shows
-        //gibberish after boot so the display needs a power cycle
-        if (actormanagement.has("relais")) actormanagement.registeredActors["relais"].toggle();
-    }
+    //toggle the relais. I connected my display to the relais output which shows
+    //gibberish after boot so the display needs a power cycle
+    if (actormanagement.has("relais")) actormanagement.registeredActors["relais"].toggle();
 
     logger.info("------------------------------------------------------");
     logger.info("BINDING SENSORS");
@@ -117,12 +119,8 @@ exports.start = function()
 
     logger.info(`client ${socketmanager.clientName} connecting to ${socketmanager.serverUrl}`);
 
-    socketmanager.socket = socketmanager.getConnectionHandle(sensorsForServer, actorsForServer);
-
-    if (isFirstConnection)
-    {
-        socketmanager.bindCallbacks();
-    }
+    socketmanager.socket = socketmanager.connect(sensorsForServer, actorsForServer);
+    socketmanager.bindCallbacks();
 };
 
 //---------------------------------------------------------------------------
