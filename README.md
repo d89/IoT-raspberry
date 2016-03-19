@@ -236,7 +236,7 @@ For a more sophisticated operation, use a service autostarting after reboot.
 
 ```
 npm install -g pm2
-pm2 start /var/www/IoT-raspberry/client/index.js --name iot-client && pm2 startup
+cd /var/www/IoT-raspberry/client && pm2 start index.js --name iot-client && pm2 startup
 ```
 
 ***restart service***
