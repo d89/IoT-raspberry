@@ -200,6 +200,7 @@ reboot now
 git clone https://github.com/d89/IoT-raspberry.git /var/www/IoT-raspberry
 chmod +x /var/www/IoT-raspberry/actors/*
 chmod +x /var/www/IoT-raspberry/sensors/*
+chmod +x update
 cd /var/www/IoT-raspberry/client
 npm install
 ```
