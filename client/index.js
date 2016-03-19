@@ -30,6 +30,11 @@ exports.start = function()
 {
     var isFirstConnection = socketmanager.socket === null;
 
+    if (isFirstConnection)
+        logger.info("is first connection");
+    else
+        logger.info("is reconnection");
+
     var sensorUpdateCallback = function(type, data)
     {
         //console.log("received " + data + " for " + type);
