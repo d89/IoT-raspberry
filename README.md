@@ -195,13 +195,11 @@ reboot now
 ... finally ... ;-)
 
 ```
-npm install -g forever
-mkdir -p /var/www /home/pi/Music
-cd /var/www
+mkdir -p /var/www && cd /var/www
 git clone https://github.com/d89/IoT-raspberry.git
 chmod +x /var/www/IoT-raspberry/actors/*
 chmod +x /var/www/IoT-raspberry/sensors/*
-cd /var/www/IoT-raspberry/client
+cd client
 npm install
 nano config.js
 ```
@@ -221,41 +219,34 @@ for a quick launch, while you are connected via SSH:
 node index.js
 ```
 
-For a more sophisticated operation, use a launch script.
+For a more sophisticated operation, use a service autostarting after reboot.
 
 ---
 
-## Launch script
-
-**systemd** style, roll your own for init.d or upstart. Or use pm2.
+## Register as a service
 
 ```
-nano /lib/systemd/system/iot-client.service
+npm install -g pm2
+pm2 start /var/www/IoT-raspberry/client/index.js --name iot-client && pm2 startup
 ```
 
-with content:
+*** restart service ***
 
 ```
-[Unit]
-Description=Job that runs the iot-client daemon
-
-[Service]
-Type=simple
-WorkingDirectory=/var/www/IoT-raspberry/client
-ExecStart=/usr/bin/forever index.js
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
+pm2 restart iot-client
+pm2 stop iot-client
 ```
 
-register:
+*** logs and monitoring ***
 
 ```
-systemctl enable iot-client
-systemctl start iot-client
-systemctl status iot-client
+pm2 logs iot-client
+pm2 show iot-client
+pm2 list iot-client
+pm2 monit iot-client
 ```
+
+See http://pm2.keymetrics.io/docs/usage/quick-start/
 
 ## Other stuff follows here
 

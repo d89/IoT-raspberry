@@ -6,7 +6,7 @@ var spawn = require('child_process').spawn;
 var actormanagement = require('../actormanagement');
 var fs = require('fs');
 var SOUND_CARD = config.soundCardInput;
-const MAKE_LOUDER = 12; //make the recording 4 times louder
+const MAKE_LOUDER = 12; //make the recording X times louder
 
 // ######################################################
 

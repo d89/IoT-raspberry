@@ -4,7 +4,7 @@ module.exports = {
     logFile: "/tmp/logfile.log",
     isoOffset: 1, //in hours, only for the correction of logger timestamps
     baseBath: "/var/www/IoT-raspberry", //no trailing slash
-    mediaBasePath: "/home/pi/Music",  //no trailing slash
+    mediaBasePath: "/home/pi",  //no trailing slash
     restartSensorAfter: 10, //s - if no message for X seconds is received, restart the sensor
     fhem: {
         basic_auth_username: "admin",

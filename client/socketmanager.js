@@ -167,7 +167,7 @@ exports.bindCallbacks = function()
         }
 
         //Recording ---------------------------------------------------------------------------
-        if (msg.type === "record" && actormanagement.has("record"))
+        if (msg.type === "record" && actormanagement.has("recorder"))
         {
             var start = msg.data.mode === "start";
 
@@ -265,7 +265,7 @@ exports.bindCallbacks = function()
             }
             else if (mode === "colorParty")
             {
-                actormanagement.registeredActors["ledstrip"].colorParty(true);
+                actormanagement.registeredActors["ledstrip"].colorParty();
             }
             else if (mode === "allOff")
             {
