@@ -183,6 +183,11 @@ exports.loadAvailableOptions = function(cb)
 
 exports.loadConditions = function(cb)
 {
+    if (!fs.existsSync(config.baseBath + "/conditions.json"))
+    {
+        return cb(null, "[]");
+    }
+
     fs.readFile(config.baseBath + "/conditions.json", function(err, file)
     {
         if (err)

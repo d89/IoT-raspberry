@@ -209,22 +209,15 @@ npm install
 ***main configuration***
 
 ```
-nano /var/www/IoT-raspberry/client/config.js
+cd /var/www/IoT-raspberry/client
+cp config.js.sample config.js
+nano config.js
 ```
 
 * serverUrl: base url of the IoT-server to connect to
 * clientName: how your Raspberry reports itself to the server
 * basePath: where you installed your IoT-raspberry (if you followed this guide, it'll be ```/var/www/IoT-raspberry```)
 * mediaBasePath: Where audio files are stored. Create this folder, if not already existent
-
-***passwords***
-
-```
-nano /var/www/IoT-raspberry/client/config-passwords.js
-```
-
-* password: Will be used as login on the server you specified at ```serverUrl``` in the main configuration file ```config.js```
-* ttsApiKey: Text To Speech API key that is being used for the ```voice``` actor. 
 
 ## Launch
 
