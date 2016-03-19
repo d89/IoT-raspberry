@@ -1,3 +1,5 @@
+var passwords = require("./config-passwords");
+
 module.exports = {
     serverUrl: 'https://d1303.de:3000',
     clientName: "Davids IoT-Raspberry",
@@ -15,5 +17,326 @@ module.exports = {
     volumemicrophone: 100, //in percent from 0 to 100
     soundCardInput: 1, //alsamixer -> F6 -> number of interface
     soundCardOutput: 0, //alsamixer -> F6 -> number of interface
-    password: "*** snip ***"
+    password: passwords.raspberryLoginPassword,
+    // ###########################################################
+    //actor class files can be found in actors/*.js. The options are passed to the constructor
+    actors: {
+        // --------------------------
+        display: {
+            options: {}
+        },
+        // --------------------------
+        switchrc: {
+            options: {}
+        },
+        // --------------------------
+        led: {
+            options: {
+                pin_red: 40,
+                pin_green: 13
+            }
+        },
+        // --------------------------
+        music: {
+            options: {}
+        },
+        // --------------------------
+        servo: {
+            options: {
+                pin: 32
+            }
+        },
+        // --------------------------
+        voice: {
+            options: {
+                ttsApiKey: passwords.ttsApiKey //voicerss.org
+            }
+        },
+        // --------------------------
+        cam: {
+            options: {}
+        },
+        // --------------------------
+        set_temperature_homematic: {
+            options: {}
+        },
+        // --------------------------
+        set_temperature_zwave: {
+            options: {}
+        },
+        // --------------------------
+        ledstrip: {
+            options: {
+                ledCount: 104 // how many leds do you have on your lpd8806 led band?
+            }
+        },
+        // --------------------------
+        recorder: {
+            options: {}
+        },
+        // --------------------------
+        switchzwave: {
+            options: {}
+        },
+        // --------------------------
+        http: {
+            options: {}
+        },
+        // --------------------------
+        relais: {
+            options: {
+                pin: 16
+            }
+        },
+        // --------------------------
+        stepper: {
+            options: {
+                pin1: 8,
+                pin2: 10,
+                pin3: 12,
+                pin4: 18
+            }
+        }
+        // --------------------------
+    },
+    // ###########################################################
+    //sensor class files can be found in sensors/*.js. The options are passed to the constructor
+    sensors: {
+        // --------------------------
+        humidity: {
+            options: {
+                pin: 25, //gpio numbering
+                interval: 2
+            }
+        },
+        // --------------------------
+        temperature: {
+            options: {
+                pin: 25, //gpio numbering
+                interval: 2
+            }
+        },
+        // --------------------------
+        cputemp: {
+            options: {
+                interval: 5
+            }
+        },
+        // --------------------------
+        lightintensity: {
+            options: {
+                pin: 0x48, //i2c hex address (i2cdetect -y 1)
+                interval: 6
+            }
+        },
+        // --------------------------
+        poti: {
+            options: {
+                pin: 0x48, //i2c hex address (i2cdetect -y 1)
+                interval: 6
+            }
+        },
+        // --------------------------
+        date: {
+            options: {
+                interval: 60
+            }
+        },
+        // --------------------------
+        time: {
+            options: {
+                interval: 1
+            }
+        },
+        // --------------------------
+        movement1: {
+            file: "./sensors/movement",
+            options: {
+                pin: 33,
+                interval: 5,
+                suffix: "1"
+            }
+        },
+        // --------------------------
+        movement2: {
+            file: "./sensors/movement",
+            options: {
+                pin: 38,
+                interval: 5,
+                suffix: "2",
+            }
+        },
+        // --------------------------
+        tapswitch: {
+            options: {
+                restartSensorAfter: false,
+                pin: 35
+            }
+        },
+        // --------------------------
+        sound: {
+            options: {
+                pin: 15,
+                interval: 4
+            }
+        },
+        // --------------------------
+        soundvol: {
+            options: {
+                pin: 37,
+                interval: 4
+            }
+        },
+        // --------------------------
+        load: {
+            options: {
+                interval: 4
+            }
+        },
+        // --------------------------
+        light: {
+            options: {
+                pin: 36,
+                interval: 4
+            }
+        },
+        // --------------------------
+        mem: {
+            options: {
+                interval: 4
+            }
+        },
+        // --------------------------
+        diskfree: {
+            options: {
+                interval: 4
+            }
+        },
+        // --------------------------
+        distance: {
+            options: {
+                pin_trigger: 31,
+                pin_echo: 29,
+                interval: 3
+            }
+        },
+        // --------------------------
+        reachability: {
+            options: {
+                ip: "192.168.0.53", //the ip your smartphone receives from your router. Should be always the same.
+                interval: 5
+            }
+        },
+        // --------------------------
+        desired_temperature_homematic: {
+            options: {
+                interval: 5,
+                thermostatName: "HM_37F678"
+            }
+        },
+        // --------------------------
+        measured_temperature_homematic: {
+            options: {
+                interval: 5,
+                thermostatName: "HM_37F678"
+            }
+        },
+        // --------------------------
+        desired_temperature_zwave: {
+            options: {
+                interval: 5,
+                thermostatName: "ZWave_THERMOSTAT_11"
+            }
+        },
+        // --------------------------
+        measured_temperature_zwave: {
+            options: {
+                interval: 5,
+                thermostatName: "ZWave_THERMOSTAT_11"
+            }
+        },
+        // --------------------------
+        battery_thermostat_zwave: {
+            options: {
+                interval: 5,
+                thermostatName: "ZWave_THERMOSTAT_11"
+            }
+        },
+        // --------------------------
+        watt: {
+            options: {
+                interval: 5,
+                switchName: "ZWave_SWITCH_BINARY_17"
+            }
+        },
+        // --------------------------
+        meter: {
+            options: {
+                interval: 5,
+                switchName: "ZWave_SWITCH_BINARY_17"
+            }
+        },
+        // --------------------------
+        lux: {
+            options: {
+                interval: 5,
+                motionSensorName: "ZWave_SENSOR_BINARY_18"
+            }
+        },
+        // --------------------------
+        battery_motionsensor_zwave: {
+            options: {
+                motionSensorName: "ZWave_SENSOR_BINARY_18",
+                interval: 5
+            }
+        },
+        // --------------------------
+        movement_zwave: {
+            options: {
+                interval: 5,
+                motionSensorName: "ZWave_SENSOR_BINARY_18"
+            }
+        },
+        // --------------------------
+        movement_temperature: {
+            options: {
+                interval: 5,
+                motionSensorName: "ZWave_SENSOR_BINARY_18"
+            }
+        },
+        // --------------------------
+        barometric_temp: {
+            options: {
+                pin: 0x77, //i2c hex address (i2cdetect -y 1)
+                interval: 4
+            }
+        },
+        // --------------------------
+        altitude: {
+            options: {
+                pin: 0x77, //i2c hex address (i2cdetect -y 1)
+                interval: 4
+            }
+        },
+        // --------------------------
+        pressure: {
+            options: {
+                pin: 0x77, //i2c hex address (i2cdetect -y 1)
+                interval: 4
+            }
+        },
+        // --------------------------
+        outside_temp: {
+            options: {
+                interval: 4
+            }
+        },
+        // --------------------------
+        httplistener: {
+            options: {
+                interval: 5
+            }
+        }
+        // --------------------------
+    }
 };

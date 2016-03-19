@@ -201,15 +201,29 @@ chmod +x /var/www/IoT-raspberry/actors/*
 chmod +x /var/www/IoT-raspberry/sensors/*
 cd client
 npm install
-nano config.js
 ```
 
-***Important parts of the configuration***
+## Configuration
+
+***main configuration***
+
+```
+nano /var/www/IoT-raspberry/client/config.js
+```
+
 * serverUrl: base url of the IoT-server to connect to
 * clientName: how your Raspberry reports itself to the server
 * basePath: where you installed your IoT-raspberry (if you followed this guide, it'll be ```/var/www/IoT-raspberry```)
 * mediaBasePath: Where audio files are stored. Create this folder, if not already existent
-* password: Will be used as login on the server you specified at ```serverUrl```
+
+***passwords***
+
+```
+nano /var/www/IoT-raspberry/client/config-passwords.js
+```
+
+* password: Will be used as login on the server you specified at ```serverUrl``` in the main configuration file ```config.js```
+* ttsApiKey: Text To Speech API key that is being used for the ```voice``` actor. 
 
 ## Launch
 
@@ -230,14 +244,14 @@ npm install -g pm2
 pm2 start /var/www/IoT-raspberry/client/index.js --name iot-client && pm2 startup
 ```
 
-*** restart service ***
+***restart service***
 
 ```
 pm2 restart iot-client
 pm2 stop iot-client
 ```
 
-*** logs and monitoring ***
+***logs and monitoring***
 
 ```
 pm2 logs iot-client
@@ -378,13 +392,19 @@ Grün = Clock (= Pin 23)
 ```
 git clone https://togiles@bitbucket.org/togiles/lightshowpi.git /opt/lightshow/lightshowpi
 cd /opt/lightshow/lightshowpi
-git fetch && git checkout stable
+git fetch && git checkout master
 ./install.sh
 ```
 
-***Cogigure:***
+***Cofigure:***
 
-Disable the "pre show" and set as much zeros as you have rows in the led strip. The number of LEDs will be split by the amount of rows. These are not real "gpio pins", they are just used to separate the rows: ```nano config/overrides.cfg```
+Disable the "pre show" and set as much zeros as you have rows in the led strip. The number of LEDs will be split by the amount of rows. These are not real "gpio pins", they are just used to separate the rows.
+
+```
+nano /opt/lightshow/lightshowpi/config/overrides.cfg
+```
+
+with content:
 
 ```
 [hardware]
@@ -406,6 +426,8 @@ chmod +x /opt/lightshow/lightshowpi/py/synchronized_lights.py
 ```
 
 ###Camera
+
+```raspivid``` and ```raspistill``` are used. They are preinstalled.
 
 * https://www.raspberrypi.org/documentation/usage/camera/raspicam/raspivid.md
 * https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
