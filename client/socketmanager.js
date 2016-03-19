@@ -530,7 +530,7 @@ exports.bindCallbacks = function()
     exports.socket.on('disconnect', function()
     {
         logger.info(`disconnected from ${exports.serverUrl}`);
-        actormanagement.registeredActors["cam"].stopStreaming();
+        if (actormanagement.has("cam")) actormanagement.registeredActors["cam"].stopStreaming();
 
         //if we receive a real "disconnect" event, the reconnection is not automatically being established again
         setTimeout(function()
