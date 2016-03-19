@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -18,6 +17,7 @@ class battery_motionsensor_zwave extends baseSensor
 
     refresh()
     {
+        var that = this;
         var shouldTrigger = (this.refreshCounter % 10 === 0)
         this.refreshCounter++;
         if (!shouldTrigger) return;
@@ -27,9 +27,9 @@ class battery_motionsensor_zwave extends baseSensor
         fhem.refreshAttribute(deviceName, refreshAttribute, function(err, body)
         {
             if (err) {
-                logger.error("zwave battery motion sensor refresh: ", err);
+                that.logger.error("zwave battery motion sensor refresh: ", err);
             } else {
-                //logger.info("zwave battery motion sensor refresh: ", body);
+                //that.logger.info("zwave battery motion sensor refresh: ", body);
             }
         });
     }
@@ -43,12 +43,12 @@ class battery_motionsensor_zwave extends baseSensor
         fhem.readValue(motionSensorName, "battery", function(err, body)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
                 var battery = parseFloat(body, 10);
 
                 if (isNaN(battery)) {
-                    logger.error("fhem zwave get motion sensor battery could not parse " + body);
+                    that.logger.error("fhem zwave get motion sensor battery could not parse " + body);
                 } else {
                     that.senddata(battery, that);
                 }

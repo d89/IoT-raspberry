@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -19,6 +18,7 @@ class desired_temperature_zwave extends baseSensor
 
     refresh()
     {
+        var that = this;
         var shouldTrigger = (this.refreshCounter % 10 === 0)
         this.refreshCounter++;
         if (!shouldTrigger) return;
@@ -29,9 +29,9 @@ class desired_temperature_zwave extends baseSensor
         fhem.refreshAttribute(t, refreshattribute, function(err, body)
         {
             if (err) {
-                logger.error("zwave measured refresh: ", err);
+                that.logger.error("zwave measured refresh: ", err);
             } else {
-                //logger.info("zwave measured refresh: ", body);
+                //that.logger.info("zwave measured refresh: ", body);
             }
         });
     }
@@ -45,12 +45,12 @@ class desired_temperature_zwave extends baseSensor
         fhem.readValue(thermostatName, "setpointTemp", function(err, body)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
                 var temp = parseFloat(body, 10);
 
                 if (isNaN(temp)) {
-                    logger.error("fhem zwave get desired temperature could not parse " + body);
+                    that.logger.error("fhem zwave get desired temperature could not parse " + body);
                 } else {
                     that.senddata(temp, that);
                 }

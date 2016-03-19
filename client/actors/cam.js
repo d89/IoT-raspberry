@@ -74,7 +74,7 @@ class cam extends baseActor
     {
         var that = this;
 
-        //logger.info('taking image');
+        //that.logger.info('taking image');
         var args = [
             '-w', 640,   // width
             '-h', 480,  // height

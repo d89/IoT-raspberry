@@ -40,10 +40,12 @@ class diskfree extends baseSensor
 
     readDisk(cb)
     {
+        var that = this;
+
         var child = exec("df / | awk '$3 ~ /[0-9]+/ { print $4 }'", function(error, stdout, stderr)
         {
             if (stderr)
-                logger.error(stderr + "");
+                that.logger.error(stderr + "");
 
             if (error !== null)
             {

@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -18,6 +17,7 @@ class battery_thermostat_zwave extends baseSensor
 
     refresh()
     {
+        var that = this;
         var shouldTrigger = (this.refreshCounter % 10 === 0)
         this.refreshCounter++;
 
@@ -32,9 +32,9 @@ class battery_thermostat_zwave extends baseSensor
         fhem.refreshAttribute(t, refreshattribute, function(err, body)
         {
             if (err) {
-                logger.error("zwave thermostat battery refresh: ", err);
+                that.logger.error("zwave thermostat battery refresh: ", err);
             } else {
-                //logger.info("zwave thermostat battery refresh: ", body);
+                //that.logger.info("zwave thermostat battery refresh: ", body);
             }
         });
     }
@@ -49,12 +49,12 @@ class battery_thermostat_zwave extends baseSensor
         fhem.readValue(thermostatName, "battery", function(err, body)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
                 var battery = parseFloat(body, 10);
 
                 if (isNaN(battery)) {
-                    logger.error("fhem zwave get thermostat battery could not parse " + body);
+                    that.logger.error("fhem zwave get thermostat battery could not parse " + body);
                 } else {
                     that.senddata(battery, that);
                 }

@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -25,12 +24,12 @@ class movement_temperature extends baseSensor
         fhem.readValue(motionSensorName, "temperature", function(err, body)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
                 var temp = parseFloat(body, 10);
 
                 if (isNaN(temp)) {
-                    logger.error("fhem zwave get temp could not parse " + body);
+                    that.logger.error("fhem zwave get temp could not parse " + body);
                 } else {
                     that.senddata(temp, that);
                 }

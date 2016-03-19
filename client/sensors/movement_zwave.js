@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -25,14 +24,14 @@ class movement_zwave extends baseSensor
         fhem.readValue(motionSensorName, "state", function(err, body)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
                 var isOpen = body.indexOf("open") !== -1;
                 var isClosed = body.indexOf("closed") !== -1;
 
                 if (!isOpen && !isClosed)
                 {
-                    logger.error("z-wave motion sensor unknown state: " + body);
+                    that.logger.error("z-wave motion sensor unknown state: " + body);
                 }
 
                 var state = (isOpen ? 1 : 0);

@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -13,6 +12,28 @@ class meter extends baseSensor
     {
         super("meter", "Energy Meter (kwh)", options);
         this.read();
+
+        this.refreshCounter = 0;
+    }
+
+    refresh()
+    {
+        var that = this;
+        var shouldTrigger = (this.refreshCounter % 10 === 0)
+        this.refreshCounter++;
+        if (!shouldTrigger) return;
+
+        var switchName = that.options.switchName;
+        var refreshattribute = "meter";
+
+        fhem.refreshAttribute(switchName, refreshattribute, function(err, body)
+        {
+            if (err) {
+                that.logger.error("zwave switch meter refresh: ", err);
+            } else {
+                //that.logger.info("zwave switch meter refresh: ", body);
+            }
+        });
     }
 
     read()
@@ -20,15 +41,16 @@ class meter extends baseSensor
         var that = this;
         var switchName = that.options.switchName;
         var t = switchName || "ZWave_SWITCH_BINARY_17";
+        that.refresh();
 
         fhem.readValue(switchName, "energy", function(err, msg)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
                 var meter = msg.split(" kwH")[0];
                 if (isNaN(parseFloat(meter, 10))) {
-                    logger.error("fhem zwave get measured meter could not parse " + msg);
+                    that.logger.error("fhem zwave get measured meter could not parse " + msg);
                 } else {
                     var kwh = meter[0];
                     that.senddata(kwh, that);

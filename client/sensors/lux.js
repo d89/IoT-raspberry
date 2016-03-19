@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -23,12 +22,12 @@ class lux extends baseSensor
         fhem.readValue(motionSensorName, "luminance", function(err, body)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
                 var lux = body.match(/(\d+)\sLux/);
 
                 if (!lux) {
-                    logger.error("fhem zwave get lux could not parse " + body);
+                    that.logger.error("fhem zwave get lux could not parse " + body);
                 } else {
                     lux = lux[1];
                     that.senddata(lux, that);

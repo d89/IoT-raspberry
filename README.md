@@ -545,7 +545,7 @@ sudo service hmland start
 FHEM wird für die Interaktion mit den Homematic Komponenten benötigt.
 
 ```
-apt-get install perl libdevice-serialport-perl libio-socket-ssl-perl libwww-perl libxml-simple-perl
+apt-get install -y libdevice-serialport-perl libio-socket-ssl-perl libwww-perl libxml-simple-perl
 mkdir /opt/fhem
 cd /opt/fhem
 wget http://fhem.de/fhem-5.7.deb 
@@ -660,12 +660,12 @@ Knopf am Motion Sensor 3mal direkt hintereinander drücken.
 
 ***Config***
 * Mit Controller assoziieren (um Live-Updates zu bekommen): ```associationAdd 3 1```
-* Regelmäßig Lux-Updates schicken: configIlluminationReportsInterval 60
-* Regelmäßig Temp-Updates schicken: configIntervalOfTemperatureMeasuring 60
-* Regelmäßg Temperatur-Updates schicken: configTemperatureReportsInterval 60
-* Bei 0,1°C Änderung Temperatur-Report schicken: configTemperatureReportThreshold 1	
-* Ab 1 Lux Änderung Report schicken: configIlluminationReportThreshold 1
-* Alarm 15 Sekunden aufrecht erhalten und danach dann neu triggern: configMotionAlarmCancellationDelay 15
+* Regelmäßig Lux-Updates schicken: ```configIlluminationReportsInterval 60```
+* Ab 1 Lux Änderung Report schicken: ```configIlluminationReportThreshold 1```
+* Regelmäßig Temp-Updates schicken: ```configIntervalOfTemperatureMeasuring 60```
+* Regelmäßg Temperatur-Updates schicken: ```configTemperatureReportsInterval 60```
+* Bei 0,1°C Änderung Temperatur-Report schicken: ```configTemperatureReportThreshold 1	```
+* Alarm 15 Sekunden aufrecht erhalten und danach dann neu triggern: ```configMotionAlarmCancellationDelay 15```
 
 ***Werte:***
 ```

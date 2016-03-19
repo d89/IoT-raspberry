@@ -2,7 +2,6 @@
 
 var baseSensor = require("./baseSensor");
 var config = require("../config");
-var logger = require("../logger");
 var fhem = require("../fhemmanagement");
 
 // ######################################################
@@ -23,7 +22,7 @@ class desired_temperature_homematic extends baseSensor
         fhem.readValue(thermostatName, "desired-temp", function(err, body)
         {
             if (err) {
-                logger.error(err);
+                that.logger.error(err);
             } else {
 
                 if (body.indexOf("on") !== -1) {
@@ -35,7 +34,7 @@ class desired_temperature_homematic extends baseSensor
                 var temp = parseFloat(body, 10);
 
                 if (isNaN(temp)) {
-                    logger.error("fhem homematic get desired temperature could not parse " + body);
+                    that.logger.error("fhem homematic get desired temperature could not parse " + body);
                 } else {
                     that.senddata(temp, that);
                 }

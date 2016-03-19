@@ -1,7 +1,6 @@
 "use strict";
 
 var baseSensor = require("./baseSensor");
-var logger = require("../logger");
 var config = require("../config");
 var spawn = require('child_process').spawn;
 
