@@ -53,6 +53,8 @@ interface wlan0
 ## Firmware Update
 
 ```
+apt-get upgrade
+apt-get update
 wget https://raw.githubusercontent.com/Hexxeh/rpi-update/master/rpi-update -O /usr/bin/rpi-update
 chmod +x /usr/bin/rpi-update
 rpi-update

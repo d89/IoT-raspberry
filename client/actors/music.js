@@ -28,6 +28,10 @@ class music extends baseActor
                     notes: "filename of .mp3 file to be played"
                 }]
             },
+            beep: {
+                method: this.beep.bind(this),
+                params: []
+            },
             stop: {
                 method: this.stop.bind(this),
                 params: []
@@ -50,7 +54,12 @@ class music extends baseActor
         cb(null, "stopped music");
     }
 
-    play(title, cb)
+    beep(cb, donePlaying)
+    {
+        this.play(false, cb, donePlaying);
+    }
+
+    play(title, cb, donePlaying)
     {
         var that = this;
 
@@ -61,19 +70,23 @@ class music extends baseActor
 
         this.logger.info("playing music " + title);
 
-        title = title || "siren.mp3";
-        title = title.replace("..", "");
-        title = config.mediaBasePath + "/" + title;
-
-        if (!fs.existsSync(title))
+        if (title)
         {
-            return cb("file " + title + " does not exist");
+            title = title.replace("..", "");
+            title = config.mediaBasePath + "/" + title;
         }
 
         this.stop();
 
-        soundmanager.play(title);
-        cb(null, "played " + title);
+        soundmanager.play(title, function(err, msg)
+        {
+            if (donePlaying)
+            {
+                donePlaying(err, msg);
+            }
+        });
+
+        cb(null, "starting music");
     }
 }
 
