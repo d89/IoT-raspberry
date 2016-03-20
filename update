@@ -3,7 +3,7 @@ echo "---------------------------------------------------"
 echo "remote changes"
 echo "---------------------------------------------------"
 git fetch origin develop
-git log HEAD..origin/develop
+git log HEAD..origin/develop --format=oneline
 
 echo "---------------------------------------------------"
 echo "current revision"
