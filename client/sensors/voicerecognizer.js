@@ -190,6 +190,8 @@ class voicerecognizer extends baseSensor
         var params = ["-lm", that.options.languageModel, "-dict", that.options.dictionary, "-adcdev", mic];
         var isReady = false;
 
+        //TODO what if it can't start, because .lm and .dic files are not there
+
         var prc = spawn(executable, params);
         prc.stdout.setEncoding("utf8");
         prc.stdout.on("data", function (data)
@@ -199,7 +201,7 @@ class voicerecognizer extends baseSensor
 
             if (matches.length === 1)
             {
-                //that.logger.info("voicerec", matches[0]);
+                that.logger.info("voicerec", matches[0]);
 
                 if (matches[0].indexOf("READY") !== -1 && isReady === false)
                 {
