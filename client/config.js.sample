@@ -333,7 +333,15 @@ module.exports = {
             options: {
                 interval: 5
             }
-        }
+        },
         // --------------------------
+        voicerecognizer: {
+            options: {
+                executable: "/usr/bin/pocketsphinx_continuous",
+                languageModel: "/opt/voicerec/lm.lm",
+                dictionary: "/opt/voicerec/dic.dic",
+                googleVoiceApiKey: "*** snip ***"
+            }
+        },
     }
 };

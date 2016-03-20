@@ -112,6 +112,60 @@ cd /opt/dht11
 python setup.py install
 ```
 
+## Voice recognition
+
+There are several "players" in the voice recognition business for the raspberry pi, most notably:
+
+* Jasper: online and offline, multiple engines: http://jasperproject.github.io/
+* PiAUISuite: only online, google engine: https://github.com/StevenHickson/PiAUISuite
+* AlexaPi, only online, amazon engine: https://github.com/sammachin/AlexaPi
+
+Sadly, Jasper and PiAUI are super-outdated and don't work properly anymore due to changes in the Google Text To Speech and Speech To Text API. AlexaPi is currently very limited, because you can't define own commands.
+
+So I decided to come up with my own engine, which is based on ```pocketsphinx``` and the Google Voice Recognition API. The idea behind it: The raspberry listens to a "hot word" using pocketsphinx. Something like ```Ok, Pi```. As soon as the raspberry recognizes this, you will hear a "beep sound" indicating that you can now talk to the raspberry and tell your command until you hear the next beep (3 seconds later). Between these 2 beeps, you can tell your raspberry, what you want. This command is sent to the Google Voice Recognition API, because pocketsphinx is not good enough to understand complex commands. By the way: google is super picky with the format of the audio file. I succeeded with a mono FLAC file in 16000hz. Mono seems to be especially important. 
+
+```pocketsphinx``` listens always and is basically the "gatekeeper" for the Google Voice Recognition API. The Google API requires an API key and limits the requests per day, that you can make (~50). You can keep track of the used quote here: https://console.developers.google.com/apis/api/speech/usage?project=your-project-key
+
+To register and retrieve your Google Voice Recognition Access token, go here and activate the API. Retrieve the key afterwards as described: https://console.developers.google.com/apis/api/speech/overview?project=your-project-key
+
+Install pocketsphinx like this:
+
+```
+apt-get install curl flac pocketsphinx
+... or compile from source, if you really want to: http://raspberrypi.stackexchange.com/a/10392
+Verify with "which pocketsphinx_continuous" after you are done
+```
+
+Now create a file on your Desktop that defines the commands you want the raspberry to understand via pocketsphinx, your "hot words". They should not be too short and not be too long.
+
+```
+Okay Pi
+Listen Pi
+Hello Pi
+```
+
+Put these in a textfile and upload the text file at http://www.speech.cs.cmu.edu/tools/lmtool-new.html. After processing, put the
+
+* .dic file as dic.dic
+* .lm file as lm.lm
+
+to ```/opt/voicerec``` on your pi.
+
+```
+mkdir /opt/voicerec
+curl -o /opt/voicerec/dic.dic http://www.speech.cs.cmu.edu/tools/product/1458488207_25039/8961.dic
+curl -o /opt/voicerec/lm.lm http://www.speech.cs.cmu.edu/tools/product/1458488207_25039/8961.lm
+```
+
+Register the ```voicerecognizer``` sensor in the config with
+
+* the executable of pocketsphinx (normally ```/usr/bin/pocketsphinx_continuous```)
+* the path to your lm.lm (```/opt/sphinx/lm.lm```)
+* the path to your dic.dic (```/opt/sphinx/dic.dic```)
+* Your google voice api key
+
+You should be good to go now!
+
 ## BMP180 / GY-68 barometric sensor
 
 measures temperature and pressure: http://www.amazon.de/BMP180-Digitaler-Luftdrucksensor-Arduino-Raspberry-Pi-Drone/dp/B00R8KKE2E
