@@ -23,6 +23,11 @@ class voicerecognizer extends baseSensor
         });
     }
 
+    stripNewLines(str)
+    {
+        return str.toString().replace(/(\r\n|\n|\r)/gm,"");
+    }
+
     hotwords()
     {
         return ["okay pi", "hello pi", "listen pi"]; //all lowercase without punctuation
@@ -49,14 +54,9 @@ class voicerecognizer extends baseSensor
         return commands;
     }
 
-    receiveLine(str)
-    {
-        return ("" + str).replace(/(\r\n|\n|\r)/gm,"");
-    };
-
     killTTS(cb)
     {
-        this.logger.info("stopping tts engine");
+        this.logger.info("voicerec", "stopping tts engine");
         var killCommand = "kill -9 $(ps aux | grep '" + this.options.executable + "' | awk '{print $2}')";
         exec(killCommand, cb);
     }
@@ -72,8 +72,9 @@ class voicerecognizer extends baseSensor
         var hotwords = that.hotwords();
         if (hotwords.indexOf(text) === -1) return;
 
-        that.logger.info("got hotword " + text);
+        that.logger.info("voicerec", "got hotword " + text);
 
+        //if you don't have a file "recognized.mp3" in your media library, a beep will be played
         actormanagement.registeredActors["music"].play("recognized.mp3", false, function()
         {
             that.googleRecognition(function(err, msg)
@@ -81,7 +82,7 @@ class voicerecognizer extends baseSensor
                 that.listenForHotword();
 
                 if (err) {
-                    that.logger.error(err);
+                    that.logger.error("voicerec", err);
                 } else {
                     that.processUserTextFromGoogle(msg);
                 }
@@ -99,7 +100,7 @@ class voicerecognizer extends baseSensor
         }
         else
         {
-            this.logger.info("unknown command from google: " + text);
+            this.logger.info("voicerec", "unknown command from google: " + text);
         }
     }
 
@@ -125,6 +126,9 @@ class voicerecognizer extends baseSensor
                 //this works best with the google api
                 exec("arecord -D plughw:1,0 -f cd -t wav -d " + duration + " -r " + sampleRate + " -c " + mono + " | flac - -f --best --sample-rate " + sampleRate + " -o " + tempFile, function(error, stdout, stderr)
                 {
+                    stdout = that.stripNewLines(stdout);
+                    stderr = that.stripNewLines(stderr);
+
                     if (error || !fs.existsSync(tempFile))
                     {
                         return cb("could not record audio: " + error + ", " + stderr);
@@ -136,6 +140,9 @@ class voicerecognizer extends baseSensor
                         //upload FLAC to google
                         exec("curl -X POST --data-binary @'" + tempFile + "' --header 'Content-Type: audio/x-flac; rate=" + sampleRate + ";' '" + url + "'", function(error, stdout, stderr)
                         {
+                            stdout = that.stripNewLines(stdout);
+                            stderr = that.stripNewLines(stderr);
+
                             if (error)
                             {
                                 return cb("error from google stt: " + error + ", " + stderr);
@@ -146,7 +153,13 @@ class voicerecognizer extends baseSensor
                                 //strip out the first empty response. For whatever reason, google gives
                                 //a '{"result":[]}' at first before returning the real result, even when
                                 //we got a successful response
-                                stdout = ("" + stdout).replace('{"result":[]}', "");
+                                var empty = '{"result":[]}';
+                                stdout = ("" + stdout).replace(empty, "");
+
+                                if (stdout.length <= empty.length)
+                                {
+                                    throw new Error("empty response");
+                                }
 
                                 var result = JSON.parse(stdout);
 
@@ -169,7 +182,7 @@ class voicerecognizer extends baseSensor
                                 if (isValidResponse)
                                     return cb(null, result.result[0].alternative[0].transcript.toLowerCase());
 
-                                throw "non successfull response";
+                                throw new Error("non successfull response");
                             }
                             catch (ex)
                             {
@@ -190,37 +203,48 @@ class voicerecognizer extends baseSensor
         var params = ["-lm", that.options.languageModel, "-dict", that.options.dictionary, "-adcdev", mic];
         var isReady = false;
 
-        //TODO what if it can't start, because .lm and .dic files are not there
-
         var prc = spawn(executable, params);
         prc.stdout.setEncoding("utf8");
-        prc.stdout.on("data", function (data)
+
+        prc.stdout.on("data", function(data)
         {
-            data = that.receiveLine(data);
+            data = that.stripNewLines(data);
+            that.logger.info("voicerec", "received: " + data);
+
             var matches = data.split(/\d+\:\s/);
 
-            if (matches.length === 1)
-            {
-                that.logger.info("voicerec", matches[0]);
-
-                if (matches[0].indexOf("READY") !== -1 && isReady === false)
-                {
-                    isReady = true;
-                    that.beep();
-                }
-            }
-            else
+            if (matches.length === 2)
             {
                 var text = matches[1].toLowerCase();
 
                 if (text && text.length)
                     that.processHotword(text)
             }
+            else
+            {
+                that.logger.info("voicerec", data);
+
+                if (data.indexOf("READY") !== -1 && isReady === false)
+                {
+                    isReady = true;
+                    that.beep();
+                }
+            }
         });
 
-        prc.on("error", function (error)
+        //pocketsphinx likes to spit out loads of stuff on stderr, which in fact is no error
+        //on top of that, stdout seems to be distorted if we receive output on stderr, so we
+        //better skip that
+        /*
+        prc.stderr.on("data", function(data)
         {
-            this.logger.error("voicerec", error);
+            that.logger.error(that.stripNewLines(data));
+        });
+        */
+
+        prc.on("close", function(exitCode)
+        {
+            that.logger.info("voicerec", "closing with exitCode " + exitCode);
         });
     }
 }

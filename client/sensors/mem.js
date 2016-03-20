@@ -67,7 +67,7 @@ class mem extends baseSensor
             return cb(null, memory.percentUsed);
         });
 
-        prc.on("error", function (error)
+        prc.stderr.on("data", function (error)
         {
             return cb(error);
         });

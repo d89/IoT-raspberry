@@ -54,6 +54,11 @@ class relais extends baseActor
         });
     }
 
+    stripNewLines(str)
+    {
+        return str.toString().replace(/(\r\n|\n|\r)/gm,"");
+    }
+
     setRelais(toState, pin, cb)
     {
         var that = this;
@@ -70,12 +75,12 @@ class relais extends baseActor
 
         prc.stderr.on('data', function (data)
         {
-            that.logger.error("received err: ", data.toString());
+            that.logger.error("received err: ", that.stripNewLines(data));
         });
 
         prc.stdout.on('data', function (data)
         {
-            that.logger.info("received data: ", data);
+            that.logger.info("received data: ", that.stripNewLines(data));
         });
 
         cb(null, "relais switch done");

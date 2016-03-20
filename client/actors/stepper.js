@@ -29,6 +29,11 @@ class stepper extends baseActor
         };
     }
 
+    stripNewLines(str)
+    {
+        return str.toString().replace(/(\r\n|\n|\r)/gm,"");
+    }
+
     setStepper(state, cb)
     {
         var that = this;
@@ -63,12 +68,12 @@ class stepper extends baseActor
 
         this.process.stderr.on('data', function(data)
         {
-            that.logger.error("received err: ", data.toString());
+            that.logger.error("received err: ", that.stripNewLines(data));
         });
 
         this.process.stdout.on('data', function(data)
         {
-            that.logger.info("received data: ", data);
+            that.logger.info("received data: ", that.stripNewLines(data));
         });
 
         cb(null, state === false ? "stepper stopped" : "stepper started");
