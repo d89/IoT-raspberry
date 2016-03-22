@@ -32,3 +32,4 @@ uploads
 .idea/
 conditions.json
 config.js
+staging_dir

@@ -70,9 +70,24 @@ class voicerecognizer extends baseSensor
     {
         var that = this;
         var hotwords = that.hotwords();
-        if (hotwords.indexOf(text) === -1) return;
+        var found = false;
 
-        that.logger.info("voicerec", "got hotword " + text);
+        for (var i = 0; i < hotwords.length; i++)
+        {
+            if (text.indexOf(hotwords[i]) !== -1)
+            {
+                found = hotwords[i];
+                break;
+            }
+        }
+
+        if (found === false)
+        {
+            that.logger.info("voicerec", "is no hotword " + text);
+            return;
+        }
+
+        that.logger.info("voicerec", "got hotword " + found);
 
         //if you don't have a file "recognized.mp3" in your media library, a beep will be played
         actormanagement.registeredActors["music"].play("recognized.mp3", false, function()
@@ -201,6 +216,13 @@ class voicerecognizer extends baseSensor
         var executable = that.options.executable;
         var mic = "plughw:" + config.soundCardInput + ",0";
         var params = ["-lm", that.options.languageModel, "-dict", that.options.dictionary, "-adcdev", mic];
+
+        /*
+        //Language Model for english, if this makes sense for your context.
+        params.push("-hmm");
+        params.push("/opt/voicerec/pocketsphinx-python/pocketsphinx/model/en-us/en-us");
+        */
+
         var isReady = false;
 
         var prc = spawn(executable, params);
@@ -208,39 +230,32 @@ class voicerecognizer extends baseSensor
 
         prc.stdout.on("data", function(data)
         {
-            data = that.stripNewLines(data);
-            that.logger.info("voicerec", "received: " + data);
+            data = that.stripNewLines(data).toLowerCase();
+            //that.logger.info("voicerec", "received: " + data);
 
-            var matches = data.split(/\d+\:\s/);
-
-            if (matches.length === 2)
+            //is ready the first time and has not been ready before
+            if (data.indexOf("ready") !== -1 && isReady === false)
             {
-                var text = matches[1].toLowerCase();
-
-                if (text && text.length)
-                    that.processHotword(text)
+                isReady = true;
+                that.beep();
+                return;
             }
-            else
-            {
-                that.logger.info("voicerec", data);
 
-                if (data.indexOf("READY") !== -1 && isReady === false)
-                {
-                    isReady = true;
-                    that.beep();
-                }
-            }
+            //can look like this: payload! -> 000000196: okay pi
+            var containsSequenceNumber = !isNaN(parseInt(data, 10));
+            var isHotword = containsSequenceNumber && data.split(":").length === 2;
+
+            if (isHotword)
+                that.processHotword(data.split(":")[1]);
         });
 
         //pocketsphinx likes to spit out loads of stuff on stderr, which in fact is no error
         //on top of that, stdout seems to be distorted if we receive output on stderr, so we
         //better skip that
-        /*
         prc.stderr.on("data", function(data)
         {
-            that.logger.error(that.stripNewLines(data));
+            //that.logger.error(that.stripNewLines(data));
         });
-        */
 
         prc.on("close", function(exitCode)
         {
