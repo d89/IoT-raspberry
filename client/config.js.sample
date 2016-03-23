@@ -24,7 +24,20 @@ module.exports = {
         },
         // --------------------------
         switchrc: {
-            options: {}
+            options: {
+                // "switchType": "A",
+                // "first": "00001",
+                // "switches": ["10000", "01000", "00100"]
+                
+                // "switchType": "B",
+                // "address_group": "1",
+                // "switches": ["1", "2", "3"]
+                
+                // "switchType": "C",
+                // "family_code": "a",
+                // "group": "1"
+                // "switches": ["1", "2", "2"]
+            }
         },
         // --------------------------
         led: {
