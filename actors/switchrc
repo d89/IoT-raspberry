@@ -6,16 +6,33 @@ import sys
 #./rcswitch.py 1 2 0
 #turns off (= 0) the rc plug with number 2 on channel 1
 
-transmission_channel = int(sys.argv[1]) # Address group (1..4)
-device = int(sys.argv[2]) # Channel (1..4)
-to_state = int(sys.argv[3])
+switch_type = str(sys.argv[1]) # switch type --> config.js
+to_state = int(sys.argv[4])
 
-print "transmission channel: " + str(transmission_channel)
-print "device: " + str(device)
-print "setting to state: " + str(to_state)
+first = None
+second = None
 
-switch = pi_switch.RCSwitchB(transmission_channel, device)
+if switch_type == "A":
+    print "switching with type A"
+    first = str(sys.argv[2]) # Address group (1..4)
+    second = str(sys.argv[3]) # Channel (1..4)
+    switch = pi_switch.RCSwitchA(first, second)
+elif switch_type == "B":
+    print "switching with type B"
+    first = int(sys.argv[2]) # Address group (1..4)
+    second = int(sys.argv[3]) # Channel (1..4)
+    switch = pi_switch.RCSwitchB(first, second)
+else:
+    # TODO: Needs changes in the server
+    print "switching with type C"
+    switch = pi_switch.RCSwitchC(first, second, second)
+
 switch.enableTransmit(0) # use WiringPi pin 0 <=> GPIO17
+
+print "switchType: " + switch_type
+print "first: " + first
+print "second: " + second
+print "setting to state: " + str(to_state)
 
 if to_state == 1:
     switch.switchOn()

@@ -33,3 +33,4 @@ uploads
 conditions.json
 config.js
 staging_dir
+.vscode

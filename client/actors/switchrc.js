@@ -84,8 +84,21 @@ class switchrc extends baseActor
             that.logger.info("actor result", err, resp);
         };
 
-        that.logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
-        var prc = spawn(config.baseBath + '/actors/switchrc', [channel, device, state]);
+        switch(this.options.switchType) {
+            case "A":
+                that.logger.info(`switching rc plug: houseCode ${this.options.first}, device ${this.options.switches[device - 1]}, state ${state}`);
+                var prc = spawn(config.baseBath + '/actors/switchrc', [this.options.switchType, this.options.first, this.options.switches[device - 1], state]);
+                break;
+            case "B":
+                that.logger.info(`switching rc plug: channel ${channel}, device ${device}, state ${state}`);
+                var prc = spawn(config.baseBath + '/actors/switchrc', ["B", channel, device, state]);
+                break;
+            case "C":
+                // TODO: this needs changes on the server
+                var prc = spawn(config.baseBath + '/actors/switchrc', [this.options.switchType, channel, device, device]);
+                break;
+        }
+        
         prc.stdout.setEncoding('utf8');
 
         prc.stderr.on('data', function (data)
