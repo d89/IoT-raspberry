@@ -30,8 +30,8 @@ else:
 switch.enableTransmit(0) # use WiringPi pin 0 <=> GPIO17
 
 print "switchType: " + switch_type
-print "first: " + first
-print "second: " + second
+print "first: " + str(first)
+print "second: " + str(second)
 print "setting to state: " + str(to_state)
 
 if to_state == 1:

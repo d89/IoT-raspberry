@@ -59,7 +59,15 @@ module.exports = {
         // --------------------------
         voice: {
             options: {
-                ttsApiKey: "*** snip ***" //voicerss.org
+                //use either voicerss (online service, requires api key)
+                //voicerss: {
+                //    language: "en-us",
+                //    ttsApiKey: "*** snip ***"
+                //},
+                //OR festival, a local tts engine
+                festival: { //local tts engine
+                    language: "english"
+                }
             }
         },
         // --------------------------

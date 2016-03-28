@@ -51,7 +51,7 @@ class battery_thermostat_zwave extends baseSensor
             if (err) {
                 that.logger.error(err);
             } else {
-                var battery = parseFloat(body, 10);
+                var battery = body.indexOf("low") !== -1 ? 0 : parseFloat(body, 10);
 
                 if (isNaN(battery)) {
                     that.logger.error("fhem zwave get thermostat battery could not parse " + body);

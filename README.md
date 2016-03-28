@@ -112,6 +112,24 @@ cd /opt/dht11
 python setup.py install
 ```
 
+## Text To Speech
+
+If you want to use the TTS module, you can choose between the excellent online TTS service http://voicerss.org (with 300 free requests per day) and the local TTS engine "festival".
+
+***voicerss.org***
+
+Requires you to register for free and obtain an API key. Consult the sample configuration for the correct place to put your API key. See http://www.voicerss.org/api/documentation.aspx for the supported languages. voicerss gives you back an mp3 file which is downloaded and cached on your Raspberry, so you don't have to redownload the mp3 file on every subsequent request. 5 files are kept (see voice.js for details).  
+
+***Festival***
+
+Festival (http://www.cstr.ed.ac.uk/projects/festival/) is a local TTS engine that needs to be installed:
+
+```
+apt-get install festival
+```
+
+Having done that, you can activate festival as TTS provider (see the sample configuration). You need to specify a language. Retrieve all available languages via ```festival --help```.
+
 ## Voice recognition
 
 There are several "players" in the voice recognition business for the raspberry pi, most notably:

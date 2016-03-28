@@ -2,7 +2,7 @@
 
 var baseActor = require("./baseActor");
 var config = require('../config');
-var spawn = require('child_process').spawn;
+var exec = require('child_process').exec;
 var request = require('request');
 var fs = require('fs');
 var crypto = require('crypto');
@@ -35,6 +35,7 @@ class voice extends baseActor
         };
     }
 
+    //used for deleting old mp3 files that the online api voicerss gave us
     deleteOldFiles()
     {
         var that = this;
@@ -78,7 +79,63 @@ class voice extends baseActor
             that.logger.info("actor result", err, resp);
         };
 
-        that.logger.info("voice acting");
+        var strategyFestival = "festival" in this.options;
+        var strategyVoicerss = "voicerss" in this.options;
+
+        //none given
+        if (!strategyFestival && !strategyVoicerss)
+        {
+            return cb("please use a text to speech provider in your configuration.");
+        }
+
+        //both given
+        if (strategyFestival && strategyVoicerss)
+        {
+            return cb("please use only one text to speech provider in your configuration.");
+        }
+
+        if (strategyFestival)
+        {
+            this.speakFestival(text, cb);
+        }
+        else
+        {
+            this.speakVoicerss(text, cb);
+        }
+    }
+
+    //use local "festival" tts engine
+    speakFestival(text, cb)
+    {
+        var that = this;
+
+        that.logger.info("voice acting api festival");
+
+        text = text || "no text given";
+        var speakerLanguage = that.options.festival.language;
+
+        exec("echo '" + text + "' | festival --tts --language " + speakerLanguage, function(error, stdout, stderr)
+        {
+            if (stderr)
+                that.logger.error(stderr + "");
+
+            if (error !== null)
+                return cb(error);
+
+            stdout = (stdout + "");
+
+            that.logger.info("festival tts output", stdout);
+
+            return cb(null, "festival tts success");
+        });
+    }
+
+    //use voicerss online tts api
+    speakVoicerss(text, cb)
+    {
+        var that = this;
+
+        that.logger.info("voice acting api voicerss");
         that.deleteOldFiles();
 
         var play = function(fileName)
@@ -86,9 +143,9 @@ class voice extends baseActor
             actormanagement.registeredActors["music"].play(path.basename(fileName));
         };
 
-        var ttsApiKey = that.options.ttsApiKey;
+        var ttsApiKey = that.options.voicerss.ttsApiKey;
         text = text || "no text given";
-        var speakerLanguage = "en-us";
+        var speakerLanguage = that.options.voicerss.language;
         var speed = 0; //-10 = slowest, 10 = fastest
         var url = "https://api.voicerss.org/?key=" + ttsApiKey + "&src=" + text + "&hl=" + speakerLanguage + "&r=" + speed + "&f=44khz_16bit_stereo";
         var fileName = "voice-" + crypto.createHash('md5').update(url).digest('hex') + ".mp3";

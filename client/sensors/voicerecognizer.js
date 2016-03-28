@@ -231,7 +231,7 @@ class voicerecognizer extends baseSensor
         prc.stdout.on("data", function(data)
         {
             data = that.stripNewLines(data).toLowerCase();
-            //that.logger.info("voicerec", "received: " + data);
+            that.logger.info("voicerec", "received: " + data);
 
             //is ready the first time and has not been ready before
             if (data.indexOf("ready") !== -1 && isReady === false)
