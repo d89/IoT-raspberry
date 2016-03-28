@@ -51,6 +51,13 @@ class baseSensor
         return triggered;
     }
 
+    //check if all the dependencies are fulfilled.
+    //can be overridden in the concrete class.
+    dependenciesFulfilled()
+    {
+        return true;
+    }
+
     validateDataPresence()
     {
         return this.sensordata

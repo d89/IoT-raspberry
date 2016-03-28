@@ -35,6 +35,11 @@ class voice extends baseActor
         };
     }
 
+    dependenciesFulfilled()
+    {
+        return true;
+    }
+
     //used for deleting old mp3 files that the online api voicerss gave us
     deleteOldFiles()
     {

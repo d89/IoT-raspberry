@@ -1,6 +1,7 @@
 "use strict";
 
 var baseSensor = require("./baseSensor");
+var sensormanagement = require("../sensormanagement");
 
 // ######################################################
 
@@ -10,6 +11,11 @@ class soundvol extends baseSensor
     {
         super("soundvol", "Sound Volume", options);
         this.read();
+    }
+
+    dependenciesFulfilled()
+    {
+        return true;
     }
 
     read()

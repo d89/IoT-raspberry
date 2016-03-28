@@ -21,6 +21,35 @@ exports.hasOneOf = function(sensorArray)
     return false;
 };
 
+exports.checkDependencies = function()
+{
+    logger.info("checking sensor dependencies");
+
+    var errorMessages = [];
+
+    Object.keys(exports.registeredSensors).forEach(function(sensorKey)
+    {
+        var sensor = exports.registeredSensors[sensorKey];
+        var result = sensor.dependenciesFulfilled();
+
+        logger.info("... checking dependencies of " + sensorKey);
+
+        if (result !== true)
+        {
+            var msg = "Dependency for sensor " + sensorKey + " is not fulfilled: " + result;
+            logger.error(msg);
+            errorMessages.push(msg);
+        }
+    });
+
+    if (errorMessages.length > 0)
+    {
+        throw new Error("Cancelling startup, not all sensor dependencies are fulfilled: " + errorMessages.join(", "));
+    }
+
+    logger.info("all sensor dependencies fulfilled.");
+};
+
 exports.init = function(opt)
 {
     //do not reregister
@@ -40,6 +69,9 @@ exports.init = function(opt)
         options.onData = opt.onData;
         exports.registeredSensors[sensorKey] = new sensor(options);
     });
+
+    //check dependencies, after all sensors have been initialized
+    exports.checkDependencies();
 
     return exports.registeredSensors;
 };

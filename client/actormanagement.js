@@ -21,6 +21,35 @@ exports.hasOneOf = function(actorArray)
     return false;
 };
 
+exports.checkDependencies = function()
+{
+    logger.info("checking actor dependencies");
+
+    var errorMessages = [];
+
+    Object.keys(exports.registeredActors).forEach(function(actorKey)
+    {
+        var actor = exports.registeredActors[actorKey];
+        var result = actor.dependenciesFulfilled();
+
+        logger.info("... checking dependencies of " + actorKey);
+
+        if (result !== true)
+        {
+            var msg = "Dependency for actor " + actorKey + " is not fulfilled: " + result;
+            logger.error(msg);
+            errorMessages.push(msg);
+        }
+    });
+
+    if (errorMessages.length > 0)
+    {
+        throw new Error("Cancelling startup, not all actor dependencies are fulfilled: " + errorMessages.join(", "));
+    }
+
+    logger.info("all actor dependencies fulfilled.");
+};
+
 exports.init = function(options)
 {
     //do not reregister
@@ -39,6 +68,9 @@ exports.init = function(options)
         var options = config.actors[actorKey].options || {};
         exports.registeredActors[actorKey] = new actor(options);
     });
+
+    //check dependencies, after all actors have been initialized
+    exports.checkDependencies();
 
     return exports.registeredActors;
 };

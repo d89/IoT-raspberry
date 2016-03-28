@@ -68,7 +68,15 @@ exports.start = function()
     logger.info("------------------------------------------------------");
     logger.info("BINDING ACTORS");
 
-    actormanagement.init();
+    try
+    {
+        actormanagement.init();
+    }
+    catch (err)
+    {
+        logger.error(err);
+        process.exit();
+    }
 
     //turn stepper engine off on first connection. It's possible that the led pins
     //are initialized in a way that one (or more) of the 4 control pins are high so
@@ -82,9 +90,17 @@ exports.start = function()
     logger.info("------------------------------------------------------");
     logger.info("BINDING SENSORS");
 
-    sensormanagement.init({
-        onData: sensorUpdateCallback
-    });
+    try
+    {
+        sensormanagement.init({
+            onData: sensorUpdateCallback
+        });
+    }
+    catch (err)
+    {
+        logger.error(err);
+        process.exit();
+    }
 
     logger.info("------------------------------------------------------");
 
