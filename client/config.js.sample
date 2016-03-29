@@ -19,24 +19,36 @@ module.exports = {
     //actor class files can be found in actors/*.js. The options are passed to the constructor
     actors: {
         // --------------------------
+        // These actors always work, no matter which actors you connected
+        // --------------------------
+        http: {
+            options: {}
+        },
+        /*
+        // --------------------------
+        // Outcomment the actors that you have:
+        // --------------------------
         display: {
             options: {}
         },
         // --------------------------
         switchrc: {
             options: {
-                // "switchType": "A",
-                // "first": "00001",
-                // "switches": ["10000", "01000", "00100"]
-                
-                // "switchType": "B",
-                // "address_group": "1",
-                // "switches": ["1", "2", "3"]
-                
-                // "switchType": "C",
-                // "family_code": "a",
-                // "group": "1"
-                // "switches": ["1", "2", "2"]
+                //for type A
+                switchType: "A",
+                first: "00001",
+                switches: ["10000", "01000", "00100"]
+
+                //... for type B ...
+                switchType: "B",
+                address_group: "1",
+                switches: ["1", "2", "3"]
+
+                //... or for type C
+                switchType: "C",
+                family_code: "a",
+                group: "1"
+                switches: ["1", "2", "2"]
             }
         },
         // --------------------------
@@ -97,10 +109,6 @@ module.exports = {
             options: {}
         },
         // --------------------------
-        http: {
-            options: {}
-        },
-        // --------------------------
         relais: {
             options: {
                 pin: 16
@@ -116,10 +124,59 @@ module.exports = {
             }
         }
         // --------------------------
+        */
     },
     // ###########################################################
     //sensor class files can be found in sensors/*.js. The options are passed to the constructor
     sensors: {
+        // --------------------------
+        // These sensors always work, no matter which sensors you connected
+        // --------------------------
+        cputemp: {
+            options: {
+                interval: 5
+            }
+        },
+        // --------------------------
+        date: {
+            options: {
+                interval: 60
+            }
+        },
+        // --------------------------
+        time: {
+            options: {
+                interval: 1
+            }
+        },
+        // --------------------------
+        load: {
+            options: {
+                interval: 4
+            }
+        },
+        // --------------------------
+        mem: {
+            options: {
+                interval: 4
+            }
+        },
+        // --------------------------
+        diskfree: {
+            options: {
+                interval: 4
+            }
+        },
+        // --------------------------
+        reachability: {
+            options: {
+                ip: "192.168.0.53", //the ip your smartphone receives from your router. Should be always the same.
+                interval: 5
+            }
+        },
+        /*
+        // --------------------------
+        // Outcomment the sensors that you have:
         // --------------------------
         humidity: {
             options: {
@@ -132,12 +189,6 @@ module.exports = {
             options: {
                 pin: 25, //gpio numbering
                 interval: 2
-            }
-        },
-        // --------------------------
-        cputemp: {
-            options: {
-                interval: 5
             }
         },
         // --------------------------
@@ -155,15 +206,9 @@ module.exports = {
             }
         },
         // --------------------------
-        date: {
+        httplistener: {
             options: {
-                interval: 60
-            }
-        },
-        // --------------------------
-        time: {
-            options: {
-                interval: 1
+                interval: 5
             }
         },
         // --------------------------
@@ -206,27 +251,9 @@ module.exports = {
             }
         },
         // --------------------------
-        load: {
-            options: {
-                interval: 4
-            }
-        },
-        // --------------------------
         light: {
             options: {
                 pin: 36,
-                interval: 4
-            }
-        },
-        // --------------------------
-        mem: {
-            options: {
-                interval: 4
-            }
-        },
-        // --------------------------
-        diskfree: {
-            options: {
                 interval: 4
             }
         },
@@ -236,13 +263,6 @@ module.exports = {
                 pin_trigger: 31,
                 pin_echo: 29,
                 interval: 3
-            }
-        },
-        // --------------------------
-        reachability: {
-            options: {
-                ip: "192.168.0.53", //the ip your smartphone receives from your router. Should be always the same.
-                interval: 5
             }
         },
         // --------------------------
@@ -350,12 +370,6 @@ module.exports = {
             }
         },
         // --------------------------
-        httplistener: {
-            options: {
-                interval: 5
-            }
-        },
-        // --------------------------
         voicerecognizer: {
             options: {
                 executable: "/usr/bin/pocketsphinx_continuous",
@@ -363,6 +377,7 @@ module.exports = {
                 dictionary: "/opt/voicerec/dic.dic",
                 googleVoiceApiKey: "*** snip ***"
             }
-        },
+        }
+        */
     }
 };

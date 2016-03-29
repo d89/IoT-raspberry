@@ -499,7 +499,7 @@ exports.bindCallbacks = function()
                 cb();
             });
         }
-        else //log
+        else if (msg.mode === "log")
         {
             fs.readFile(config.logFile, "utf8", function(err, logfileRaw)
             {
@@ -537,6 +537,40 @@ exports.bindCallbacks = function()
                 }
 
                 return cb(err, logfile);
+            });
+        }
+        else if (msg.mode === "updatechanges")
+        {
+            logger.info("Executing update changes");
+
+            exec("../update", function(err, stdout, stderr)
+            {
+                stdout = stdout.toString();
+                stderr = stderr.toString();
+
+                if (err)
+                {
+                    return cb(stderr);
+                }
+
+                return cb(null, stdout);
+            });
+        }
+        else if (msg.mode === "update")
+        {
+            logger.info("Executing update");
+
+            exec("../update --execute", function(err, stdout, stderr)
+            {
+                stdout = stdout.toString();
+                stderr = stderr.toString();
+
+                if (err)
+                {
+                    return cb(stderr);
+                }
+
+                return cb(null, stdout);
             });
         }
     });
