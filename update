@@ -11,12 +11,12 @@ git fetch origin develop
 git log HEAD..origin/develop --format=oneline
 
 echo "---------------------------------------------------"
-echo "current rev"
+echo "current revision"
 echo "---------------------------------------------------"
 git rev-list HEAD --count
 
 echo "---------------------------------------------------"
-echo "head rev"
+echo "head revision"
 echo "---------------------------------------------------"
 git rev-list origin/develop --count
 
