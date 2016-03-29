@@ -23,7 +23,7 @@ git rev-list origin/develop --count
 echo "---------------------------------------------------"
 echo "changed files"
 echo "---------------------------------------------------"
-git diff --stat --no-color HEAD..origin/develop
+git --no-pager diff --stat --no-color HEAD..origin/develop
 
 if [ "$MODE" != "--execute" ]; then
     echo "---------------------------------------------------"
