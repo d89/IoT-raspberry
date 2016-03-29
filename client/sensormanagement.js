@@ -63,7 +63,7 @@ exports.init = function(opt)
 
     Object.keys(config.sensors).forEach(function(sensorKey)
     {
-        var file = config.sensors[sensorKey].file || "./sensors/" + sensorKey;
+        var file = config.sensors[sensorKey].file || "./sensors/" + sensorKey + ".js";
         var sensor = require(file);
         var options = config.sensors[sensorKey].options || {};
         options.onData = opt.onData;

@@ -565,6 +565,8 @@ exports.bindCallbacks = function()
                 stdout = stdout.toString();
                 stderr = stderr.toString();
 
+                logger.info("Got update execution answer", err, stdout, stderr);
+
                 if (err)
                 {
                     return cb(stderr);

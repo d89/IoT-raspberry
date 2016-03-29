@@ -63,7 +63,7 @@ exports.init = function(options)
 
     Object.keys(config.actors).forEach(function(actorKey)
     {
-        var file = config.actors[actorKey].file || "./actors/" + actorKey;
+        var file = config.actors[actorKey].file || "./actors/" + actorKey + ".js";
         var actor = require(file);
         var options = config.actors[actorKey].options || {};
         exports.registeredActors[actorKey] = new actor(options);

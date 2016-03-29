@@ -1,3 +1,6 @@
+//set correct working directory to this folder
+process.chdir(__dirname);
+
 var config = require('./config');
 var exec = require('child_process').exec;
 var fs = require('fs');
