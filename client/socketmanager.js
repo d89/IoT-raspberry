@@ -560,20 +560,10 @@ exports.bindCallbacks = function()
         {
             logger.info("Executing update");
 
-            exec("../update --execute", function(err, stdout, stderr)
-            {
-                stdout = stdout.toString();
-                stderr = stderr.toString();
-
-                logger.info("Got update execution answer", err, stdout, stderr);
-
-                if (err)
-                {
-                    return cb(stderr);
-                }
-
-                return cb(null, stdout);
-            });
+            var out = fs.openSync('/tmp/out.log', 'a');
+            var err = fs.openSync('/tmp/out.log', 'a');
+            var child = spawn('../update', ["--execute"], { detached: true, stdio: [ 'ignore', out, err ] });
+            child.unref();
         }
     });
 
