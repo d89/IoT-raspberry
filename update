@@ -19,6 +19,11 @@ echo "head revision"
 echo "---------------------------------------------------"
 git rev-list origin/develop --count
 
+echo "---------------------------------------------------"
+echo "changed files"
+echo "---------------------------------------------------"
+git diff --stat --no-color HEAD..origin/develop
+
 if [ "$MODE" != "--execute" ]; then
     echo "---------------------------------------------------"
     echo "update has NOT been performed. Use the --execute flag to do so"
