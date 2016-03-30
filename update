@@ -4,7 +4,7 @@ args=("$@")
 MODE=${args[0]}
 cd "$(dirname "$0")"
 
-git fetch origin develop -q #quiet
+git fetch origin develop --quiet
 CURRENT_REV=$(git rev-list HEAD --count)
 HEAD_REV=$(git rev-list origin/develop --count)
 
@@ -14,10 +14,13 @@ echo "INSTALLED REVISION: $HEAD_REV"
 echo "---------------------------------------------------"
 
 if [ "$CURRENT_REV" == "$HEAD_REV" ]; then
-    echo "No update available"
+    echo "No Update Available"
     exit
+else
+    echo "An Update Is Available"
 fi
 
+echo "---------------------------------------------------"
 echo "UPDATES"
 echo "---------------------------------------------------"
 git log HEAD..origin/develop --format=oneline
