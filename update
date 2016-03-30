@@ -4,25 +4,28 @@ args=("$@")
 MODE=${args[0]}
 cd "$(dirname "$0")"
 
+git fetch origin develop -q #quiet
+CURRENT_REV=$(git rev-list HEAD --count)
+HEAD_REV=$(git rev-list origin/develop --count)
+
 echo "---------------------------------------------------"
-echo "remote changes"
+echo "AVAILABLE REVISION: $CURRENT_REV"
+echo "INSTALLED REVISION: $HEAD_REV"
 echo "---------------------------------------------------"
-git fetch origin develop
+
+if [ "$CURRENT_REV" == "$HEAD_REV" ]; then
+    echo "No update available"
+    exit
+fi
+
+echo "UPDATES"
+echo "---------------------------------------------------"
 git log HEAD..origin/develop --format=oneline
 
 echo "---------------------------------------------------"
-echo "current revision"
+echo "CHANGED FILES"
 echo "---------------------------------------------------"
-git rev-list HEAD --count
 
-echo "---------------------------------------------------"
-echo "head revision"
-echo "---------------------------------------------------"
-git rev-list origin/develop --count
-
-echo "---------------------------------------------------"
-echo "changed files"
-echo "---------------------------------------------------"
 git --no-pager diff --stat --no-color HEAD..origin/develop
 
 if [ "$MODE" != "--execute" ]; then
