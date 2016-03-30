@@ -565,6 +565,17 @@ exports.bindCallbacks = function()
             var child = spawn('../update', ["--execute"], { detached: true, stdio: [ 'ignore', out, err ] });
             child.unref();
         }
+        else if (msg.mode === "updatelog")
+        {
+            var updateLogFile = "/tmp/update.log";
+
+            if (!fs.existsSync(updateLogFile))
+            {
+                return cb("no update log available, seems like you have not updated yet or the file " + updateLogFile + " got lost?");
+            }
+
+            return cb(null, fs.readFileSync(updateLogFile).toString());
+        }
     });
 
     exports.socket.on('disconnect', function()

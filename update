@@ -2,8 +2,11 @@
 
 args=("$@")
 MODE=${args[0]}
+DATE=`date +%Y-%m-%d@%H:%M:%S`
 cd "$(dirname "$0")"
 
+echo "---------------------------------------------------"
+echo "Current date: $DATE"
 git fetch origin develop --quiet
 CURRENT_REV=$(git rev-list HEAD --count)
 HEAD_REV=$(git rev-list origin/develop --count)
