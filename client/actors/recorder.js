@@ -4,6 +4,7 @@ var baseActor = require("./baseActor");
 var config = require('../config');
 var spawn = require('child_process').spawn;
 var actormanagement = require('../actormanagement');
+var sensormanagement = require('../sensormanagement');
 var fs = require('fs');
 var SOUND_CARD = config.soundCardInput;
 const MAKE_LOUDER = 12; //make the recording X times louder
@@ -59,7 +60,7 @@ class recorder extends baseActor
         }
 
         //sound sync requires the microphone, so shut it down
-        actormanagement.registeredActors["ledstrip"].allOff();
+        actormanagement.has("ledstrip") && actormanagement.registeredActors["ledstrip"].allOff();
 
         this.process = null;
     }
@@ -117,49 +118,74 @@ class recorder extends baseActor
     doRecord(title, maxLength, basePath, cb)
     {
         var that = this;
-        title = title || "recording-" + (new Date).getTime() + ".wav";
-        title = title.replace("..", "");
-        basePath = basePath || config.mediaBasePath;
-        title = basePath + "/" + title;
-        maxLength = parseInt(maxLength, 10);
 
-        if (!isNaN(maxLength) && maxLength > 0) {
-            maxLength *= 1000;
-        } else {
-            maxLength = 5000;
-        }
+        var act = function()
+        {
+            title = title || "recording-" + (new Date).getTime() + ".wav";
+            title = title.replace("..", "");
+            basePath = basePath || config.mediaBasePath;
+            title = basePath + "/" + title;
+            maxLength = parseInt(maxLength, 10);
 
-        that.stop();
-        that.logger.info("recording " + title + " with maxLength " + maxLength);
-        var executable = "/usr/bin/arecord";
+            if (!isNaN(maxLength) && maxLength > 0) {
+                maxLength *= 1000;
+            } else {
+                maxLength = 5000;
+            }
 
-        //arecord -f cd -D plughw:1 a.wav
-        that.process = {
-            process: spawn(executable, ["-f", "cd", "-D", "plughw:" + SOUND_CARD, title]),
-            killer: setTimeout(function()
+            that.stop();
+            that.logger.info("recording " + title + " with maxLength " + maxLength);
+            var executable = "/usr/bin/arecord";
+
+            //arecord -f cd -D plughw:1 a.wav
+            that.process = {
+                process: spawn(executable, ["-f", "cd", "-D", "plughw:" + SOUND_CARD, title]),
+                killer: setTimeout(function()
+                {
+                    that.logger.info("max time timeout stop: " + maxLength);
+                    that.stop();
+                }, maxLength),
+                title: title
+            };
+
+            that.process.process.stdout.on("data", function(data)
             {
-                that.logger.info("max time timeout stop: " + maxLength);
-                that.stop();
-            }, maxLength),
-            title: title
+                that.logger.info("recorder output: ", that.receiveLine(data.toString()));
+            });
+
+            that.process.process.stderr.on("data", function(data)
+            {
+                //likes putting out stuff on stderr that is not an error
+                that.logger.info("recorder data: ", that.receiveLine(data.toString()));
+            });
+
+            that.process.process.on("close", function(exitCode)
+            {
+                //restart permanently listening voicerecognizer, if present
+                if (sensormanagement.has("voicerecognizer"))
+                {
+                    sensormanagement.registeredSensors["voicerecognizer"].listenForHotword();
+                }
+
+                that.logger.info("recording " + title + " ended with " + exitCode);
+                that.convert(title, cb);
+            });
         };
 
-        that.process.process.stdout.on("data", function(data)
+        //stop permanently listening voicerecognizer, if present
+        if (sensormanagement.has("voicerecognizer"))
         {
-            that.logger.info("recorder output: ", that.receiveLine(data.toString()));
-        });
+            that.logger.info("Stopping voicerecognizer");
 
-        that.process.process.stderr.on("data", function(data)
+            sensormanagement.registeredSensors["voicerecognizer"].killTTS(function()
+            {
+                act();
+            });
+        }
+        else
         {
-            //likes putting out stuff on stderr that is not an error
-            that.logger.info("recorder data: ", that.receiveLine(data.toString()));
-        });
-
-        that.process.process.on("close", function(exitCode)
-        {
-            that.logger.info("recording " + title + " ended with " + exitCode);
-            that.convert(title, cb);
-        });
+            act();
+        }
     }
 }
 

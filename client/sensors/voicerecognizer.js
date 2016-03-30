@@ -23,6 +23,42 @@ class voicerecognizer extends baseSensor
         });
     }
 
+    exposed(val)
+    {
+        var that = this;
+
+        return {
+            on: {
+                method: function(val)
+                {
+                    if (!that.sensordata || that.sensordata.is == null || typeof that.sensordata.is == "undefined")
+                    {
+                        return false;
+                    }
+
+                    val = (val + "").toLowerCase();
+                    var lastTalk = ("" + that.sensordata.is).toLowerCase();
+                    var triggered = (lastTalk == val);
+                    return that.processCondition("is_equal", val, triggered);
+                },
+                params: [{
+                    name: "val",
+                    isOptional: false,
+                    dataType: "string",
+                    notes: "The text to react to, when recognized"
+                }]
+            }
+        };
+    }
+
+    dependenciesFulfilled()
+    {
+        if (!actormanagement.has("recorder") || !actormanagement.has("music"))
+            return "recorder and music required";
+
+        return true;
+    }
+
     stripNewLines(str)
     {
         return str.toString().replace(/(\r\n|\n|\r)/gm,"");
@@ -31,27 +67,6 @@ class voicerecognizer extends baseSensor
     hotwords()
     {
         return ["okay pi", "hello pi", "listen pi"]; //all lowercase without punctuation
-    }
-
-    commands()
-    {
-        //put here whatever you want to
-        //commands all lowercase without punctuation
-        var commands =
-        {
-            "lights on": function()
-            {
-                console.log("turning lights on, if you comment this out");
-                //actormanagement.registeredActors["switchrc"].switch1on();
-            },
-            "lights off": function()
-            {
-                console.log("turning lights off, if you comment this out");
-                //actormanagement.registeredActors["switchrc"].switch1off();
-            }
-        };
-
-        return commands;
     }
 
     killTTS(cb)
@@ -107,16 +122,8 @@ class voicerecognizer extends baseSensor
 
     processUserTextFromGoogle(text)
     {
-        var commands = this.commands();
-
-        if (text in commands)
-        {
-            commands[text]();
-        }
-        else
-        {
-            this.logger.info("voicerec", "unknown command from google: " + text);
-        }
+        this.logger.info("voicerec", "understood: " + text);
+        this.senddata(text, this);
     }
 
     googleRecognition(cb)
@@ -223,8 +230,9 @@ class voicerecognizer extends baseSensor
         params.push("/opt/voicerec/pocketsphinx-python/pocketsphinx/model/en-us/en-us");
         */
 
-        var isReady = false;
+        //console.log(executable + " " + params.join(" "));
 
+        var isReady = false;
         var prc = spawn(executable, params);
         prc.stdout.setEncoding("utf8");
 

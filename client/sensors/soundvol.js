@@ -13,11 +13,6 @@ class soundvol extends baseSensor
         this.read();
     }
 
-    dependenciesFulfilled()
-    {
-        return true;
-    }
-
     read()
     {
         var that = this;

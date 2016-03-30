@@ -49,7 +49,7 @@ class music extends baseActor
         };
 
         this.logger.info("stopping music");
-        actormanagement.registeredActors["ledstrip"].allOff();
+        actormanagement.has("ledstrip") && actormanagement.registeredActors["ledstrip"].allOff();
         soundmanager.stop();
         cb(null, "stopped music");
     }

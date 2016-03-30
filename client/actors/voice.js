@@ -37,6 +37,9 @@ class voice extends baseActor
 
     dependenciesFulfilled()
     {
+        if (!actormanagement.has("music"))
+            return "actor music is required";
+
         return true;
     }
 

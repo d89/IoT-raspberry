@@ -122,16 +122,19 @@ class cam extends baseActor
 
         //-----------------------------------------------------------------------------------
 
-        callbacks.push(function(recordingDone)
+        if (actormanagement.has("recorder"))
         {
-            actormanagement.registeredActors["recorder"].doRecord(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
+            callbacks.push(function(recordingDone)
             {
-                if (err)
-                    return recordingDone(err);
+                actormanagement.registeredActors["recorder"].doRecord(path.basename(videoPath + ".wav"), (duration / 1000), "/tmp", function(err, fileName)
+                {
+                    if (err)
+                        return recordingDone(err);
 
-                return recordingDone(null, fileName);
+                    return recordingDone(null, fileName);
+                });
             });
-        });
+        }
 
         //-----------------------------------------------------------------------------------
         var raspivid = spawn("raspivid", ["-t", duration, "-o", videoPath, "-w", 640, "-h", 480]);
@@ -165,18 +168,42 @@ class cam extends baseActor
                 return cb(err);
             }
 
-            that.convert(data[0], data[1], cb);
+            var hasAudio = data.length === 2;
+
+            that.logger.info("has audio?", hasAudio);
+
+            if (hasAudio)
+            {
+                that.convert(data[0], data[1], cb);
+            }
+            else
+            {
+                that.convert(null, data[0], cb);
+            }
         });
     }
 
     convert(audioFile, videoFile, cb)
     {
         var that = this;
-        that.logger.info("merging audio " + audioFile + " with video " + videoFile);
 
-        if (!fs.existsSync(audioFile) || !fs.existsSync(videoFile))
+        if (audioFile)
         {
-            return cb("either video or audio file did not exist");
+            that.logger.info("merging audio " + audioFile + " with video " + videoFile);
+
+            if (!fs.existsSync(audioFile) || !fs.existsSync(videoFile))
+            {
+                return cb("either video or audio file did not exist");
+            }
+        }
+        else
+        {
+            that.logger.info("converting video " + videoFile + ", no audio");
+
+            if (!fs.existsSync(videoFile))
+            {
+                return cb("video file does not exist");
+            }
         }
 
         var date = moment().format("YYYYMMDD-HHmmss");
@@ -184,7 +211,17 @@ class cam extends baseActor
 
         //http://stackoverflow.com/questions/11779490/ffmpeg-how-to-add-new-audio-not-mixing-in-video
         //https://gist.github.com/jamiew/5110703
-        var converter = spawn("MP4Box", ["-add", videoFile, "-add", audioFile, finalFileName]);
+        var params = ["-add", videoFile ];
+
+        if (audioFile)
+        {
+            params.push("-add");
+            params.push(audioFile);
+        }
+
+        params.push(finalFileName);
+
+        var converter = spawn("MP4Box", params);
 
         converter.stdout.on("data", function(data)
         {
@@ -201,7 +238,7 @@ class cam extends baseActor
         {
             that.logger.info("converting " + videoFile + " ended with " + exitCode);
 
-            fs.unlink(audioFile, function(err) {
+            audioFile && fs.unlink(audioFile, function(err) {
                 err && that.logger.error("audio file " + audioFile + " could not be deleted: " + err);
             });
 

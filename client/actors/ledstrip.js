@@ -5,6 +5,7 @@ var config = require('../config');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
 var soundmanager = require('../soundmanager');
+var actormanagement = require('../actormanagement');
 var LPD8806 = require('lpd8806');
 
 // ######################################################
@@ -18,6 +19,14 @@ class ledstrip extends baseActor
         this.spawned = null;
         this.lightshowStarter = config.baseBath + '/actors/startlightshow';
         this.ledCount = this.options.ledCount;
+    }
+
+    dependenciesFulfilled()
+    {
+        if (!actormanagement.has("music"))
+            return "actor music is required";
+
+        return true;
     }
 
     exposed()
