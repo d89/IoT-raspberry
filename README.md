@@ -6,7 +6,7 @@ Home control client unit that works together with IoT-server
 ```
 raspi-config
 1 -> Expand Filesystem
-5 -> Internationalisation Options -> Change Locale and Change Timezone
+5 -> Internationalisation Options -> Change Locale, Change Timezone
 6 -> Enable Camera
 9 -> Advanced Options -> A4: SSH, A5: Device Tree, A6: SPI, A7: I2C
 Finish
