@@ -584,7 +584,7 @@ Testen:
 Nach Flash: HHM-USB-IF,03C7,MEQ0231318,373300,000000,00012D6B,0000,00
 ```
 
-***Startscript in /etc/init.d/hmusb***
+***Startscript in /etc/init.d/hmland***
 
 ```
 cp /var/www/IoT-raspberry/actors/hmusbdriver/hmland /etc/init.d
@@ -605,6 +605,7 @@ Manueller Start des HMUSB Deamons (falls mal zum Test nötig): ```/opt/hmusb/hml
 * Anmeldung des Sticks: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen) 
 * HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300```
 * Aktivieren des Pairings für 60 Sekunden: ```set hmusb hmPairForSec 60```
+* Komponente in den manuellen Modus versetzen per Druck auf die Uhr
 * State des HMUSB abrufen per http://RASPI_IP:8083/fhem?detail=hmusb 
 
 ***ggf. Name der Komponente ändern***
@@ -614,6 +615,8 @@ rename HM_37F678 WohnzimmerFenster
 rename HM_37F678_Clima WohnzimmerFenster_Clima
 attr WohnzimmerFenster_Clima room Wozhnzimmer
 ```
+
+Nach jeder Operation auf "Save config" drücken, um die FHEM Konfiguration zu speichern.
 
 ---
 
@@ -631,6 +634,8 @@ Mittels Z-Wave ZME_UZB1 Me USB Stick (http://www.amazon.de/gp/product/B00QJEY6OC
 * Geräteliste des Dongles abrufen: ```get ZWDongle_0 nodeList```
 * Deviceinfos erhalten: ```list ZWave_THERMOSTAT_10```
 * FHEM Referenz zu Z-Wave: http://fhem.de/commandref.html#ZWave
+
+Nach jeder Operation auf "Save config" drücken, um die FHEM Konfiguration zu speichern.
 
 ### Danfoss Living Connect Z (014G0013) Thermostat 
 
