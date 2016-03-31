@@ -9,7 +9,6 @@ var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var path = require('path');
 var audio = require('./audio');
-var youtube = require('./youtube');
 var conditionparser = require('./conditionparser');
 var actormanagement = require('./actormanagement');
 var start = require('./index');
@@ -296,32 +295,15 @@ exports.bindCallbacks = function()
         }
 
         //YT Download --------------------------------------------------------------------------
-        if (msg.type === "youtube" && actormanagement.has("music"))
+        if (msg.type === "youtube")
         {
-            youtube.download(msg.data, function onout(text)
-                {
-                    logger.info(text);
-                    exports.socket.emit("client:youtube-download", {
-                        output: text
-                    });
-                },
-                function onclose(code, fileName)
-                {
-                    logger.info("Done with response code: " + code + " and file " + fileName);
-
-                    var resp = { success: true };
-
-                    if (code === 0 && fileName)
-                    {
-                        resp.file = fileName;
-                    }
-                    else
-                    {
-                        resp.success = false;
-                    }
-
-                    exports.socket.emit("client:youtube-download", resp);
-                });
+            actormanagement.registeredActors["youtubedl"].download2mp3(msg.data, function(err, fileName)
+            {
+                if (err)
+                    logger.error(err);
+                else
+                    logger.info("Done with file " + fileName);
+            });
         }
     });
 

@@ -67,7 +67,7 @@ Don't skip this! These tools are basically necessary for everything else later o
 
 ```
 apt-get update
-apt-get install build-essential git gpac mpg321 omxplayer python-dev libboost-python-dev python-pip python-smbus i2c-tools
+apt-get install -y build-essential git gpac mpg321 omxplayer python-dev libboost-python-dev python-pip python-smbus i2c-tools
 ```
 
 ## Node 5 (or above)
@@ -125,7 +125,7 @@ Requires you to register for free and obtain an API key. Consult the sample conf
 Festival (http://www.cstr.ed.ac.uk/projects/festival/) is a local TTS engine that needs to be installed:
 
 ```
-apt-get install festival
+apt-get install -y festival
 ```
 
 Having done that, you can activate festival as TTS provider (see the sample configuration). You need to specify a language. Retrieve all available languages via ```festival --help```.
@@ -149,7 +149,7 @@ To register and retrieve your Google Voice Recognition Access token, go here and
 Install pocketsphinx like this:
 
 ```
-apt-get install curl flac pocketsphinx
+apt-get install -y curl flac pocketsphinx
 ... or compile from source, if you really want to: http://raspberrypi.stackexchange.com/a/10392
 Verify with "which pocketsphinx_continuous" after you are done
 ```
@@ -505,110 +505,9 @@ chmod +x /opt/lightshow/lightshowpi/py/synchronized_lights.py
 
 ---
 
-###Homematic Heizungssteuerung
+###FHEM installieren
 
-* Hervorragende Übersicht der Möglichkeiten: http://www.meintechblog.de/2015/02/fhem-welches-gateway-fuer-welches-system/
-* Thermostat: Homematic 105155 (http://www.amazon.de/gp/product/B00CFF3410/)
-* Konfigurations-Adapter (statt CUL-Stick): Homematic 104134 - http://www.amazon.de/eQ-3-HomeMatic-104134-Homematic-Konfigurations-Adapter/dp/B007VTXP0A/
-
-***Treiber für Konfigurations-Adapter:***
-
-```
-apt-get install libusb-1.0-0-dev
-mkdir /opt/hmlan
-cd /opt/hmlan
-wget https://git.zerfleddert.de/hmcfgusb/releases/hmcfgusb-0.102.tar.gz
-tar xzf hmcfgusb-0.102.tar.gz
-cd hmcfgusb-0.102
-make
-mv hmcfgusb-0.102/* .
-sudo cp hmcfgusb.rules /etc/udev/rules.d/
-```
-Siehe auch http://www.fhemwiki.de/wiki/HM-CFG-USB_USB_Konfigurations-Adapter bzw. https://git.zerfleddert.de/cgi-bin/gitweb.cgi/hmcfgusb
-
-***Firmware-Update des HMUSB***
-
-fhem bzw. den deamon stoppen, falls schon installiert. Dann: ```/opt/hmlan/hmland -i``` aufrufen.
-
-Die 03C4 ist vorher hierbei die Version in Hex (in Dezimal: 964).
-
-```Vor flash:  HHM-USB-IF,03C4,MEQ0231318,373300,000000,0614745A,0000```
-
-Flashen:
-```
-cd /opt/hmlan
-wget http://git.zerfleddert.de/hmcfgusb/firmware/hmusbif.03c7.enc
-./flash-hmcfgusb hmusbif.03c7.enc
-```
-
-```Nach Flash: HHM-USB-IF,03C7,MEQ0231318,373300,000000,00012D6B,0000,00```
-
-Manueller Start des HMUSB Deamons: ```/opt/hmlan/hmland -p 1234 -D```
-
-***Startscript in /etc/init.d/hmland***
-
-```
-#!/bin/sh
-# simple init for hmland
-### BEGIN INIT INFO
-# Provides:          hmland
-# Required-Start:    $network $local_fs $remote_fs
-# Required-Stop::    $network $local_fs $remote_fs
-# Should-Start:      $all
-# Should-Stop:       $all
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: Start hmland daemon at boot time
-# Description:       Provide Service to use HM-USB-CFG Adapter for FHEM.
-### END INIT INFO
-
-pidfile=/var/run/hmland.pid
-port=1234
-
-case "$1" in
- start|"")
-	chrt 50 /opt/hmlan/hmland -r 0 -d -P -l 127.0.0.1 -p $port 2>&1 | perl -ne '$|=1; print localtime . ": [hmland] $_"' >> /var/log/hmland.log &
-	;;
- restart|reload|force-reload)
-	echo "Error: argument '$1' not supported" >&2
-	exit 3
-	;;
- stop)
-	killall hmland
-	;;
- status)
-	if [ ! -e $pidfile ]; then
-		echo "No pid"
-		exit 1
-	fi
-	pid=`cat $pidfile`
-	if kill -0 $pid &>1 > /dev/null; then
-		echo "Running"
-		exit 0
-	else
-		rm $pidfile
-		echo "Not running"
-		exit 1
-	fi
-	;;
- *)
-	echo "Usage: hmland [start|stop|status]" >&2
-	exit 3
-	;;
-esac
-```
-
-Und aktivieren:
-
-```
-sudo chmod 755 /etc/init.d/hmland
-update-rc.d hmland defaults
-sudo service hmland start
-```
-
-***FHEM installieren***
-
-FHEM wird für die Interaktion mit den Homematic Komponenten benötigt.
+FHEM wird für die Interaktion mit z.B. Homematic oder Z-Wave Komponenten benötigt.
 
 ```
 apt-get install -y libdevice-serialport-perl libio-socket-ssl-perl libwww-perl libxml-simple-perl
@@ -637,50 +536,83 @@ Anschließend:
 update (in FHEM textbox, then shutdown restart)
 ```
 
-* Auth: ```attr global motd none```
-* Anmeldung: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen) 
+***Update FHEM***
+
+```update``` in Actionbar eingeben. Danach ```shutdown restart```
+
+###Homematic Heizungssteuerung
+
+* Hervorragende Übersicht der Möglichkeiten: http://www.meintechblog.de/2015/02/fhem-welches-gateway-fuer-welches-system/
+* Thermostat: Homematic 105155 (http://www.amazon.de/gp/product/B00CFF3410/)
+* Konfigurations-Adapter (statt CUL-Stick): Homematic 104134 - http://www.amazon.de/eQ-3-HomeMatic-104134-Homematic-Konfigurations-Adapter/dp/B007VTXP0A/
+* Ein paar sinnvolle FHEM Kommandos: http://www.ply.me.uk/bits_and_pieces/fhem_snippets.html
+* Artikel über das Anlernen (mit Schaltzeiten) des Homematic 105155: http://www.security-blog.eu/homematic-funk-thermostat-mit-fhem-zeitsteuern-steuern/ bzw. http://www.meintechblog.de/2013/12/fhem-heizungssteuerung-per-anwesenheitserkennung/
+* Siehe auch http://www.fhemwiki.de/wiki/HM-CFG-USB_USB_Konfigurations-Adapter bzw. https://git.zerfleddert.de/cgi-bin/gitweb.cgi/hmcfgusb
+
+***Treiber für Konfigurations-Adapter:***
+
+```
+apt-get install -y libusb-1.0-0-dev
+mkdir /opt/hmusb && cd /opt/hmusb
+wget https://git.zerfleddert.de/hmcfgusb/releases/hmcfgusb-0.102.tar.gz
+tar xzf hmcfgusb-0.102.tar.gz
+mv hmcfgusb-0.102/* .
+make
+cp hmcfgusb.rules /etc/udev/rules.d/
+```
+
+***Firmware-Update des HMUSB***
+
+fhem bzw. den deamon stoppen, falls schon installiert. 
+
+Firmware-Check:
+```
+/opt/hmusb/hmland -i
+Output etwa: HHM-USB-IF,03C4,MEQ0231318,373300,000000,0614745A,0000 (Die 03C4 ist vorher hierbei die Version in Hex (in Dezimal: 964).)
+```
+
+Flashen:
+```
+cd /opt/hmusb
+wget http://git.zerfleddert.de/hmcfgusb/firmware/hmusbif.03c7.enc
+./flash-hmcfgusb hmusbif.03c7.enc
+```
+
+Testen:
+```
+/opt/hmusb/hmland -i
+Nach Flash: HHM-USB-IF,03C7,MEQ0231318,373300,000000,00012D6B,0000,00
+```
+
+***Startscript in /etc/init.d/hmusb***
+
+```
+cp /var/www/IoT-raspberry/actors/hmusbdriver/hmland /etc/init.d
+chmod 755 /etc/init.d/hmland
+update-rc.d hmland defaults
+service hmland start
+```
+
+Manueller Start des HMUSB Deamons (falls mal zum Test nötig): ```/opt/hmusb/hmland -p 1234 -D```
+
+***Komponente resetten (Homematic 105155)***
+
+* eine Batterie entfernen, dann alle 3 Knöpfe drücken und währenddessen die Batterie wieder einlegen. Dann nochmal mit dem mittleren Button "res" bestätigen.
+* Danach im "ins" Modus auch die mittlere Taste bestätigen, um den Inkludiermodus zu beginnen.
+
+***In FHEM einbinden***
+
+* Anmeldung des Sticks: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen) 
 * HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300```
 * Aktivieren des Pairings für 60 Sekunden: ```set hmusb hmPairForSec 60```
 * State des HMUSB abrufen per http://RASPI_IP:8083/fhem?detail=hmusb 
 
-***Update FHEM***
-
-```update``` in Actionbar eingeben. Danach ```shutdown restart```
+***ggf. Name der Komponente ändern***
 
 ```
 rename HM_37F678 WohnzimmerFenster
 rename HM_37F678_Clima WohnzimmerFenster_Clima
 attr WohnzimmerFenster_Clima room Wozhnzimmer
-```
-
-* Ein paar sinnvolle FHEM Kommandos: http://www.ply.me.uk/bits_and_pieces/fhem_snippets.html
-* Artikel über das Anlernen (mit Schaltzeiten) des Homematic 105155: http://www.security-blog.eu/homematic-funk-thermostat-mit-fhem-zeitsteuern-steuern/ bzw. http://www.meintechblog.de/2013/12/fhem-heizungssteuerung-per-anwesenheitserkennung/
-
----
-
-####HMUSB Intereaktion
-
-***get desired temperature***
-
-* http://RASPI_IP:8083/fhem?detail=HM_37F678&dev.getHM_37F678=HM_37F678&cmd.getHM_37F678=get&arg.getHM_37F678=param&val.getHM_37F678=desired-temp&XHR=1&addLinks=1
-* bzw: http://RASPI_IP:8083/fhem?cmd={ReadingsVal("WohnzimmerFenster_Clima","desired-temp","")}&XHR=1
-
-***get current temperature***
-* http://RASPI_IP:8083/fhem?detail=HM_37F678&dev.getHM_37F678=HM_37F678&cmd.getHM_37F678=get&arg.getHM_37F678=param&val.getHM_37F678=measured-temp&XHR=1&addLinks=1
-* http://RASPI_IP:8083/fhem?cmd={ReadingsVal("WohnzimmerFenster_Clima","measured-temp","")}&XHR=1
-
-
-***set current temperature***
-
-```
-POST http://RASPI_IP:8083/fhem
-Content-Type:application/x-www-form-urlencoded
-params
-	detail:WohnzimmerFenster_Clima
-	dev.setWohnzimmerFenster_Clima:WohnzimmerFenster_Clima
-	cmd.setWohnzimmerFenster_Clima:set
-	arg.setWohnzimmerFenster_Clima:desired-temp
-	val.setWohnzimmerFenster_Clima:11.5
 ```
 
 ---

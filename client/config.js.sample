@@ -32,6 +32,10 @@ module.exports = {
             options: {}
         },
         // --------------------------
+        youtubedl: { //requires actor "music" to be enabled
+            options: {}
+        },
+        // --------------------------
         switchrc: {
             options: {
                 //for type A
@@ -69,7 +73,7 @@ module.exports = {
             }
         },
         // --------------------------
-        voice: {
+        voice: { //requires actor "music" to be enabled
             options: {
                 //use either voicerss (online service, requires api key)
                 //voicerss: {
@@ -95,7 +99,7 @@ module.exports = {
             options: {}
         },
         // --------------------------
-        ledstrip: {
+        ledstrip: { //requires actor "music" to be enabled
             options: {
                 ledCount: 104 // how many leds do you have on your lpd8806 led band?
             }
@@ -370,7 +374,7 @@ module.exports = {
             }
         },
         // --------------------------
-        voicerecognizer: {
+        voicerecognizer: { //requires actors "recorder" and "music" to be enabled
             options: {
                 executable: "/usr/bin/pocketsphinx_continuous",
                 languageModel: "/opt/voicerec/lm.lm",
