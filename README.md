@@ -554,9 +554,9 @@ attr WohnzimmerFenster_Clima room Wozhnzimmer
 Mittels Z-Wave ZME_UZB1 Me USB Stick (http://www.amazon.de/gp/product/B00QJEY6OC)
 
 * An FHEM anmelden, wenn nicht automatisch ohnehin schon passiert (prüfen per http://RASPY_IP:8083/fhem?detail=ZWDongle_0): ```define ZWDongle_0 ZWDongle /dev/ttyACM0@115200```
-* Inkludieren per ```set ZWDongle_0 addNode nwOn```
+* Inkludieren per ```set ZWDongle_0 addNode onNw```
 * Stoppen der Inklusion per ```set ZWDongle_0 addNode off```
-* Exkludieren per ```set ZWDongle_0 removeNode nwOn```, dann Knopf am Gerät drücken, danach ```set ZWDongle_0 removeNode off```. Anschließend Gerät aus FHEM entfernen: ```delete ZWave_THERMOSTAT_10```
+* Exkludieren per ```set ZWDongle_0 removeNode onNw```, dann Knopf am Gerät drücken, danach ```set ZWDongle_0 removeNode off```. Anschließend Gerät aus FHEM entfernen: ```delete ZWave_THERMOSTAT_10```
 * Umbenennen von Z-Wave Komponenten: ```rename KomponentenNameZWave GewuenschterNeuerName```
 * Zuweisen von Komponenten zu Räumen: ```attr GewuenschterNeuerName room Wohnzimmer```
 * Home ID abfragen: ```get ZWDongle_0 homeId```
@@ -570,9 +570,10 @@ Nach jeder Operation auf "Save config" drücken, um die FHEM Konfiguration zu sp
 
 http://www.amazon.de/Danfoss-Heizk%C3%B6rperthermostat-Stellantrieb-LC-13-DAN_LC-13/dp/B00IGE38JM
 
-Direkt nach dem Inkludieren den Montagemodus beenden, indem der Hauptknopf (in der Mitte) lange gedrückt wird. Danach braucht das Thermostat 2 Zusatzkommandos, um korrekt zu funktionieren.
+* Reset: Eine Batterie herausnehmen und wieder einlegen. Während des Einlegens den Mittelknopf gedrückt halten. 
+* Nach Inkludieren: Den Montagemodus beenden, indem der Hauptknopf (in der Mitte) lange gedrückt wird. Danach braucht das Thermostat 2 Zusatzkommandos, um korrekt zu funktionieren.
 
-* ```set WakeupInterval 100 1``` -> Alle 100 Sekunden aufwachen und an Controller (mit ID 1) reporten.
+* ```set ZWave_THERMOSTAT_11 WakeupInterval 100 1``` -> Alle 100 Sekunden aufwachen und an Controller (mit ID 1) reporten.
 * ```define zwtrigger1 at +*00:01 get ZWave_THERMOSTAT_11 battery``` -> Jede Minute bei Thermostat 11 nachfragen (Batterie-Trigger)
 
 ---
@@ -592,13 +593,13 @@ set ZWDongle_0 addNode onNw
 Knopf am Motion Sensor 3mal direkt hintereinander drücken.
 
 ***Config***
-* Mit Controller assoziieren (um Live-Updates zu bekommen): ```associationAdd 3 1```
-* Regelmäßig Lux-Updates schicken: ```configIlluminationReportsInterval 60```
-* Ab 1 Lux Änderung Report schicken: ```configIlluminationReportThreshold 1```
-* Regelmäßig Temp-Updates schicken: ```configIntervalOfTemperatureMeasuring 60```
-* Regelmäßg Temperatur-Updates schicken: ```configTemperatureReportsInterval 60```
-* Bei 0,1°C Änderung Temperatur-Report schicken: ```configTemperatureReportThreshold 1	```
-* Alarm 15 Sekunden aufrecht erhalten und danach dann neu triggern: ```configMotionAlarmCancellationDelay 15```
+* Mit Controller assoziieren (um Live-Updates zu bekommen): ```set ZWave_SENSOR_BINARY_31 associationAdd 3 1```
+* Regelmäßig Lux-Updates schicken: ```set ZWave_SENSOR_BINARY_31 configIlluminationReportsInterval 60```
+* Ab 1 Lux Änderung Report schicken: ```set ZWave_SENSOR_BINARY_31 configIlluminationReportThreshold 1```
+* Regelmäßig Temp-Updates schicken: ```set ZWave_SENSOR_BINARY_31 configIntervalOfTemperatureMeasuring 60```
+* Regelmäßg Temperatur-Updates schicken: ```set ZWave_SENSOR_BINARY_31 configTemperatureReportsInterval 60```
+* Bei 0,1°C Änderung Temperatur-Report schicken: ```set ZWave_SENSOR_BINARY_31 configTemperatureReportThreshold 1	```
+* Alarm 15 Sekunden aufrecht erhalten und danach dann neu triggern: ```set ZWave_SENSOR_BINARY_31 configMotionAlarmCancellationDelay 15```
 
 ***Werte:***
 ```
@@ -622,10 +623,10 @@ set ZWDongle_0 addNode onNw
 ```
 
 ***Config***
-* Mit Controller assoziieren (um Live-Updates zu bekommen): ```associationAdd 3 1```
-* Bei 1% Änderung neuen Stand an Controller senden: ```configImmediatePowerReport 1```
-* Alle 0,01kwH Gesamt-Verbrauchsupdates schicken: ```configReportingChangesInEnergyConsumed45 1```
-* Bei 1% Änderung neuen Stand an Controller senden: ```configStandardPowerLoadReporting  1```
+* Mit Controller assoziieren (um Live-Updates zu bekommen): ```set ZWave_SWITCH_BINARY_30 associationAdd 3 1```
+* Bei 1% Änderung neuen Stand an Controller senden: ```set ZWave_SWITCH_BINARY_30 configImmediatePowerReport 1```
+* Alle 0,01kwH Gesamt-Verbrauchsupdates schicken: ```set ZWave_SWITCH_BINARY_30 configReportingChangesInEnergyConsumed45 1```
+* Bei 1% Änderung neuen Stand an Controller senden: ```set ZWave_SWITCH_BINARY_30 configStandardPowerLoadReporting 1```
 
 ***Werte:***
 ```
