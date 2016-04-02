@@ -565,7 +565,7 @@ cp hmcfgusb.rules /etc/udev/rules.d/
 
 fhem bzw. den deamon stoppen, falls schon installiert. 
 
-Firmware-Check:
+Firmware-Check (Vor Flash):
 ```
 /opt/hmusb/hmland -i
 Output etwa: HHM-USB-IF,03C4,MEQ0231318,373300,000000,0614745A,0000 (Die 03C4 ist vorher hierbei die Version in Hex (in Dezimal: 964).)
@@ -593,21 +593,21 @@ update-rc.d hmland defaults
 service hmland start
 ```
 
-Manueller Start des HMUSB Deamons (falls mal zum Test nötig): ```/opt/hmusb/hmland -p 1234 -D```
+Manueller Start des HMUSB Deamons (falls mal zum Test nötig - klappt nur, wenn der Deamon nicht bereits läuft): ```/opt/hmusb/hmland -p 1234 -D```
 
-***Komponente resetten (Homematic 105155)***
+***Komponente inkludieren (Homematic 105155)***
 
-* eine Batterie entfernen, dann alle 3 Knöpfe drücken und währenddessen die Batterie wieder einlegen. Dann nochmal mit dem mittleren Button "res" bestätigen.
-* Danach im "ins" Modus auch die mittlere Taste bestätigen, um den Inkludiermodus zu beginnen.
-
-***In FHEM einbinden***
-
-* Anmeldung des Sticks: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen) 
-* HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300```
-* Aktivieren des Pairings für 60 Sekunden: ```set hmusb hmPairForSec 60```
-* Komponente in den manuellen Modus versetzen per Druck auf die Uhr
-* State des HMUSB abrufen per http://RASPI_IP:8083/fhem?detail=hmusb 
-
+* Reset (falls nötig): eine Batterie entfernen, dann wieder einlegen. Direkt danach alle 3 Knöpfe drücken. Dann nochmal mit dem mittleren Button "res" bestätigen.
+* Einstellungen (Datum, Uhrzeit) jeweils mit der mittleren Taste bzw. dem Drehrad bestätigen
+* In FHEM: ```set hmusb hmPairForSec 60```
+* Mehrere Sekunden den mittleren Knopf drücken, um "ins" zu bestätigen. Ein Countdown zählt herunter. Wenn die Inkludierung geklappt hat, erscheint "AC" auf dem Display
+* Jetzt einmal kurz den mittleren Button drücken, sodass "ada" erscheint. Das Thermostat zieht sich nun fest.
+* Nach Abschluss dessen muss der manuelle Modus aktiviert werden. 
+* Dazu auf den linken Button drücken (die Uhr), bis "Manu" links oben im Display erscheint
+* "Save Config" in FHEM drücken
+* State des HMUSB abrufen per http://RASPI_IP:8083/fhem?detail=hmusb
+* HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300``` 
+ 
 ***ggf. Name der Komponente ändern***
 
 ```
@@ -615,8 +615,6 @@ rename HM_37F678 WohnzimmerFenster
 rename HM_37F678_Clima WohnzimmerFenster_Clima
 attr WohnzimmerFenster_Clima room Wozhnzimmer
 ```
-
-Nach jeder Operation auf "Save config" drücken, um die FHEM Konfiguration zu speichern.
 
 ---
 
