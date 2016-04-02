@@ -6,10 +6,10 @@ Home control client unit that works together with IoT-server
 ```
 raspi-config
 1 -> Expand Filesystem
-5 -> Internationalisation Options -> Change Locale, Change Timezone
+5 -> Internationalisation Options -> Change Locale (z.B. de_DE.UTF-8 UTF-8" -> "C.UTF-8"), Change Timezone (z.B. Europe -> Berlin)
 6 -> Enable Camera
 9 -> Advanced Options -> A4: SSH, A5: Device Tree, A6: SPI, A7: I2C
-Finish
+Finish & Reboot
 ```
 
 ## Change keyboard layout
@@ -33,6 +33,8 @@ Since debian jessie, most of the guides you will find in the internet are obsole
 ```
 nano /etc/wpa_supplicant/wpa_supplicant.conf
 
+Add to file (on bottom):
+
 network={
    ssid="your_ssid"
    psk="your_password"
@@ -44,17 +46,21 @@ network={
 ```
 nano /etc/dhcpcd.conf
 
+Add to file (on bottom):
+
 interface wlan0
    static ip_address=192.168.0.70/24
    static routers=192.168.0.1
    static domain_name_servers=192.168.0.1
+
+reboot
 ```
 
 ## Firmware Update
 
 ```
-apt-get upgrade
 apt-get update
+apt-get upgrade
 wget https://raw.githubusercontent.com/Hexxeh/rpi-update/master/rpi-update -O /usr/bin/rpi-update
 chmod +x /usr/bin/rpi-update
 rpi-update
@@ -77,14 +83,6 @@ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
 apt-get install -y nodejs
 ```
 
-## Youtube Downloader
-
-```
-wget https://yt-dl.org/latest/youtube-dl -O /usr/local/bin/youtube-dl
-chmod a+x /usr/local/bin/youtube-dl
-hash -r
-```
-
 ## Wiring Pi
 
 ```
@@ -92,6 +90,101 @@ cd /opt
 git clone git://git.drogon.net/wiringPi
 cd wiringPi
 ./build
+```
+
+## Install ffmpeg
+
+Required for sound recording and other media stuff.
+
+```
+apt-get install -y libav-tools
+ln -fs /usr/bin/avconv /usr/bin/ffmpeg
+```
+
+## put tmpfs onto ram
+
+Well suited for temporary logfiles, so the SD card doesn't wear so fast.
+
+```
+nano /etc/fstab
+tmpfs /tmp tmpfs nodev,nosuid,relatime,size=300M 0 0
+reboot now
+```
+
+## Set up the IoT-raspberry client itself
+
+... finally ... ;-)
+
+```
+git clone https://github.com/d89/IoT-raspberry.git /var/www/IoT-raspberry
+chmod +x /var/www/IoT-raspberry/actors/*
+chmod +x /var/www/IoT-raspberry/sensors/*
+chmod +x /var/www/IoT-raspberry/update
+cd /var/www/IoT-raspberry/client
+npm install
+```
+
+## Configuration
+
+***main configuration***
+
+```
+cd /var/www/IoT-raspberry/client
+cp config.js.sample config.js
+nano config.js
+```
+
+* serverUrl: base url of the IoT-server to connect to
+* clientName: how your Raspberry reports itself to the server
+* basePath: where you installed your IoT-raspberry (if you followed this guide, it'll be ```/var/www/IoT-raspberry```)
+* mediaBasePath: Where audio files are stored. Create this folder, if not already existent
+
+## Launch
+
+for a quick launch, while you are connected via SSH:
+
+```
+cd /var/www/IoT-raspberry/client
+node index.js
+```
+
+For a more sophisticated operation, use a service autostarting after reboot.
+
+---
+
+## Register as a service
+
+```
+npm install -g pm2
+cd /var/www/IoT-raspberry/client && pm2 start index.js --name iot-client && pm2 startup
+```
+
+***restart service***
+
+```
+pm2 restart iot-client
+pm2 stop iot-client
+```
+
+***logs and monitoring***
+
+```
+pm2 logs iot-client
+pm2 show iot-client
+pm2 list iot-client
+pm2 monit iot-client
+```
+
+See http://pm2.keymetrics.io/docs/usage/quick-start/
+
+# Modules
+
+## Youtube Downloader
+
+```
+wget https://yt-dl.org/latest/youtube-dl -O /usr/local/bin/youtube-dl
+chmod a+x /usr/local/bin/youtube-dl
+hash -r
 ```
 
 ## Pi-Switch
@@ -144,7 +237,7 @@ So I decided to come up with my own engine, which is based on ```pocketsphinx```
 
 ```pocketsphinx``` listens always and is basically the "gatekeeper" for the Google Voice Recognition API. The Google API requires an API key and limits the requests per day, that you can make (~50). You can keep track of the used quote here: https://console.developers.google.com/apis/api/speech/usage?project=your-project-key
 
-To register and retrieve your Google Voice Recognition Access token, go here and activate the API. Retrieve the key afterwards as described: https://console.developers.google.com/apis/api/speech/overview?project=your-project-key
+To register and retrieve your Google Voice Recognition Access token, go here and activate the API. Retrieve the "browser key" afterwards as described: https://console.developers.google.com/apis/api/speech/overview?project=your-project-key
 
 Install pocketsphinx like this:
 
@@ -194,7 +287,7 @@ cd /opt/barometric
 python setup.py install
 ```
 
-##  1 Wire ds18b20
+## 1 Wire ds18b20 temperature sensor
 
 http://www.amazon.de/Digitaler-Edelstahl-Temperatur-Thermometer-wasserdicht/dp/B018M7T7Q0/
 
@@ -212,6 +305,9 @@ Load modules after boot:
 
 ```
 nano /etc/modules
+
+add to bottom of file:
+
 wire
 w1-gpio pullup=1
 w1-therm
@@ -221,7 +317,16 @@ Activate in device tree (newer raspbian versions):
 
 ```
 nano /boot/config.txt 
+
+add to bottom of file:
+
 dtoverlay=w1-gpio,gpiopin=4,pullup=on
+```
+
+Reboot: 
+
+```
+reboot now
 ```
 
 Read temperature via:
@@ -239,7 +344,7 @@ for
 
 https://www.auctoritas.ch/bauprojekte/4-ein-sainsmart-lcd-display-am-raspberry-pi-verwenden
 
-in ```nano /etc/modules``` add:
+in ```nano /etc/modules``` add (or make sure they are present):
 
 ```
 i2c-bcm2708 
@@ -256,183 +361,7 @@ or
 i2cdetect -y 1
 ```
 
-## put tmpfs onto ram
-
-Well suited for temporary logfiles, so the SD card doesn't wear so fast.
-
-```
-nano /etc/fstab
-tmpfs /tmp tmpfs nodev,nosuid,relatime,size=300M 0 0
-reboot now
-```
-
-## Set up the IoT-raspberry client itself
-
-... finally ... ;-)
-
-```
-git clone https://github.com/d89/IoT-raspberry.git /var/www/IoT-raspberry
-chmod +x /var/www/IoT-raspberry/actors/*
-chmod +x /var/www/IoT-raspberry/sensors/*
-chmod +x update
-cd /var/www/IoT-raspberry/client
-npm install
-```
-
-## Configuration
-
-***main configuration***
-
-```
-cd /var/www/IoT-raspberry/client
-cp config.js.sample config.js
-nano config.js
-```
-
-* serverUrl: base url of the IoT-server to connect to
-* clientName: how your Raspberry reports itself to the server
-* basePath: where you installed your IoT-raspberry (if you followed this guide, it'll be ```/var/www/IoT-raspberry```)
-* mediaBasePath: Where audio files are stored. Create this folder, if not already existent
-
-## Launch
-
-for a quick launch, while you are connected via SSH:
-
-```
-node index.js
-```
-
-For a more sophisticated operation, use a service autostarting after reboot.
-
----
-
-## Register as a service
-
-```
-npm install -g pm2
-cd /var/www/IoT-raspberry/client && pm2 start index.js --name iot-client && pm2 startup
-```
-
-***restart service***
-
-```
-pm2 restart iot-client
-pm2 stop iot-client
-```
-
-***logs and monitoring***
-
-```
-pm2 logs iot-client
-pm2 show iot-client
-pm2 list iot-client
-pm2 monit iot-client
-```
-
-See http://pm2.keymetrics.io/docs/usage/quick-start/
-
-## Other stuff follows here
-
-### Mappings
-
-Wiring Pi: ```gpio readall```
-
-```
- +-----+-----+---------+------+---+---Pi 2---+---+------+---------+-----+-----+
- | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
- +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
- |     |     |    3.3v |      |   |  1 || 2  |   |      | 5v      |     |     |
- |   2 |   8 |   SDA.1 |   IN | 1 |  3 || 4  |   |      | 5V      |     |     |
- |   3 |   9 |   SCL.1 |   IN | 1 |  5 || 6  |   |      | 0v      |     |     |
- |   4 |   7 | GPIO. 7 |   IN | 1 |  7 || 8  | 1 | ALT0 | TxD     | 15  | 14  |
- |     |     |      0v |      |   |  9 || 10 | 1 | ALT0 | RxD     | 16  | 15  |
- |  17 |   0 | GPIO. 0 |  OUT | 0 | 11 || 12 | 0 | IN   | GPIO. 1 | 1   | 18  |
- |  27 |   2 | GPIO. 2 |   IN | 1 | 13 || 14 |   |      | 0v      |     |     |
- |  22 |   3 | GPIO. 3 |   IN | 1 | 15 || 16 | 1 | IN   | GPIO. 4 | 4   | 23  |
- |     |     |    3.3v |      |   | 17 || 18 | 0 | IN   | GPIO. 5 | 5   | 24  |
- |  10 |  12 |    MOSI |   IN | 0 | 19 || 20 |   |      | 0v      |     |     |
- |   9 |  13 |    MISO |   IN | 0 | 21 || 22 | 0 | IN   | GPIO. 6 | 6   | 25  |
- |  11 |  14 |    SCLK |   IN | 0 | 23 || 24 | 1 | IN   | CE0     | 10  | 8   |
- |     |     |      0v |      |   | 25 || 26 | 1 | IN   | CE1     | 11  | 7   |
- |   0 |  30 |   SDA.0 |   IN | 1 | 27 || 28 | 1 | IN   | SCL.0   | 31  | 1   |
- |   5 |  21 | GPIO.21 |   IN | 1 | 29 || 30 |   |      | 0v      |     |     |
- |   6 |  22 | GPIO.22 |   IN | 1 | 31 || 32 | 0 | IN   | GPIO.26 | 26  | 12  |
- |  13 |  23 | GPIO.23 |   IN | 0 | 33 || 34 |   |      | 0v      |     |     |
- |  19 |  24 | GPIO.24 |   IN | 0 | 35 || 36 | 1 | IN   | GPIO.27 | 27  | 16  |
- |  26 |  25 | GPIO.25 |   IN | 0 | 37 || 38 | 0 | IN   | GPIO.28 | 28  | 20  |
- |     |     |      0v |      |   | 39 || 40 | 0 | IN   | GPIO.29 | 29  | 21  |
- +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
- | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
- +-----+-----+---------+------+---+---Pi 2---+---+------+---------+-----+-----+
-```
-
-GPIO Mapping Raspberry 2: http://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-4-309126/GPIO_Pi2.png?01AD=3lnx_cxwfZDoPGf2yt6YEgRzLIZJQi6cxPZlHcksSGF1h-MkIeePk3Q&01RI=38876E403D2DF1C&01NA=
-
-### Configure USB soundcard
-
-Falls nicht der 3,5" Klinkenstecker verwendet werden soll (zwar bessere Soundqualität, aber anfälliger für System-Crashes):
-
-```sudo nano /usr/share/alsa/alsa.conf```
-
-Folgende Zeilen ändern:
-
-```
-defaults.ctl.card 0
-defaults.pcm.card 0
-```
-
-in:
-
-```
-defaults.ctl.card 1
-defaults.pcm.card 1
-```
-
-Die ```1``` ist das USB Soundkarten-Interface aus ```cat /proc/asound/cards``` bzw. ```alsamixer -> F6```
-
-Danach ```reboot``` 
-
-Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei): http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
-
-###Sound wiedergeben
-
-Soundvolumen anpassen per Befehl: 
-
-```
-amixer set PCM -- -2000
-```
-
-Setzt Volume auf -20db. 
-
-Kontrolle per ```alsamixer```
-
-Wav Dateien spielen: ```aplay /home/pi/Music/gong.wav```
-
-Mp3 Dateien spielen:
-
-Entweder
-
-```
-sudo apt-get -y install mpg321
-mpg321 /home/pi/Music/siren.mp3
-```
-
-oder
-
-```
-apt-get install -y omxplayer
-omxplayer /home/pi/Music/siren.mp3
-```
-
-Empfehlung: ```omxplayer```, weil mp3 ***und*** wav Dateien wiedergegeben werden. Problem: ```omxplayer``` respektiert nicht die Einstellungen von ```alsamixer``` und ```amixer``` - Wiedergabe über alsa geht generell nicht (d.h. nur USB wird unterstützt, nicht der normale Klinkenanschluss). Daher muss die Lautstärke mitgegben werden:
-
-```
-omxplayer --vol -2000 /home/pi/Music/siren.mp3
-```
-
-Stellt die Lautstärke ebenso auf -20db.
-
-### LED Strip & Lightshow
+## LED Strip & Lightshow
 
 Bei ebay: 2m 5V LPD8806 52LED/m White FPCA IP67 Waterproof: http://www.ebay.de/itm/111767798377
 
@@ -494,7 +423,7 @@ cp /var/www/IoT-raspberry/actors/lightshowdriver/synchronized_lights.py /opt/lig
 chmod +x /opt/lightshow/lightshowpi/py/synchronized_lights.py
 ```
 
-###Camera
+## Camera
 
 ```raspivid``` and ```raspistill``` are used. They are preinstalled.
 
@@ -505,7 +434,7 @@ chmod +x /opt/lightshow/lightshowpi/py/synchronized_lights.py
 
 ---
 
-###FHEM installieren
+## FHEM installieren
 
 FHEM wird für die Interaktion mit z.B. Homematic oder Z-Wave Komponenten benötigt.
 
@@ -518,14 +447,13 @@ dpkg -i fhem-5.7.deb
 chmod -R a+w /opt/fhem 
 usermod -a -G tty pi
 usermod -a -G tty fhem
-echo -n admin:admin | base64
 ```
 Dann:
 ```
 nano /opt/fhem/fhem.cfg
 ```
 
-nach ```define WEB FHEMWEB 8083 global``` einfügen: ```attr WEB basicAuth YWRtaW46YWRtaW4=``` (entspricht base64 admin:admin)
+nach ```define WEB FHEMWEB 8083 global``` einfügen: ```attr WEB basicAuth YWRtaW46YWRtaW4=``` (entspricht base64 ```echo -n admin:admin | base64```)
 Die Zeile ```define initialUsbCheck notify global:INITIALIZED usb create``` unbedingt in der Config auskommentieren, sonst lädt sich das Webinterface zu tode.
 
 Anschließend:
@@ -533,14 +461,13 @@ Anschließend:
 ```
 /etc/init.d/fhem stop
 /etc/init.d/fhem start
-update (in FHEM textbox, then shutdown restart)
 ```
 
 ***Update FHEM***
 
 ```update``` in Actionbar eingeben. Danach ```shutdown restart```
 
-###Homematic Heizungssteuerung
+## Homematic Heizungssteuerung
 
 * Hervorragende Übersicht der Möglichkeiten: http://www.meintechblog.de/2015/02/fhem-welches-gateway-fuer-welches-system/
 * Thermostat: Homematic 105155 (http://www.amazon.de/gp/product/B00CFF3410/)
@@ -595,6 +522,12 @@ service hmland start
 
 Manueller Start des HMUSB Deamons (falls mal zum Test nötig - klappt nur, wenn der Deamon nicht bereits läuft): ```/opt/hmusb/hmland -p 1234 -D```
 
+***hmusb Stick in FHEM anmelden***
+
+* Anmeldung: ```define hmusb HMLAN 127.0.0.1:1234``` (Port muss dem Startscript entsprechen)
+* HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300```
+* "Save config" klicken, um die Einstellungen zu persistieren
+
 ***Komponente inkludieren (Homematic 105155)***
 
 * Reset (falls nötig): eine Batterie entfernen, dann wieder einlegen. Direkt danach alle 3 Knöpfe drücken. Dann nochmal mit dem mittleren Button "res" bestätigen.
@@ -602,11 +535,9 @@ Manueller Start des HMUSB Deamons (falls mal zum Test nötig - klappt nur, wenn 
 * In FHEM: ```set hmusb hmPairForSec 60```
 * Mehrere Sekunden den mittleren Knopf drücken, um "ins" zu bestätigen. Ein Countdown zählt herunter. Wenn die Inkludierung geklappt hat, erscheint "AC" auf dem Display
 * Jetzt einmal kurz den mittleren Button drücken, sodass "ada" erscheint. Das Thermostat zieht sich nun fest.
-* Nach Abschluss dessen muss der manuelle Modus aktiviert werden. 
-* Dazu auf den linken Button drücken (die Uhr), bis "Manu" links oben im Display erscheint
+* Nach Abschluss dessen muss der manuelle Modus aktiviert werden. Dazu auf den linken Button drücken (die Uhr), bis "Manu" links oben im Display erscheint
 * "Save Config" in FHEM drücken
 * State des HMUSB abrufen per http://RASPI_IP:8083/fhem?detail=hmusb
-* HM-ID setzen (je nach Stick): ```attr hmusb hmId 373300``` 
  
 ***ggf. Name der Komponente ändern***
 
@@ -618,7 +549,7 @@ attr WohnzimmerFenster_Clima room Wozhnzimmer
 
 ---
 
-### Z-Wave per FHEM
+## Z-Wave per FHEM
 
 Mittels Z-Wave ZME_UZB1 Me USB Stick (http://www.amazon.de/gp/product/B00QJEY6OC)
 
@@ -702,3 +633,104 @@ smStatus: Wattzahl
 swbStatus: on/off
 meter: kwh
 ```
+
+# Optional and other Stuff
+
+## Mappings
+
+Wiring Pi: ```gpio readall```
+
+```
+ +-----+-----+---------+------+---+---Pi 2---+---+------+---------+-----+-----+
+ | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
+ +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
+ |     |     |    3.3v |      |   |  1 || 2  |   |      | 5v      |     |     |
+ |   2 |   8 |   SDA.1 |   IN | 1 |  3 || 4  |   |      | 5V      |     |     |
+ |   3 |   9 |   SCL.1 |   IN | 1 |  5 || 6  |   |      | 0v      |     |     |
+ |   4 |   7 | GPIO. 7 |   IN | 1 |  7 || 8  | 1 | ALT0 | TxD     | 15  | 14  |
+ |     |     |      0v |      |   |  9 || 10 | 1 | ALT0 | RxD     | 16  | 15  |
+ |  17 |   0 | GPIO. 0 |  OUT | 0 | 11 || 12 | 0 | IN   | GPIO. 1 | 1   | 18  |
+ |  27 |   2 | GPIO. 2 |   IN | 1 | 13 || 14 |   |      | 0v      |     |     |
+ |  22 |   3 | GPIO. 3 |   IN | 1 | 15 || 16 | 1 | IN   | GPIO. 4 | 4   | 23  |
+ |     |     |    3.3v |      |   | 17 || 18 | 0 | IN   | GPIO. 5 | 5   | 24  |
+ |  10 |  12 |    MOSI |   IN | 0 | 19 || 20 |   |      | 0v      |     |     |
+ |   9 |  13 |    MISO |   IN | 0 | 21 || 22 | 0 | IN   | GPIO. 6 | 6   | 25  |
+ |  11 |  14 |    SCLK |   IN | 0 | 23 || 24 | 1 | IN   | CE0     | 10  | 8   |
+ |     |     |      0v |      |   | 25 || 26 | 1 | IN   | CE1     | 11  | 7   |
+ |   0 |  30 |   SDA.0 |   IN | 1 | 27 || 28 | 1 | IN   | SCL.0   | 31  | 1   |
+ |   5 |  21 | GPIO.21 |   IN | 1 | 29 || 30 |   |      | 0v      |     |     |
+ |   6 |  22 | GPIO.22 |   IN | 1 | 31 || 32 | 0 | IN   | GPIO.26 | 26  | 12  |
+ |  13 |  23 | GPIO.23 |   IN | 0 | 33 || 34 |   |      | 0v      |     |     |
+ |  19 |  24 | GPIO.24 |   IN | 0 | 35 || 36 | 1 | IN   | GPIO.27 | 27  | 16  |
+ |  26 |  25 | GPIO.25 |   IN | 0 | 37 || 38 | 0 | IN   | GPIO.28 | 28  | 20  |
+ |     |     |      0v |      |   | 39 || 40 | 0 | IN   | GPIO.29 | 29  | 21  |
+ +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
+ | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
+ +-----+-----+---------+------+---+---Pi 2---+---+------+---------+-----+-----+
+```
+
+GPIO Mapping Raspberry 2: http://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-4-309126/GPIO_Pi2.png?01AD=3lnx_cxwfZDoPGf2yt6YEgRzLIZJQi6cxPZlHcksSGF1h-MkIeePk3Q&01RI=38876E403D2DF1C&01NA=
+
+## Configure USB soundcard
+
+Falls nicht der 3,5" Klinkenstecker verwendet werden soll (zwar bessere Soundqualität, aber anfälliger für System-Crashes):
+
+```sudo nano /usr/share/alsa/alsa.conf```
+
+Folgende Zeilen ändern:
+
+```
+defaults.ctl.card 0
+defaults.pcm.card 0
+```
+
+in:
+
+```
+defaults.ctl.card 1
+defaults.pcm.card 1
+```
+
+Die ```1``` ist das USB Soundkarten-Interface aus ```cat /proc/asound/cards``` bzw. ```alsamixer -> F6```
+
+Danach ```reboot``` 
+
+Siehe auch (vorsicht: da alte und mittlerweile nicht mehr gültige Config-Datei): http://computers.tutsplus.com/articles/using-a-usb-audio-device-with-a-raspberry-pi--mac-55876
+
+## Sound wiedergeben
+
+Soundvolumen anpassen per Befehl: 
+
+```
+amixer set PCM -- -2000
+```
+
+Setzt Volume auf -20db. 
+
+Kontrolle per ```alsamixer```
+
+Wav Dateien spielen: ```aplay /home/pi/Music/gong.wav```
+
+Mp3 Dateien spielen:
+
+Entweder
+
+```
+sudo apt-get -y install mpg321
+mpg321 /home/pi/Music/siren.mp3
+```
+
+oder
+
+```
+apt-get install -y omxplayer
+omxplayer /home/pi/Music/siren.mp3
+```
+
+Empfehlung: ```omxplayer```, weil mp3 ***und*** wav Dateien wiedergegeben werden. Problem: ```omxplayer``` respektiert nicht die Einstellungen von ```alsamixer``` und ```amixer``` - Wiedergabe über alsa geht generell nicht (d.h. nur USB wird unterstützt, nicht der normale Klinkenanschluss). Daher muss die Lautstärke mitgegben werden:
+
+```
+omxplayer --vol -2000 /home/pi/Music/siren.mp3
+```
+
+Stellt die Lautstärke ebenso auf -20db.
