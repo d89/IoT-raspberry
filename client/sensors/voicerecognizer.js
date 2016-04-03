@@ -66,7 +66,7 @@ class voicerecognizer extends baseSensor
 
     hotwords()
     {
-        return ["okay pi", "hello pi", "listen pi"]; //all lowercase without punctuation
+        return ["okay raspberry"]; //all lowercase without punctuation
     }
 
     killTTS(cb)

@@ -247,12 +247,14 @@ apt-get install -y curl flac pocketsphinx
 Verify with "which pocketsphinx_continuous" after you are done
 ```
 
-Now create a file on your Desktop that defines the commands you want the raspberry to understand via pocketsphinx, your "hot words". They should not be too short and not be too long.
+Now create a file on your Desktop that defines the commands you want the raspberry to understand via pocketsphinx, your "hot words". They should not be too short and not be too long. If you put too few of them, it tends to work worse. "raspberry" is general seems to work well.
 
 ```
-Okay Pi
-Listen Pi
-Hello Pi
+please hear
+hello listen
+heads up
+okay raspberry listen
+open garage door
 ```
 
 Put these in a textfile and upload the text file at http://www.speech.cs.cmu.edu/tools/lmtool-new.html. After processing, put the
@@ -264,8 +266,8 @@ to ```/opt/voicerec``` on your pi.
 
 ```
 mkdir /opt/voicerec
-curl -o /opt/voicerec/dic.dic http://www.speech.cs.cmu.edu/tools/product/1458488207_25039/8961.dic
-curl -o /opt/voicerec/lm.lm http://www.speech.cs.cmu.edu/tools/product/1458488207_25039/8961.lm
+curl -o /opt/voicerec/dic.dic http://www.speech.cs.cmu.edu/tools/product/1459715270_08780/2370.dic
+curl -o /opt/voicerec/lm.lm http://www.speech.cs.cmu.edu/tools/product/1459715270_08780/2370.lm
 ```
 
 Register the ```voicerecognizer``` sensor in the config with

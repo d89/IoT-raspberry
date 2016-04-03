@@ -61,20 +61,10 @@ class ledstrip extends baseActor
             singleColor: {
                 method: this.singleColor.bind(this),
                 params: [{
-                    name: "red",
-                    isOptional: true,
-                    dataType: "integer",
-                    notes: "value between 0 and 255"
-                }, {
-                    name: "green",
-                    isOptional: true,
-                    dataType: "integer",
-                    notes: "value between 0 and 255"
-                }, {
-                    name: "blue",
-                    isOptional: true,
-                    dataType: "integer",
-                    notes: "value between 0 and 255"
+                    name: "hexcolor",
+                    isOptional: false,
+                    dataType: "string",
+                    notes: "hexcolor (in rgb format) with hash sign, like #FFDEAD"
                 }]
             }
         };
@@ -151,7 +141,7 @@ class ledstrip extends baseActor
         //music would interfere with the lightshow aswell
         soundmanager.stop();
 
-        that.setSingleColor(0, 0, 0, true);
+        that.setSingleColor("#000000", true);
 
         if (isError)
         {
@@ -197,14 +187,10 @@ class ledstrip extends baseActor
 
     randomColor(cb)
     {
-        var rnd = function()
-        {
-            var min = 0;
-            var max = 255;
-            return Math.floor(Math.random() * (max - min + 1) + min);
-        };
+        //from http://stackoverflow.com/questions/5092808/how-do-i-randomly-generate-html-hex-color-codes-using-javascript
+        var rndColor = '#' + (Math.random() * 0xFFFFFF << 0).toString(16);
 
-        this.setSingleColor(rnd(), rnd(), rnd(), false, cb);
+        this.setSingleColor(rndColor, false, cb);
     }
 
     synchronize(cb)
@@ -322,7 +308,7 @@ class ledstrip extends baseActor
         cb(null, "started lightshow for " + title);
     }
 
-    setSingleColor(red, green, blue, skipReset, cb)
+    setSingleColor(hexColor, skipReset, cb)
     {
         var that = this;
 
@@ -331,29 +317,56 @@ class ledstrip extends baseActor
             that.logger.info("actor result", err, resp);
         };
 
+        //from http://stackoverflow.com/questions/8027423/how-to-check-if-a-string-is-a-valid-hex-color-representation
+        var isValidColor = function(hexColor)
+        {
+            return /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(hexColor);
+        };
+
+        //from http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+        var hexToRgb = function(hex)
+        {
+            // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+            hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+                return r + r + g + g + b + b;
+            });
+
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        };
+
         //if called from allOff, we don't want to cycle
         if (!skipReset)
             this.allOff();
 
-        this.logger.info("setting led color to " + red + " / " + green + " / " + blue);
+        if (!isValidColor(hexColor))
+        {
+            return cb("invalid color");
+        }
 
-        red = parseInt(red, 10);
-        green = parseInt(green, 10);
-        blue = parseInt(blue, 10);
+        var rgb = hexToRgb(hexColor);
 
-        if (isNaN(red)) red = 255;
-        if (isNaN(green)) green = 0;
-        if (isNaN(blue)) blue = 255;
+        if (!rgb)
+        {
+            return cb("invalid color conversion");
+        }
+
+        this.logger.info("setting led color to " + hexColor);
 
         var ledband = new LPD8806(this.options.ledCount, '/dev/spidev0.0');
-        ledband.fillRGB(red, blue, green);
+        ledband.fillRGB(rgb.r, rgb.b, rgb.g);
 
         cb(null, "set ledstrip color");
     }
 
-    singleColor(red, green, blue, cb)
+    singleColor(hexColor, cb)
     {
-        this.setSingleColor(red, green, blue, false, cb)
+        this.setSingleColor(hexColor, false, cb)
     }
 }
 
