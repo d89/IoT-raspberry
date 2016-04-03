@@ -41,7 +41,7 @@ class cam extends baseActor
                     name: "duration",
                     isOptional: true,
                     dataType: "integer",
-                    notes: "Number of seconds the camera shall record video."
+                    notes: "Number of seconds the camera shall record video. Defaults to 5."
                 }]
             }
         };
@@ -273,7 +273,7 @@ class cam extends baseActor
                 that.logger.error(msg, err);
                 cb(msg);
             } else {
-                msg = "Successfully uploaded video";
+                msg = path.basename(videoPath);
                 that.logger.info(msg + ": " + body);
                 cb(null, msg);
             }

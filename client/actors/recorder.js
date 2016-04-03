@@ -3,6 +3,7 @@
 var baseActor = require("./baseActor");
 var config = require('../config');
 var spawn = require('child_process').spawn;
+var exec = require('child_process').exec;
 var actormanagement = require('../actormanagement');
 var sensormanagement = require('../sensormanagement');
 var fs = require('fs');
@@ -18,6 +19,8 @@ class recorder extends baseActor
         super("recorder", options);
 
         this.process = null;
+
+        this.volume(config.volumemicrophone);
     }
 
     exposed()
@@ -29,15 +32,50 @@ class recorder extends baseActor
                     name: "title",
                     isOptional: true,
                     dataType: "string",
-                    notes: "filename of recorded audio without extension"
+                    notes: "filename of recorded audio without extension. If you don't put a file name, a random one will be chosen."
                 }, {
                     name: "length",
                     isOptional: true,
                     dataType: "integer",
-                    notes: "recording duration in seconds"
+                    notes: "recording duration in seconds, defaults to 5"
                 }]
-            }
+            },
+            volume: {
+                method: this.volume.bind(this),
+                params: [{
+                    name: "volume",
+                    isOptional: false,
+                    dataType: "integer",
+                    notes: "Recorder volume between 0 (silent) and 100 (loudest)."
+                }]
+            },
         };
+    }
+
+    volume(volume, cb)
+    {
+        var that = this;
+
+        cb = cb || function(err, resp)
+        {
+            that.logger.info("volume result", err, resp);
+        };
+
+        var volume = parseFloat(volume, 10);
+
+        if (isNaN(volume) || volume < 0 || volume > 100)
+        {
+            return cb("invalid volume");
+        }
+
+        //Volume ranges from 0 to 100%
+        this.logger.info("setting recorder volume to ", volume);
+
+        //unmute mic and set default: https://wiki.ubuntuusers.de/amixer/
+        exec("amixer -c " + config.soundCardInput + " sset Mic,0 " + volume + "% unmute cap");
+        config.volumemicrophone = volume;
+
+        cb(null, "Recorder volume successfully adjusted");
     }
 
     receiveLine(str)

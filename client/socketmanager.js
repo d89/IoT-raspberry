@@ -50,261 +50,39 @@ exports.bindCallbacks = function()
         logger.info(`connected to ${exports.serverUrl}`);
     });
 
-    exports.socket.on('actionrequest', function(msg, resp)
+    exports.socket.on('execute-actor', function(msg, resp)
     {
-        /*
-         known messages:
-         { type: 'switchrc', data: { switchNumber: '1', onoff: '0' } }
-         { type: 'led', data: { ledType: 'red' } }
-         */
-
-        if (!msg.type)
+        if (!("actor" in msg) || !("method" in msg) || !("params" in msg))
         {
-            logger.info("malformatted actionrequest");
-            return;
+            return resp("malformatted actionrequest");
         }
 
-        //RC SWITCH  -----------------------------------------------------------------------
-        if (msg.type === "switchrc" && actormanagement.has("switchrc"))
+        var actor = msg.actor;
+        var method = msg.method;
+        var params = msg.params;
+
+        if (!actormanagement.has(actor))
         {
-            var switchNumber = msg.data.switchNumber;
-            var onoff = msg.data.onoff;
-
-            logger.info(`actionrequest for rc switch ${switchNumber} to status ${onoff}`);
-
-            actormanagement.registeredActors["switchrc"].turnSwitch(1, switchNumber, onoff);
+            return resp("actor is not known");
         }
 
-        //ZW SWITCH  -----------------------------------------------------------------------
-        if (msg.type === "switchzwave" && actormanagement.has("switchzwave"))
+        var methods = actormanagement.registeredActors[actor].exposed();
+
+        if (!(method in methods))
         {
-            var switchName = msg.data.switchName;
-            var onoff = msg.data.onoff;
-
-            logger.info(`actionrequest for zwave switch ${switchName} to status ${onoff}`);
-
-            if (onoff)
-                actormanagement.registeredActors["switchzwave"].on(switchName);
-            else
-                actormanagement.registeredActors["switchzwave"].off(switchName);
+            return resp(null, "method not known for this actor");
         }
 
-        //Servo Engine  ---------------------------------------------------------------------
-        if (msg.type === "servo" && actormanagement.has("servo"))
+        logger.info(`actionrequest for actor ${actor} and method ${method}`);
+
+        var cb = function(err, data)
         {
-            var onoff = msg.data.onoff;
+            return resp(err, data);
+        };
 
-            logger.info(`actionrequest for servo to status ${onoff}`);
+        params.push(cb);
 
-            if (onoff)
-                actormanagement.registeredActors["servo"].on();
-            else
-                actormanagement.registeredActors["servo"].off();
-        }
-
-        //Relais -----------------------------------------------------------------------------
-        if (msg.type === "relais" && actormanagement.has("relais"))
-        {
-            var onoff = msg.data.onoff;
-
-            logger.info(`actionrequest for relais to status ${onoff}`);
-
-            if (onoff)
-                actormanagement.registeredActors["relais"].on();
-            else
-                actormanagement.registeredActors["relais"].off();
-        }
-
-        //Stepper Engine  -------------------------------------------------------------------
-        if (msg.type === "stepper" && actormanagement.has("stepper"))
-        {
-            var onoff = msg.data.onoff;
-
-            logger.info(`actionrequest for stepper to status ${onoff}`);
-
-            if (onoff)
-                actormanagement.registeredActors["stepper"].on();
-            else
-                actormanagement.registeredActors["stepper"].off();
-        }
-
-        //LED ------------------------------------------------------------------------------
-        if (msg.type === "led" && actormanagement.has("led"))
-        {
-            logger.info(`actionrequest for LED ${msg.data.ledType}`);
-
-            if (msg.data.ledType === "red")
-            {
-                actormanagement.registeredActors["led"].red();
-            }
-            else if (msg.data.ledType === "green")
-            {
-                actormanagement.registeredActors["led"].green();
-            }
-        }
-
-        //Voice ------------------------------------------------------------------------------
-        if (msg.type === "voice" && actormanagement.has("voice"))
-        {
-            logger.info(`actionrequest for Voice with text ${msg.data}`);
-
-            actormanagement.registeredActors["voice"].speak(msg.data);
-        }
-
-        //Music ------------------------------------------------------------------------------
-        if (msg.type === "music" && actormanagement.has("music"))
-        {
-            var turnOff = msg.data === false;
-
-            if (turnOff) {
-                logger.info("turning music off");
-                actormanagement.registeredActors["music"].stop();
-            } else {
-                logger.info(`actionrequest for music with title ${msg.data}`);
-                actormanagement.registeredActors["music"].play(msg.data);
-            }
-        }
-
-        //Recording ---------------------------------------------------------------------------
-        if (msg.type === "record" && actormanagement.has("recorder"))
-        {
-            var start = msg.data.mode === "start";
-
-            if (start) {
-                logger.info("start recording");
-                actormanagement.registeredActors["recorder"].doRecord(false, msg.data.maxLength, config.mediaBasePath, function(err, fileName)
-                {
-                    if (err)
-                        return resp(err);
-
-                    //the full path is returned, we only want the raw file name
-                    if (fileName)
-                        return resp(null, path.basename(fileName));
-                });
-            }
-        }
-
-        //Volume Out ------------------------------------------------------------------------
-        if (msg.type === "volume" && actormanagement.has("music"))
-        {
-            var volume = parseFloat(msg.data, 10);
-
-            if (isNaN(volume) || volume < 0 || volume > 100)
-            {
-                logger.error("invalid volume - setting to default");
-                volume = config.volume;
-            }
-
-            //Volume ranges from 0 to 100%
-            logger.info("setting audio volume to ", volume);
-
-            exec("amixer -c " + config.soundCardOutput + " sset PCM,0 " + volume + "%");
-
-            config.volume = volume;
-        }
-
-        //Volume In -------------------------------------------------------------------------
-        if (msg.type === "volumemicrophone" && actormanagement.has("recorder"))
-        {
-            var volume = parseFloat(msg.data, 10);
-
-            if (isNaN(volume) || volume < 0 || volume > 100)
-            {
-                logger.error("invalid volume - setting to default");
-                volume = config.volumemicrophone;
-            }
-
-            //Volume ranges from 0 to 100%
-            logger.info("setting mic volume to ", volume);
-
-            //unmute mic and set default: https://wiki.ubuntuusers.de/amixer/
-            exec("amixer -c " + config.soundCardInput + " sset Mic,0 " + volume + "% unmute cap");
-            config.volumemicrophone = volume;
-        }
-
-        //Temperature -------------------------------------------------------------------------
-        if (msg.type === "settemperature" && actormanagement.hasOneOf(["set_temperature_zwave", "set_temperature_homematic"]))
-        {
-            var data = msg.data;
-            logger.info(`actionrequest for temperature with data`, data);
-
-            if (!("type" in data && "temp" in data && "thermostat" in data))
-            {
-                return logger.error("invalid set temperature request (1)", data);
-            }
-
-            var type = data.type;
-            var temp = data.temp;
-            var thermostat = data.thermostat;
-
-            if (type === "zwave")
-            {
-                actormanagement.registeredActors["set_temperature_zwave"].settemp(temp, thermostat);
-            }
-            else if (type === "homematic")
-            {
-                actormanagement.registeredActors["set_temperature_homematic"].settemp(temp, thermostat);
-            }
-            else
-            {
-                logger.error("invalid set temperature request (2)", msg.data);
-            }
-        }
-
-        //LED Strip --------------------------------------------------------------------------
-        if (msg.type === "ledstrip" && actormanagement.has("ledstrip"))
-        {
-            logger.info("actionrequest for ledstrip with data", msg.data);
-
-            var mode = msg.data.mode;
-
-            if (mode === "singleColor")
-            {
-                actormanagement.registeredActors["ledstrip"].singleColor(msg.data.colors.red, msg.data.colors.green, msg.data.colors.blue);
-            }
-            else if (mode === "colorParty")
-            {
-                actormanagement.registeredActors["ledstrip"].colorParty();
-            }
-            else if (mode === "allOff")
-            {
-                actormanagement.registeredActors["ledstrip"].allOff();
-            }
-            else if (mode === "randomColor")
-            {
-                actormanagement.registeredActors["ledstrip"].randomColor();
-            }
-            else if (mode === "lightshow")
-            {
-                var style = msg.data.style;
-
-                if (style === "music")
-                {
-                    var file = msg.data.file;
-                    actormanagement.registeredActors["ledstrip"].lightshow(file);
-                }
-                else if (style === "linein")
-                {
-                    actormanagement.registeredActors["ledstrip"].synchronize();
-                }
-            }
-            else
-            {
-                logger.error("invalid led strip command type");
-            }
-        }
-
-        //YT Download --------------------------------------------------------------------------
-        if (msg.type === "youtube")
-        {
-            actormanagement.registeredActors["youtubedl"].download2mp3(msg.data, function(err, fileName)
-            {
-                if (err)
-                    logger.error(err);
-                else
-                    logger.info("Done with file " + fileName);
-            });
-        }
+        methods[method].method.apply(this, params);
     });
 
     exports.socket.on('audio', function(msg, resp)

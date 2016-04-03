@@ -51,7 +51,7 @@ class set_temperature_zwave extends baseActor
             }
             else
             {
-                cb(null, msg);
+                cb(null, msg || "done setting temperature");
             }
         });
     }

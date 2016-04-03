@@ -62,7 +62,7 @@ class set_temperature_homematic extends baseActor
                     if (err) {
                         cb(err);
                     } else {
-                        cb(null, msg);
+                        cb(null, msg || "done setting temperature");
                     }
                 });
             }

@@ -61,9 +61,18 @@ class youtubedl extends baseActor
         return (match&&match[7].length==11)? match[7] : false;
     }
 
-    download2mp3(ytID, cb)
+    download2mp3(ytUrl, cb)
     {
         var that = this;
+
+        var ytID = false;
+
+        //accept both youtube ids and full urls.
+        //if we receive a full url, extract to see if things are fine
+        if (that.idExtractor(ytUrl))
+        {
+            ytID = that.idExtractor(ytUrl);
+        }
 
         var onout = function(text)
         {
@@ -84,17 +93,14 @@ class youtubedl extends baseActor
 
             socketmanager.socket.emit("client:youtube-download", resp);
 
-            return cb(err, fileName);
+            cb(err, fileName);
         };
 
-        //accept both youtube ids and full urls.
-        //if we receive a full url, extract to see if things are fine
-        if (that.idExtractor(ytID))
-        {
-            ytID = that.idExtractor(ytID);
+        if (!ytID) {
+            return ondone("Invalid youtube link, links should have the format https://www.youtube.com/watch?v=DLzxrzFCyOs");
+        } else {
+            cb(null, "Started download for ID: " + ytID);
         }
-
-        if (!ytID) return ondone("Invalid youtube ID");
 
         var url = 'https://www.youtube.com/watch?v=' + ytID;
 
@@ -128,6 +134,8 @@ class youtubedl extends baseActor
 
         var download = function()
         {
+            ondone(null, "Download started");
+
             var dest = config.mediaBasePath + '/%(title)s-%(id)s.%(ext)s';
             var extractedFilename = null;
             var process = spawn("youtube-dl", ["-o", dest, "--extract-audio", "--audio-format", "mp3", url]);
@@ -136,7 +144,7 @@ class youtubedl extends baseActor
 
             process.stderr.on('data', function (data)
             {
-                onout("ERROR: " + receiveLine(data));
+                onout("ERROR: " + that.receiveLine(data));
             });
 
             process.stdout.on('data', function (data)

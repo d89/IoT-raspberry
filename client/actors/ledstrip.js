@@ -6,6 +6,7 @@ var spawn = require('child_process').spawn;
 var fs = require('fs');
 var soundmanager = require('../soundmanager');
 var actormanagement = require('../actormanagement');
+var sensormanagement = require('../sensormanagement');
 var LPD8806 = require('lpd8806');
 
 // ######################################################
@@ -223,29 +224,51 @@ class ledstrip extends baseActor
 
         that.logger.info("calling " + that.lightshowStarter + " " + params.join(" "));
 
-        that.spawned = {
-            process: spawn(that.lightshowStarter, params, {detached: true}),
-            type: "lightshow"
+        var act = function()
+        {
+            that.spawned = {
+                process: spawn(that.lightshowStarter, params, {detached: true}),
+                type: "lightshow"
+            };
+
+            that.spawned.process.stdout.setEncoding('utf8');
+
+            that.spawned.process.stderr.on('data', function(data)
+            {
+                that.logger.error("received err: ", data.toString());
+            });
+
+            that.spawned.process.stdout.on('data', function(data)
+            {
+                //console.log(data.toString());
+            });
+
+            that.spawned.process.on("close", function(returnCode)
+            {
+                that.logger.info("lightshow finished with " + returnCode);
+
+                if (sensormanagement.has("voicerecognizer"))
+                {
+                    sensormanagement.registeredSensors["voicerecognizer"].listenForHotword();
+                }
+            });
+
+            cb(null, "started synchronized lightshow");
         };
 
-        that.spawned.process.stdout.setEncoding('utf8');
-
-        that.spawned.process.stderr.on('data', function(data)
+        if (sensormanagement.has("voicerecognizer"))
         {
-            that.logger.error("received err: ", data.toString());
-        });
+            that.logger.info("Stopping voicerecognizer");
 
-        that.spawned.process.stdout.on('data', function(data)
+            sensormanagement.registeredSensors["voicerecognizer"].killTTS(function()
+            {
+                act();
+            });
+        }
+        else
         {
-            //console.log(data.toString());
-        });
-
-        that.spawned.process.on("close", function(returnCode)
-        {
-            that.logger.info("lightshow finished with " + returnCode);
-        });
-
-        cb(null, "started synchronized lightshow");
+            act();
+        }
     }
 
     lightshow(title, cb)
@@ -258,6 +281,7 @@ class ledstrip extends baseActor
         };
         
         title = title || "song.mp3";
+        title = title.toString();
         title = title.replace("..", "");
         title = config.mediaBasePath + "/" + title;
 

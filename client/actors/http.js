@@ -66,9 +66,9 @@ class http extends baseActor
         {
             if (error)
             {
-                cb(error + " for " + url);
+                cb("execution error " + error + " for url " + url);
             }
-            else if (response && response.statusCode && response.statusCode != 200)
+            else if (response && response.statusCode && response.statusCode >= 400)
             {
                 cb("status code " + response.statusCode + " for " + url);
             }
@@ -95,9 +95,9 @@ class http extends baseActor
         {
             if (error)
             {
-                cb(error + " for " + url);
+                cb("execution error " + error + " for url " + url);
             }
-            else if (response && response.statusCode && response.statusCode != 200)
+            else if (response && response.statusCode && response.statusCode >= 400)
             {
                 cb("status code " + response.statusCode + " for " + url);
             }
