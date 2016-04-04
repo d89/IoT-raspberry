@@ -48,12 +48,11 @@ class meter extends baseSensor
             if (err) {
                 that.logger.error(err);
             } else {
-                var meter = msg.split(" kwH")[0];
+                var meter = msg.split(" kWh")[0];
                 if (isNaN(parseFloat(meter, 10))) {
                     that.logger.error("fhem zwave get measured meter could not parse " + msg);
                 } else {
-                    var kwh = meter[0];
-                    that.senddata(kwh, that);
+                    that.senddata(meter, that);
                 }
             }
 
