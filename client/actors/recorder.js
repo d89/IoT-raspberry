@@ -160,7 +160,7 @@ class recorder extends baseActor
         var act = function()
         {
             title = title || "recording-" + (new Date).getTime() + ".wav";
-            title = title.replace("..", "");
+            title = title.toString().replace("..", "");
             basePath = basePath || config.mediaBasePath;
             title = basePath + "/" + title;
             maxLength = parseInt(maxLength, 10);

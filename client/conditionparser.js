@@ -76,6 +76,12 @@ exports.testConditions = function(allconditions, cb)
         }
     };
 
+    //empty?
+    if (!allconditions.length)
+    {
+        return checkFinished();
+    }
+
     allconditions.forEach(function(statementObject)
     {
         if (statementObject.isActive)
@@ -266,7 +272,9 @@ exports.saveConditions = function(conditions, cb)
         exports.conditionEvaluationMemory = {};
         exports.statements = [];
 
-        return cb(null, "saved conditions");
+        return cb(null, {
+            conditions: "saved conditions"
+        });
     });
 };
 

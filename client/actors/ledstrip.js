@@ -267,8 +267,7 @@ class ledstrip extends baseActor
         };
         
         title = title || "song.mp3";
-        title = title.toString();
-        title = title.replace("..", "");
+        title = title.toString().replace("..", "");
         title = config.mediaBasePath + "/" + title;
 
         if (!fs.existsSync(title))

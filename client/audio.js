@@ -7,7 +7,12 @@ var fs = require('fs');
 
 exports.delete = function(fileName, cb)
 {
-    fileName = fileName.replace("..", "");
+    if (!fileName)
+    {
+        return cb("invalid filename");
+    }
+
+    fileName = fileName.toString().replace("..", "");
     fileName = config.mediaBasePath + "/" + fileName;
 
     if (!fs.existsSync(fileName))
