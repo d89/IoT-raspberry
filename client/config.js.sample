@@ -14,7 +14,8 @@ module.exports = {
     volumemicrophone: 100, //in percent from 0 to 100
     soundCardInput: 1, //alsamixer -> F6 -> number of interface
     soundCardOutput: 0, //alsamixer -> F6 -> number of interface
-    password: "*** snip ***", //login on server
+    password: "*** snip ***", //login on server,
+    apitoken: "*** snip ***", //put false if you don't want to enable api access to your raspberry
     // ###########################################################
     //actor class files can be found in actors/*.js. The options are passed to the constructor
     actors: {

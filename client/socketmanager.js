@@ -29,6 +29,10 @@ exports.connect = function(sensorsForServer, actorsForServer)
     var connectionParams = [];
     connectionParams.push("mode=client");
     connectionParams.push("password=" + crypto.createHash('sha512').update(config.password).digest('hex'));
+
+    if (config.apitoken) //optional
+        connectionParams.push("apitoken=" + crypto.createHash('sha512').update(config.apitoken).digest('hex'));
+
     connectionParams.push("connected_at=" + (new Date));
     connectionParams.push("client_name=" + exports.clientName);
     connectionParams.push("capabilities=" + capabilities);
