@@ -65,28 +65,7 @@ exports.bindCallbacks = function()
         var method = msg.method;
         var params = msg.params;
 
-        if (!actormanagement.has(actor))
-        {
-            return resp("actor is not known");
-        }
-
-        var methods = actormanagement.registeredActors[actor].exposed();
-
-        if (!(method in methods))
-        {
-            return resp(null, "method not known for this actor");
-        }
-
-        logger.info(`actionrequest for actor ${actor} and method ${method}`);
-
-        var cb = function(err, data)
-        {
-            return resp(err, data);
-        };
-
-        params.push(cb);
-
-        methods[method].method.apply(this, params);
+        actormanagement.executeByName(actor, method, params, resp);
     });
 
     exports.socket.on('audio', function(msg, resp)

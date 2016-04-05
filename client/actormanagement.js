@@ -21,6 +21,32 @@ exports.hasOneOf = function(actorArray)
     return false;
 };
 
+exports.executeByName = function(actorname, methodname, params, resp)
+{
+    if (!exports.has(actorname))
+    {
+        return resp("actor is not known");
+    }
+
+    var methods = exports.registeredActors[actorname].exposed();
+
+    if (!(methodname in methods))
+    {
+        return resp(null, "method not known for this actor");
+    }
+
+    logger.info(`actionrequest for actor ${actorname} and method ${methodname}`);
+
+    var cb = function(err, data)
+    {
+        return resp(err, data);
+    };
+
+    params.push(cb);
+
+    methods[methodname].method.apply(this, params);
+};
+
 exports.checkDependencies = function()
 {
     logger.info("checking actor dependencies");

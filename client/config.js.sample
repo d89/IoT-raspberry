@@ -25,6 +25,9 @@ module.exports = {
         http: {
             options: {}
         },
+        scenario: {
+            options: {}
+        },
         /*
         // --------------------------
         // Outcomment the actors that you have:
