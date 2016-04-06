@@ -22,10 +22,10 @@ module.exports = {
         // --------------------------
         // These actors always work, no matter which actors you connected
         // --------------------------
-        http: {
+        scenario: {
             options: {}
         },
-        scenario: {
+        http: {
             options: {}
         },
         /*

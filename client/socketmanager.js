@@ -216,6 +216,27 @@ exports.bindCallbacks = function()
         });
     });
 
+    exports.socket.on('scenario', function(msg, cb)
+    {
+        logger.info("Received scenario request");
+
+        if (!("type" in msg))
+        {
+            return cb("type missing");
+        }
+
+        if (msg.type === "save")
+        {
+            var data = msg.data || [];
+            var name = msg.name;
+
+            actormanagement.registeredActors["scenario"].save(data, name, function(err, data)
+            {
+                cb(err, data);
+            });
+        }
+    });
+
     exports.socket.on('maintenance', function(msg, cb)
     {
         logger.info("received maintenance request", msg);

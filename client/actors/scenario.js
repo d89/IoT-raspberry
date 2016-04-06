@@ -125,7 +125,7 @@ class scenario extends baseActor
             }
             else
             {
-                var actorname = actor.name;
+                var actorname = actor.actor;
                 var methodname = actor.method;
                 var params = actor.params;
 
@@ -148,6 +148,49 @@ class scenario extends baseActor
             }
 
             return cb(null, "Executed scenario '" + foundScenario.name + "' with individual results: " + data.join(" | "));
+        });
+    }
+
+    save(scenarioItems, name, cb)
+    {
+        var that = this;
+
+        name = name.toString().toLowerCase();
+
+        that.logger.info("received scenarioItems", scenarioItems);
+
+        that.loadScenarios(function(scenarios)
+        {
+            for (var i = 0; i < scenarios.length; i++)
+            {
+                if (scenarios[i].name === name)
+                {
+                    that.logger.info("found " + name + ", removing");
+                    scenarios.splice(i, 1);
+                    break;
+                }
+            }
+
+            scenarios.push({
+                name: name,
+                actors: scenarioItems
+            });
+
+            try {
+                scenarios = JSON.stringify(scenarios, null, 4);
+            } catch (e) {
+                return cb(e);
+            }
+
+            fs.writeFile(SCENARIO_FILE, scenarios, function(err, msg)
+            {
+                if (err)
+                {
+                    return cb("could not save scenarios");
+                }
+
+                return cb(null, "successfully saved scenario '" + name + "'");
+            });
         });
     }
 }
