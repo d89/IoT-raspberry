@@ -220,6 +220,11 @@ exports.bindCallbacks = function()
     {
         logger.info("Received scenario request");
 
+        if (!actormanagement.has("scenario"))
+        {
+            return cb("Please enable the actor 'scenario' first.");
+        }
+
         if (!("type" in msg))
         {
             return cb("type missing");
@@ -234,6 +239,24 @@ exports.bindCallbacks = function()
             {
                 cb(err, data);
             });
+        }
+        else if (msg.type === "load")
+        {
+            actormanagement.registeredActors["scenario"].loadScenarios(function(data)
+            {
+                cb(null, data);
+            });
+        }
+        else if (msg.type === "delete")
+        {
+            actormanagement.registeredActors["scenario"].deleteScenario(msg.name, function(err, data)
+            {
+                cb(err, data);
+            });
+        }
+        else
+        {
+            return cb("invalid action.");
         }
     });
 

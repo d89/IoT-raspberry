@@ -61,6 +61,55 @@ class scenario extends baseActor
         });
     }
 
+    deleteScenario(name, cb)
+    {
+        var that = this;
+        name = name.toString().toLowerCase();
+        that.logger.info("deleting scenario " + name);
+
+        that.loadScenarios(function(scenarios)
+        {
+            var scenariosCleaned = [];
+            var found = false;
+
+            for (var i = 0; i < scenarios.length; i++)
+            {
+                var scenario = scenarios[i];
+
+                if (scenario.name !== name)
+                {
+                    scenariosCleaned.push(scenario);
+                }
+                else
+                {
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                return cb("scenario '" + name + "' not found");
+            }
+
+            try {
+                var toSave = JSON.stringify(scenariosCleaned, null, 4);
+
+                fs.writeFile(SCENARIO_FILE, toSave, function(err, msg)
+                {
+                    if (err)
+                    {
+                        return cb("could not delete scenarios");
+                    }
+
+                    return cb(null, scenariosCleaned);
+                });
+
+            } catch (e) {
+                return cb(e);
+            }
+        });
+    }
+
     execute(name, cb)
     {
         var that = this;
