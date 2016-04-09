@@ -23,7 +23,6 @@ elif switch_type == "B":
     second = int(sys.argv[3]) # Channel (1..4)
     switch = pi_switch.RCSwitchB(first, second)
 else:
-    # TODO: Needs changes in the server
     print "switching with type C"
     switch = pi_switch.RCSwitchC(first, second, second)
 

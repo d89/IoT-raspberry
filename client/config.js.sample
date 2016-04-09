@@ -28,6 +28,12 @@ module.exports = {
         http: {
             options: {}
         },
+        push: {
+            options: {}
+        },
+        mail: {
+            options: {}
+        },
         /*
         // --------------------------
         // Outcomment the actors that you have:

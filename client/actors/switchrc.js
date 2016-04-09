@@ -94,7 +94,6 @@ class switchrc extends baseActor
                 var prc = spawn(config.baseBath + '/actors/switchrc', ["B", channel, device, state]);
                 break;
             case "C":
-                // TODO: this needs changes on the server
                 var prc = spawn(config.baseBath + '/actors/switchrc', [this.options.switchType, channel, device, device]);
                 break;
         }
