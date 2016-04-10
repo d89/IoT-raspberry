@@ -76,12 +76,6 @@ exports.testConditions = function(allconditions, cb)
         }
     };
 
-    //empty?
-    if (!allconditions.length)
-    {
-        return checkFinished();
-    }
-
     allconditions.forEach(function(statementObject)
     {
         if (statementObject.isActive)
@@ -89,6 +83,12 @@ exports.testConditions = function(allconditions, cb)
             testconditions.push(statementObject);
         }
     });
+
+    //empty?
+    if (!testconditions.length)
+    {
+        return checkFinished();
+    }
 
     testconditions.forEach(function(so)
     {

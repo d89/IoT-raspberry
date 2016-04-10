@@ -62,10 +62,13 @@ exports.start = function()
 
         conditionparser.process(type, data);
 
+        /*
+        //TODO
         if (type == "mem")
         {
             exports.displayUpdate(data);
         }
+        */
     };
 
     logger.info("------------------------------------------------------");

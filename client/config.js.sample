@@ -294,6 +294,13 @@ module.exports = {
             }
         },
         // --------------------------
+        battery_homematic: {
+            options: {
+                interval: 5,
+                thermostatName: "HM_37F678"
+            }
+        },
+        // --------------------------
         desired_temperature_zwave: {
             options: {
                 interval: 5,

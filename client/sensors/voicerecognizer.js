@@ -17,6 +17,9 @@ class voicerecognizer extends baseSensor
 
         var that = this;
 
+        that.recognizedTotal = 0;
+        that.recognizedHotwords = 0;
+
         that.killTTS(function()
         {
             that.listenForHotword();
@@ -87,13 +90,27 @@ class voicerecognizer extends baseSensor
         var hotwords = that.hotwords();
         var found = false;
 
+        that.recognizedTotal++;
+
         for (var i = 0; i < hotwords.length; i++)
         {
             if (text.indexOf(hotwords[i]) !== -1)
             {
+                that.recognizedHotwords++;
                 found = hotwords[i];
                 break;
             }
+        }
+
+        //TODO
+        if (actormanagement.has("display"))
+        {
+            actormanagement.registeredActors.display.print([
+                "last: " + require("moment")().format("HHmmss"),
+                "word: " + text,
+                "total: " + that.recognizedTotal,
+                "total hotwords:: " + that.recognizedHotwords
+            ]);
         }
 
         if (found === false)
