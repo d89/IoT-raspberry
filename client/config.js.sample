@@ -192,6 +192,13 @@ module.exports = {
         // --------------------------
         // Outcomment the sensors that you have:
         // --------------------------
+        reachability_bluetooth: {
+            options: {
+                address: "XX:D1:CB:E9:33:XX", //the bt address of your smartphone (can be found by "hcitool scan")
+                interval: 5
+            }
+        },
+        // --------------------------
         humidity: {
             options: {
                 pin: 25, //gpio numbering

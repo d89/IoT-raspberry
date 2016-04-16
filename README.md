@@ -1,5 +1,5 @@
 # IoT-raspberry
-Home control client unit that works together with IoT-server
+Home control client unit that works together with IoT-server.
 
 ## Raspi Config
 
@@ -204,6 +204,44 @@ git clone https://github.com/adafruit/Adafruit_Python_DHT.git /opt/dht11
 cd /opt/dht11
 python setup.py install
 ```
+
+## Bluetooth Reachability
+
+If you are on Debian Jessie and use a Rasberry Pi 3, you don't need to enable/install anything. 
+
+If you use a Raspberry Pi 1 or 2, you have to buy one of these guys: http://www.amazon.de/CSL-Bluetooth-Adapter-Technologie-neuester-Standard/dp/B00C68IQ3C
+On top of that, you have to install some packages for bluetooth to work properly on your Raspberry Pi 1 / 2:
+
+```
+apt-get install --no-install-recommends bluetooth
+```
+
+***Scanning for bluetooth devices***
+
+You can scan for "normal" Bluetooth devices (like your smartphone, when the bluetooth screen is open) with:
+
+```
+hcitool scan
+```
+
+Also, it's possible to scan for Bluetooth LE devices (like wearables for example) with:
+
+```
+hcitool lescan
+```
+
+The Bluetooth Address you get from the ```hcitool scan``` command can be pinged:
+
+```
+l2ping -c 1 B8:27:EB:99:A1:CF
+```
+
+Note, that you cannot ping Bluetooth LE devices. Additionally to that, there is the ```bluetoothctl``` tool that offers you to pair to devices and do additional things. Try that, if you want. The IoT-client component just depends on ```hcitool``` and ```l2ping``` to check for the availability of a bluetooth device.
+
+More infos:
+
+* https://www.element14.com/community/docs/DOC-81266/l/setting-up-bluetooth-on-the-raspberry-pi-3
+* https://www.raspberrypi.org/learning/robo-butler/bluetooth-setup/
 
 ## Text To Speech
 
