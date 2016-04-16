@@ -6,6 +6,19 @@ var exec = require("child_process").exec;
 var config = require("../config");
 var actormanagement  = require("../actormanagement");
 var fs = require("fs");
+var moment = require("moment");
+
+// ######################################################
+
+var VOICEREC_DEBUG = false;
+var voiceRecLog = function(text)
+{
+    if (VOICEREC_DEBUG)
+    {
+        text = moment().format("HHmmss") + ": " + text + "\n\n";
+        fs.appendFileSync("/var/www/voicerec.log", text);
+    }
+};
 
 // ######################################################
 
@@ -75,6 +88,7 @@ class voicerecognizer extends baseSensor
     killTTS(cb)
     {
         this.logger.info("voicerec", "stopping tts engine");
+        voiceRecLog("stopping tts engine");
         var killCommand = "kill -9 $(ps aux | grep '" + this.options.executable + "' | awk '{print $2}')";
         exec(killCommand, cb);
     }
@@ -102,20 +116,20 @@ class voicerecognizer extends baseSensor
             }
         }
 
-        //TODO
-        if (actormanagement.has("display"))
+        if (VOICEREC_DEBUG && actormanagement.has("display"))
         {
             actormanagement.registeredActors.display.print([
                 "last: " + require("moment")().format("HHmmss"),
                 "word: " + text,
                 "total: " + that.recognizedTotal,
-                "total hotwords:: " + that.recognizedHotwords
+                "total hotwords: " + that.recognizedHotwords
             ]);
         }
 
         if (found === false)
         {
             that.logger.info("voicerec", "is no hotword " + text);
+            voiceRecLog("is no hotword " + text);
             return;
         }
 
@@ -130,6 +144,7 @@ class voicerecognizer extends baseSensor
 
                 if (err) {
                     that.logger.error("voicerec", err);
+                    voiceRecLog(err);
                 } else {
                     that.processUserTextFromGoogle(msg);
                 }
@@ -140,6 +155,7 @@ class voicerecognizer extends baseSensor
     processUserTextFromGoogle(text)
     {
         this.logger.info("voicerec", "understood: " + text);
+        voiceRecLog("understood: " + text);
         this.senddata(text, this);
     }
 
@@ -257,6 +273,7 @@ class voicerecognizer extends baseSensor
         {
             data = that.stripNewLines(data).toLowerCase();
             that.logger.info("voicerec", "received: " + data);
+            voiceRecLog("received: " + data);
 
             //is ready the first time and has not been ready before
             if (data.indexOf("ready") !== -1 && isReady === false)
@@ -280,11 +297,19 @@ class voicerecognizer extends baseSensor
         prc.stderr.on("data", function(data)
         {
             //that.logger.error(that.stripNewLines(data));
+            voiceRecLog(that.stripNewLines(data));
         });
 
         prc.on("close", function(exitCode)
         {
             that.logger.info("voicerec", "closing with exitCode " + exitCode);
+            voiceRecLog("closing with exitCode " + exitCode);
+
+            if (exitCode !== null)
+            {
+                voiceRecLog("unexpected close, restarting");
+                that.listenForHotword();
+            }
         });
     }
 }
