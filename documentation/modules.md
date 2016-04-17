@@ -1,19 +1,15 @@
 # Modules
 
+## switchrc
+
+Remote Control Power Plugs: [switchrc](actors/switchrc.md)
+
 ## Youtube Downloader
 
 ```
 wget https://yt-dl.org/latest/youtube-dl -O /usr/local/bin/youtube-dl
 chmod a+x /usr/local/bin/youtube-dl
 hash -r
-```
-
-## Pi-Switch
-
-for switching rc plugs: https://github.com/lexruee/pi-switch-python
-
-```
-pip install pi_switch
 ```
 
 ## DHT11 temperature sensor
