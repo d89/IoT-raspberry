@@ -200,4 +200,4 @@ Congratulations! You just set up the basic installation of the Raspberry IoT Cli
 * diskfree (current disk usage)
 * reachability (reachability of a certain IP in your network. Useful for detecting if you are at home, when you put your smartphone IP here)
 
-The IoT Client comes with lots of modules that you can enable in your config, when you have the corresponding sensors / actors connected to your Pi. Go see the full [documentation](tree/blob/develop/documentation/modules.md) of the available modules.
+The IoT Client comes with lots of modules that you can enable in your config, when you have the corresponding sensors / actors connected to your Pi. Go see the full [documentation](blob/develop/documentation/modules.md) of the available modules.
