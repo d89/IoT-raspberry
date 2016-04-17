@@ -131,10 +131,10 @@ module.exports = {
         // --------------------------
         stepper: {
             options: {
-                pin1: 8,
-                pin2: 10,
-                pin3: 12,
-                pin4: 18
+                in1: 8,
+                in2: 10,
+                in3: 12,
+                in4: 18
             }
         }
         // --------------------------
@@ -184,7 +184,7 @@ module.exports = {
         // --------------------------
         reachability: {
             options: {
-                ip: "192.168.0.53", //the ip your smartphone receives from your router. Should be always the same.
+                ip: "192.168.0.50", //the ip your smartphone receives from your router. Should be always the same.
                 interval: 5
             }
         },
@@ -194,7 +194,7 @@ module.exports = {
         // --------------------------
         reachability_bluetooth: {
             options: {
-                address: "XX:D1:CB:E9:33:XX", //the bt address of your smartphone (can be found by "hcitool scan")
+                address: "F8:95:C7:73:82:7F", //the bt address of your smartphone (can be found by "hcitool scan")
                 interval: 5
             }
         },
@@ -236,7 +236,7 @@ module.exports = {
         movement1: {
             file: "./sensors/movement",
             options: {
-                pin: 33,
+                pin: 11,
                 interval: 5,
                 suffix: "1"
             }
@@ -245,7 +245,7 @@ module.exports = {
         movement2: {
             file: "./sensors/movement",
             options: {
-                pin: 38,
+                pin: 13,
                 interval: 5,
                 suffix: "2",
             }

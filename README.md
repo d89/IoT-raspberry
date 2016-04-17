@@ -465,7 +465,11 @@ chmod +x /opt/lightshow/lightshowpi/py/synchronized_lights.py
 
 ## Camera
 
-```raspivid``` and ```raspistill``` are used. They are preinstalled.
+Connect the camera to your Raspberry like so: https://www.raspberrypi.org/help/camera-module-setup/
+
+I used a 75cm cable that to get some more flexibility which worked out just fine: http://www.amazon.de/Flexibles-Kabel-f%C3%BCr-Raspberry-Camera/dp/B00QIW4Y4M
+
+```raspivid``` and ```raspistill``` are used. They are preinstalled. 
 
 * https://www.raspberrypi.org/documentation/usage/camera/raspicam/raspivid.md
 * https://www.raspberrypi.org/documentation/raspbian/applications/camera.md

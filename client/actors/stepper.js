@@ -50,10 +50,10 @@ class stepper extends baseActor
         }
 
         var pins = [
-            this.options.pin1,
-            this.options.pin2,
-            this.options.pin3,
-            this.options.pin4
+            this.options.in1,
+            this.options.in2,
+            this.options.in3,
+            this.options.in4
         ];
 
         var params = pins;
