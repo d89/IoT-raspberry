@@ -78,10 +78,10 @@ apt-get update
 apt-get install -y build-essential git gpac mpg321 omxplayer python-dev libboost-python-dev python-pip python-smbus i2c-tools
 ```
 
-## Node 5 (or above)
+## Node 6 (or above)
 
 ```
-curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 apt-get install -y nodejs
 ```
 

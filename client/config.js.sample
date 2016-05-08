@@ -189,12 +189,12 @@ module.exports = {
             }
         },
         sun: {
-	        options: {
-	    	    latitude: "49.8705556", //lookup your lat/long of your city at http://www.latlong.net
-		        longitude: "8.6494444",
-		        interval: 10
-  	        }
-	    },
+            options: {
+                latitude: "49.8705556", //lookup your lat/long of your city at http://www.latlong.net
+                longitude: "8.6494444",
+                interval: 10
+            }
+        },
         /*
         // --------------------------
         // Outcomment the sensors that you have:
